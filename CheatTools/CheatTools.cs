@@ -2,7 +2,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -12,9 +11,9 @@ namespace CheatTools
     [BepInPlugin("CheatTools", "Cheat Tools", "1.0")]
     public partial class CheatTools : BaseUnityPlugin
     {
-        private string mainWindowTitle;
+        private readonly int inspectorTypeWidth = 170, inspectorNameWidth = 200;
         private readonly int screenOffset = 20;
-
+        private Dictionary<Type, bool> CanCovertCache = new Dictionary<Type, bool>();
         private object currentlyEditingTag;
         private string currentlyEditingText;
         private List<ICacheEntry> fieldCache = new List<ICacheEntry>();
@@ -22,11 +21,17 @@ namespace CheatTools
         private string[] hExpNames = { "First time", "Inexperienced", "Used to", "Perverted" };
         private Vector2 inspectorScrollPos, cheatsScrollPos;
         private Stack<InspectorStackEntry> inspectorStack = new Stack<InspectorStackEntry>();
+        private string mainWindowTitle;
         private InspectorStackEntry nextToPush;
         private Rect screenRect;
         private bool showGui = false;
         private bool userHasHitReturn;
         private Rect windowRect, windowRect2;
+
+        private static void DrawSeparator()
+        {
+            GUILayout.Space(5);
+        }
 
         private static string ExtractText(object value)
         {
@@ -66,6 +71,94 @@ namespace CheatTools
             {
                 BepInLogger.Log("Inspector crash: " + ex.ToString());
             }
+        }
+
+        private Boolean CanCovert(string value, Type type)
+        {
+            if (CanCovertCache.ContainsKey(type))
+                return CanCovertCache[type];
+
+            try
+            {
+                var obj = Convert.ChangeType(value, type);
+                CanCovertCache[type] = true;
+                return true;
+            }
+            catch
+            {
+                CanCovertCache[type] = false;
+                return false;
+            }
+        }
+
+        private void CheatWindow(int id)
+        {
+            try
+            {
+                // add club rating cheat (maybe dont change directly,
+                // add points as normal bonus and have player go write a report)
+
+                // todo add time slider?
+
+                cheatsScrollPos = GUILayout.BeginScrollView(cheatsScrollPos);
+                {
+                    if (!gameMgr.saveData.isOpening)
+                    {
+                        DrawPlayerCheats();
+                    }
+                    else
+                    {
+                        GUILayout.Label("Start the game to see player cheats");
+                    }
+
+                    DrawSeparator();
+
+                    if (GUILayout.Button("Open game state in inspector"))
+                    {
+                        InspectorClear();
+                        InspectorPush(new InspectorStackEntry(gameMgr, "Manager.Game.Instance"));
+                    }
+
+                    DrawSeparator();
+
+                    GUILayout.BeginVertical(GUI.skin.box);
+                    {
+                        GUILayout.Label("Current girl stats");
+
+                        var currentAdvGirl = GetCurrentAdvHeroine();
+
+                        if (currentAdvGirl != null)
+                        {
+                            DrawCurrentHeroineCheats(currentAdvGirl);
+                        }
+                        else
+                        {
+                            GUILayout.Label("Talk to a girl to access her stats");
+                        }
+                    }
+                    GUILayout.EndVertical();
+
+                    DrawSeparator();
+
+                    if (GUILayout.Button("Open heroine list in inspector"))
+                    {
+                        InspectorClear();
+                        InspectorPush(new InspectorStackEntry(gameMgr.HeroineList, "Heroine list"));
+                    }
+
+                    DrawSeparator();
+                    GUILayout.Label("Created by MarC0 @ HongFire");
+                }
+                GUILayout.EndScrollView();
+
+                //TODO guibutton to enable/disable full editor
+            }
+            catch (Exception ex)
+            {
+                BepInLogger.Log("CheatWindow crash: " + ex.Message);
+            }
+
+            GUI.DragWindow();
         }
 
         private void DrawCurrentHeroineCheats(SaveData.Heroine currentAdvGirl)
@@ -128,6 +221,37 @@ namespace CheatTools
             GUILayout.EndVertical();
         }
 
+        private void DrawEditableValue(ICacheEntry field, object value)
+        {
+            bool isBeingEdited = currentlyEditingTag == field;
+            string text = isBeingEdited ? currentlyEditingText : ExtractText(value);
+            var result = GUILayout.TextField(text, GUILayout.ExpandWidth(true));
+
+            if (!Equals(text, result) || isBeingEdited)
+            {
+                if (userHasHitReturn)
+                {
+                    currentlyEditingTag = null;
+                    userHasHitReturn = false;
+                    try
+                    {
+                        var converted = Convert.ChangeType(result, field.Type());
+                        if (!Equals(converted, value))
+                            field.Set(converted);
+                    }
+                    catch (Exception ex)
+                    {
+                        BepInLogger.Log("Failed to set value - " + ex.Message);
+                    }
+                }
+                else
+                {
+                    currentlyEditingText = result;
+                    currentlyEditingTag = field;
+                }
+            }
+        }
+
         private void DrawPlayerCheats()
         {
             GUILayout.BeginVertical(GUI.skin.box);
@@ -167,6 +291,27 @@ namespace CheatTools
             GUILayout.EndVertical();
         }
 
+        private void DrawValue(object value)
+        {
+            GUILayout.TextArea(ExtractText(value), GUI.skin.label, GUILayout.ExpandWidth(true));
+        }
+
+        private void DrawVariableName(ICacheEntry field)
+        {
+            GUILayout.TextArea(field.Name(), GUI.skin.label, GUILayout.Width(inspectorNameWidth), GUILayout.MaxWidth(inspectorNameWidth));
+        }
+
+        private void DrawVariableNameEnterButton(ICacheEntry field, object value)
+        {
+            if (GUILayout.Button(field.Name(), GUILayout.Width(inspectorNameWidth), GUILayout.MaxWidth(inspectorNameWidth)))
+            {
+                if (value != null)
+                {
+                    nextToPush = new InspectorStackEntry(value, field.Name());
+                }
+            }
+        }
+
         private SaveData.Heroine GetCurrentAdvHeroine()
         {
             try
@@ -199,28 +344,6 @@ namespace CheatTools
         {
             inspectorStack.Push(o);
             CacheFields(o.Instance);
-        }
-
-        readonly int inspectorTypeWidth = 170, inspectorNameWidth = 200;
-
-        Dictionary<Type, bool> CanCovertCache = new Dictionary<Type, bool>();
-
-        private Boolean CanCovert(string value, Type type)
-        {
-            if (CanCovertCache.ContainsKey(type))
-                return CanCovertCache[type];
-
-            try
-            {
-                var obj = Convert.ChangeType(value, type);
-                CanCovertCache[type] = true;
-                return true;
-            }
-            catch
-            {
-                CanCovertCache[type] = false;
-                return false;
-            }
         }
 
         private void InspectorWindow(int id)
@@ -300,133 +423,6 @@ namespace CheatTools
             }
 
             GUI.DragWindow();
-        }
-
-        private void DrawVariableName(ICacheEntry field)
-        {
-            GUILayout.TextArea(field.Name(), GUI.skin.label, GUILayout.Width(inspectorNameWidth), GUILayout.MaxWidth(inspectorNameWidth));
-        }
-
-        private void DrawVariableNameEnterButton(ICacheEntry field, object value)
-        {
-            if (GUILayout.Button(field.Name(), GUILayout.Width(inspectorNameWidth), GUILayout.MaxWidth(inspectorNameWidth)))
-            {
-                if (value != null)
-                {
-                    nextToPush = new InspectorStackEntry(value, field.Name());
-                }
-            }
-        }
-
-        private void DrawValue(object value)
-        {
-            GUILayout.TextArea(ExtractText(value), GUI.skin.label, GUILayout.ExpandWidth(true));
-        }
-
-        private void DrawEditableValue(ICacheEntry field, object value)
-        {
-            bool isBeingEdited = currentlyEditingTag == field;
-            string text = isBeingEdited ? currentlyEditingText : ExtractText(value);
-            var result = GUILayout.TextField(text, GUILayout.ExpandWidth(true));
-
-            if (!Equals(text, result) || isBeingEdited)
-            {
-                if (userHasHitReturn)
-                {
-                    currentlyEditingTag = null;
-                    userHasHitReturn = false;
-                    try
-                    {
-                        var converted = Convert.ChangeType(result, field.Type());
-                        if (!Equals(converted, value))
-                            field.Set(converted);
-                    }
-                    catch (Exception ex)
-                    {
-                        BepInLogger.Log("Failed to set value - " + ex.Message);
-                    }
-                }
-                else
-                {
-                    currentlyEditingText = result;
-                    currentlyEditingTag = field;
-                }
-            }
-        }
-
-        private void CheatWindow(int id)
-        {
-            try
-            {
-                // add club rating cheat (maybe dont change directly,
-                // add points as normal bonus and have player go write a report)
-
-                // todo add time slider?
-
-                cheatsScrollPos = GUILayout.BeginScrollView(cheatsScrollPos);
-                {
-                    if (!gameMgr.saveData.isOpening)
-                    {
-                        DrawPlayerCheats();
-                    }
-                    else
-                    {
-                        GUILayout.Label("Start the game to see player cheats");
-                    }
-
-                    DrawSeparator();
-
-                    if (GUILayout.Button("Open game state in inspector"))
-                    {
-                        InspectorClear();
-                        InspectorPush(new InspectorStackEntry(gameMgr, "Manager.Game.Instance"));
-                    }
-
-                    DrawSeparator();
-
-                    GUILayout.BeginVertical(GUI.skin.box);
-                    {
-                        GUILayout.Label("Current girl stats");
-
-                        var currentAdvGirl = GetCurrentAdvHeroine();
-
-                        if (currentAdvGirl != null)
-                        {
-                            DrawCurrentHeroineCheats(currentAdvGirl);
-                        }
-                        else
-                        {
-                            GUILayout.Label("Talk to a girl to access her stats");
-                        }
-                    }
-                    GUILayout.EndVertical();
-
-                    DrawSeparator();
-
-                    if (GUILayout.Button("Open heroine list in inspector"))
-                    {
-                        InspectorClear();
-                        InspectorPush(new InspectorStackEntry(gameMgr.HeroineList, "Heroine list"));
-                    }
-
-                    DrawSeparator();
-                    GUILayout.Label("Created by MarC0 @ HongFire");
-                }
-                GUILayout.EndScrollView();
-
-                //TODO guibutton to enable/disable full editor
-            }
-            catch (Exception ex)
-            {
-                BepInLogger.Log("CheatWindow crash: " + ex.Message);
-            }
-
-            GUI.DragWindow();
-        }
-
-        private static void DrawSeparator()
-        {
-            GUILayout.Space(5);
         }
 
         private void OnGUI()
