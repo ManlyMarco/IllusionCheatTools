@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -202,6 +203,19 @@ namespace CheatTools
 
         readonly int inspectorTypeWidth = 170, inspectorNameWidth = 200;
 
+        private Boolean CanCovert(string value, Type type)
+        {
+            try
+            {
+                var obj = Convert.ChangeType(value, type);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         private void InspectorWindow(int id)
         {
             try
@@ -210,7 +224,7 @@ namespace CheatTools
                 {
                     GUILayout.BeginHorizontal();
                     {
-                        if(GUILayout.Button("Exit the inspector"))
+                        if (GUILayout.Button("Exit the inspector"))
                         {
                             InspectorClear();
                         }
@@ -235,7 +249,7 @@ namespace CheatTools
                     {
                         GUILayout.Label("Value type", GUI.skin.box, GUILayout.Width(inspectorTypeWidth));
                         GUILayout.Label("Variable name", GUI.skin.box, GUILayout.Width(inspectorNameWidth));
-                        GUILayout.Label("Value", GUI.skin.box,GUILayout.ExpandWidth(true));
+                        GUILayout.Label("Value", GUI.skin.box, GUILayout.ExpandWidth(true));
                     }
                     GUILayout.EndHorizontal();
 
@@ -259,33 +273,10 @@ namespace CheatTools
                                     }
                                 }
 
-                                bool isBeingEdited = currentlyEditingTag == field;
-                                string text = isBeingEdited ? currentlyEditingText : ExtractText(value);
-                                var result = GUILayout.TextField(text, GUILayout.ExpandWidth(true));
-
-                                if (!Equals(text, result) || isBeingEdited)
-                                {
-                                    if (userHasHitReturn)
-                                    {
-                                        currentlyEditingTag = null;
-                                        userHasHitReturn = false;
-                                        try
-                                        {
-                                            var converted = Convert.ChangeType(result, field.Type());
-                                            if (!Equals(converted, value))
-                                                field.Set(converted);
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            BepInLogger.Log("Failed to set value - " + ex.Message);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        currentlyEditingText = result;
-                                        currentlyEditingTag = field;
-                                    }
-                                }
+                                if (CanCovert(ExtractText(value), field.Type()))
+                                    DrawEditableValue(field, value);
+                                else
+                                    DrawValue(value);
                             }
                             GUILayout.EndHorizontal();
                         }
@@ -303,6 +294,42 @@ namespace CheatTools
             GUI.DragWindow();
         }
 
+        private void DrawValue(object value)
+        {
+            GUILayout.TextArea(ExtractText(value), GUI.skin.label, GUILayout.ExpandWidth(true));
+        }
+
+        private void DrawEditableValue(ICacheEntry field, object value)
+        {
+            bool isBeingEdited = currentlyEditingTag == field;
+            string text = isBeingEdited ? currentlyEditingText : ExtractText(value);
+            var result = GUILayout.TextField(text, GUILayout.ExpandWidth(true));
+
+            if (!Equals(text, result) || isBeingEdited)
+            {
+                if (userHasHitReturn)
+                {
+                    currentlyEditingTag = null;
+                    userHasHitReturn = false;
+                    try
+                    {
+                        var converted = Convert.ChangeType(result, field.Type());
+                        if (!Equals(converted, value))
+                            field.Set(converted);
+                    }
+                    catch (Exception ex)
+                    {
+                        BepInLogger.Log("Failed to set value - " + ex.Message);
+                    }
+                }
+                else
+                {
+                    currentlyEditingText = result;
+                    currentlyEditingTag = field;
+                }
+            }
+        }
+
         private void CheatWindow(int id)
         {
             try
@@ -314,7 +341,7 @@ namespace CheatTools
 
                 cheatsScrollPos = GUILayout.BeginScrollView(cheatsScrollPos);
                 {
-                    if(!gameMgr.saveData.isOpening)
+                    if (!gameMgr.saveData.isOpening)
                     {
                         DrawPlayerCheats();
                     }
