@@ -272,13 +272,10 @@ namespace CheatTools
 
                                 object value = field.Get();
 
-                                if (GUILayout.Button(field.Name(), GUILayout.Width(inspectorNameWidth), GUILayout.MaxWidth(inspectorNameWidth)))
-                                {
-                                    if (value != null)
-                                    {
-                                        nextToPush = new InspectorStackEntry(value, field.Name());
-                                    }
-                                }
+                                if (field.Type().IsPrimitive)
+                                    DrawVariableName(field);
+                                else
+                                    DrawVariableNameEnterButton(field, value);
 
                                 if (CanCovert(ExtractText(value), field.Type()) && field.CanSet())
                                     DrawEditableValue(field, value);
@@ -299,6 +296,22 @@ namespace CheatTools
             }
 
             GUI.DragWindow();
+        }
+
+        private void DrawVariableName(ICacheEntry field)
+        {
+            GUILayout.TextArea(field.Name(), GUI.skin.label, GUILayout.Width(inspectorNameWidth), GUILayout.MaxWidth(inspectorNameWidth));
+        }
+
+        private void DrawVariableNameEnterButton(ICacheEntry field, object value)
+        {
+            if (GUILayout.Button(field.Name(), GUILayout.Width(inspectorNameWidth), GUILayout.MaxWidth(inspectorNameWidth)))
+            {
+                if (value != null)
+                {
+                    nextToPush = new InspectorStackEntry(value, field.Name());
+                }
+            }
         }
 
         private void DrawValue(object value)
