@@ -203,15 +203,22 @@ namespace CheatTools
 
         readonly int inspectorTypeWidth = 170, inspectorNameWidth = 200;
 
+        Dictionary<Type, bool> CanCovertCache = new Dictionary<Type, bool>();
+
         private Boolean CanCovert(string value, Type type)
         {
+            if (CanCovertCache.ContainsKey(type))
+                return CanCovertCache[type];
+
             try
             {
                 var obj = Convert.ChangeType(value, type);
+                CanCovertCache[type] = true;
                 return true;
             }
             catch
             {
+                CanCovertCache[type] = false;
                 return false;
             }
         }
