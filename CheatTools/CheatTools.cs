@@ -252,41 +252,45 @@ namespace CheatTools
                     }
                     GUILayout.EndHorizontal();
 
-                    GUILayout.BeginHorizontal();
+                    GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        GUILayout.Label("Value type", GUI.skin.box, GUILayout.Width(inspectorTypeWidth));
-                        GUILayout.Label("Variable name", GUI.skin.box, GUILayout.Width(inspectorNameWidth));
-                        GUILayout.Label("Value", GUI.skin.box, GUILayout.ExpandWidth(true));
-                    }
-                    GUILayout.EndHorizontal();
-
-                    inspectorScrollPos = GUILayout.BeginScrollView(inspectorScrollPos);
-                    {
-                        GUILayout.BeginVertical();
-
-                        foreach (var field in fieldCache)
+                        GUILayout.BeginHorizontal();
                         {
-                            GUILayout.BeginHorizontal();
-                            {
-                                GUILayout.Label(field.TypeName(), GUILayout.Width(inspectorTypeWidth), GUILayout.MaxWidth(inspectorTypeWidth));
-
-                                object value = field.Get();
-
-                                if (field.Type().IsPrimitive)
-                                    DrawVariableName(field);
-                                else
-                                    DrawVariableNameEnterButton(field, value);
-
-                                if (CanCovert(ExtractText(value), field.Type()) && field.CanSet())
-                                    DrawEditableValue(field, value);
-                                else
-                                    DrawValue(value);
-                            }
-                            GUILayout.EndHorizontal();
+                            GUILayout.Label("Value type", GUI.skin.box, GUILayout.Width(inspectorTypeWidth));
+                            GUILayout.Label("Variable name", GUI.skin.box, GUILayout.Width(inspectorNameWidth));
+                            GUILayout.Label("Value", GUI.skin.box, GUILayout.ExpandWidth(true));
                         }
-                        GUILayout.EndVertical();
+                        GUILayout.EndHorizontal();
+
+                        inspectorScrollPos = GUILayout.BeginScrollView(inspectorScrollPos);
+                        {
+                            GUILayout.BeginVertical();
+
+                            foreach (var field in fieldCache)
+                            {
+                                GUILayout.BeginHorizontal();
+                                {
+                                    GUILayout.Label(field.TypeName(), GUILayout.Width(inspectorTypeWidth), GUILayout.MaxWidth(inspectorTypeWidth));
+
+                                    object value = field.Get();
+
+                                    if (field.Type().IsPrimitive)
+                                        DrawVariableName(field);
+                                    else
+                                        DrawVariableNameEnterButton(field, value);
+
+                                    if (CanCovert(ExtractText(value), field.Type()) && field.CanSet())
+                                        DrawEditableValue(field, value);
+                                    else
+                                        DrawValue(value);
+                                }
+                                GUILayout.EndHorizontal();
+                            }
+                            GUILayout.EndVertical();
+                        }
+                        GUILayout.EndScrollView();
                     }
-                    GUILayout.EndScrollView();
+                    GUILayout.EndVertical();
                 }
                 GUILayout.EndVertical();
             }
