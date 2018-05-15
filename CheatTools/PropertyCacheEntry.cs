@@ -75,6 +75,11 @@ namespace CheatTools
             {
                 return prop.PropertyType;
             }
+
+            public bool CanSet ()
+            {
+                return prop.CanWrite;
+            }
         }
     }
 }

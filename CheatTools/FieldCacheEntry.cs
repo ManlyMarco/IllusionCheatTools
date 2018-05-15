@@ -64,6 +64,11 @@ namespace CheatTools
             {
                 return field.FieldType;
             }
+
+            public bool CanSet()
+            {
+                return true;
+            }
         }
     }
 }

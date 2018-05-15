@@ -43,6 +43,11 @@ namespace CheatTools
             {
                 return type;
             }
+
+            public bool CanSet()
+            {
+                return false;
+            }
         }
     }
 }

@@ -10,5 +10,6 @@ namespace CheatTools
 
         void Set(object newValue);
         Type Type();
+        bool CanSet();
     }
 }

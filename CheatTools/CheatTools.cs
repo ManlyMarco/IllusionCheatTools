@@ -280,7 +280,7 @@ namespace CheatTools
                                     }
                                 }
 
-                                if (CanCovert(ExtractText(value), field.Type()))
+                                if (CanCovert(ExtractText(value), field.Type()) && field.CanSet())
                                     DrawEditableValue(field, value);
                                 else
                                     DrawValue(value);
