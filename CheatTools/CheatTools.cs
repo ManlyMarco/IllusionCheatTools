@@ -119,31 +119,6 @@ namespace CheatTools
                         InspectorPush(new InspectorStackEntry(gameMgr, "Manager.Game.Instance"));
                     }
 
-					var hFlag = GameObject.FindObjectOfType<HFlag>();
-					if (hFlag != null) //If is in a H Scene 
-					{
-						GUILayout.BeginVertical(GUI.skin.box);
-						{
-							GUILayout.Label("H stats");
-							//Male Gauge
-							GUILayout.BeginHorizontal();
-							{
-								GUILayout.Label("Male Gauge: " + hFlag.gaugeMale, GUILayout.Width(60));
-								hFlag.gaugeMale = (float)GUILayout.HorizontalSlider(hFlag.gaugeMale, 0, 100);
-							}
-							GUILayout.EndHorizontal();
-							//Female Gauge
-							GUILayout.BeginHorizontal();
-							{
-								GUILayout.Label("Female Gauge: " + hFlag.gaugeFemale, GUILayout.Width(60));
-								hFlag.gaugeFemale = (float)GUILayout.HorizontalSlider(hFlag.gaugeFemale, 0, 100);
-							}
-
-							GUILayout.EndHorizontal();
-						}
-						GUILayout.EndVertical();
-					}
-
                     DrawSeparator();
 
                     GUILayout.BeginVertical(GUI.skin.box);
