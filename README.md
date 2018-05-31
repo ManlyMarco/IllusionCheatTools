@@ -7,7 +7,7 @@ To turn on press the F12 key.
 
 Recommended to have the developer console plugin installed.
 
-**Changes: **
+**Changes**
 
 Add the ability to change male and female gauge at H scene.
 
