@@ -1,4 +1,7 @@
 # KoikatuCheatTools (forked version)
+
+Download binary from [here](releases)
+
 Trainer with inspector BepInEx plugin for Koikatsu. It allows control over player and girl variables, as well as inspecting and editing of the actual game variables in an inspector.
 
 To install put the .dll in the BepInEx directory.
