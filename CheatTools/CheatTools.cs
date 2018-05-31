@@ -199,6 +199,11 @@ namespace CheatTools
                         currentAdvGirl.hAreaExps[i] = 99f;
                 }
 
+                if (GUILayout.Button("Reset conversation time"))
+                {
+                    currentAdvGirl.talkTime = currentAdvGirl.talkTimeMax;
+                }
+
                 currentAdvGirl.isVirgin = GUILayout.Toggle(currentAdvGirl.isVirgin, "isVirgin");
                 currentAdvGirl.isAnalVirgin = GUILayout.Toggle(currentAdvGirl.isAnalVirgin, "isAnalVirgin");
                 currentAdvGirl.isAnger = GUILayout.Toggle(currentAdvGirl.isAnger, "Is angry");
@@ -275,6 +280,37 @@ namespace CheatTools
                         gameMgr.Player.hentai = (int)GUILayout.HorizontalSlider(gameMgr.Player.hentai, 0, 100);
                     }
                     GUILayout.EndHorizontal();
+
+                    var cycle = FindObjectsOfType<ActionGame.Cycle>().FirstOrDefault();
+                    if (cycle != null)
+                    {
+                        if (cycle.timerVisible)
+                        {
+                            GUILayout.BeginHorizontal();
+                            {
+                                GUILayout.Label("Time: " + cycle.timer.ToString("N1"), GUILayout.Width(65));
+                                var newVal = GUILayout.HorizontalSlider(cycle.timer, 0, ActionGame.Cycle.TIME_LIMIT);
+                                if(Math.Abs(newVal - cycle.timer) > 0.09)
+                                {
+                                    typeof(ActionGame.Cycle)
+                                        .GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)
+                                        .SetValue(cycle, newVal);
+                                }
+                            }
+                            GUILayout.EndHorizontal();
+                        }
+
+                        GUILayout.BeginHorizontal();
+                        {
+                            GUILayout.Label("Day of the week: " + cycle.nowWeek);
+                            if (GUILayout.Button("Next"))
+                            {
+                                cycle.Change(cycle.nowWeek.Next());
+                            }
+                        }
+                        GUILayout.EndHorizontal();
+                        
+                    }
                 }
 
                 if (GUILayout.Button("Add 10000 club points (+1 level)"))

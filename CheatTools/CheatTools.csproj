@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CheatTools.cs" />
+    <Compile Include="Extensions.cs" />
     <Compile Include="FieldCacheEntry.cs" />
     <Compile Include="ICacheEntry.cs" />
     <Compile Include="InspectorStackEntry.cs" />
