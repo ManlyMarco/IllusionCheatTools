@@ -11,7 +11,5 @@ To turn on press the F12 key.
 Recommended to have the developer console plugin installed.
 
 **Changes**
-
+Add a quit H scene button. Click that button to end H scene, it works even in first time. (Alpha)
 Add the ability to change male and female gauge at H scene.
-
-![hstats](https://user-images.githubusercontent.com/39810994/40809601-34a4c5da-6555-11e8-9e51-0b010f7e97e0.jpg)
