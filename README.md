@@ -13,4 +13,5 @@ Recommended to have the developer console plugin installed.
 **Changes**
 
 Add a quit H scene button. Click that button to end H scene, it works even in first time. (Alpha)
+
 Add the ability to change male and female gauge at H scene.
