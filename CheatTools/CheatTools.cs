@@ -119,79 +119,13 @@ namespace CheatTools
                         InspectorPush(new InspectorStackEntry(gameMgr, "Manager.Game.Instance"));
                     }
 
-					var hFlag = GameObject.FindObjectOfType<HFlag>();
-					var hSceneProc = GameObject.FindObjectOfType<HSceneProc>();
-					var hScene = FindObjectOfType<HScene>();
-					var hSprite = FindObjectOfType<HSprite>();
+                    DrawSeparator();
 
-					//if (hScene != null) //If is in a H Scene 
-					//{
-					//	if (GUILayout.Button("HScene"))
-					//	{
-					//		InspectorClear();
-					//		InspectorPush(new InspectorStackEntry(hScene, "HScene"));
-					//	}
-					//}
-
-					//if (hSceneProc != null) //If is in a H Scene 
-					//{
-					//	if (GUILayout.Button("HSceneProc"))
-					//	{
-					//		InspectorClear();
-					//		InspectorPush(new InspectorStackEntry(hSceneProc, "HSceneProc"));
-					//	}
-					//}
-					if (hSprite != null) //If is in a H Scene 
-					{
-						//if (GUILayout.Button("HSprite"))
-						//{
-						//	InspectorClear();
-						//	InspectorPush(new InspectorStackEntry(hSprite, "HSprite"));
-						//}
-						//if (GUILayout.Button("objFirstHHelpBase"))
-						//{
-						//	hSprite.objFirstHHelpBase.SetActive(!hSprite.objFirstHHelpBase.activeSelf);
-						//}
-						if (GUILayout.Button("btnEnd"))
-						{
-							InspectorClear();
-							InspectorPush(new InspectorStackEntry(hSprite.btnEnd, "btnEnd"));
-						}
-						if (GUILayout.Button("Quit Scene"))
-						{
-							hSprite.btnEnd.onClick.Invoke();
-						}
-					}
-
-
-					if (hFlag != null) //If is in a H Scene 
-					{
-						if (GUILayout.Button("HFlag"))
-						{
-							InspectorClear();
-							InspectorPush(new InspectorStackEntry(hFlag, "HFlag"));
-						}
-						GUILayout.BeginVertical(GUI.skin.box);
-						{
-							GUILayout.Label("H stats");
-							//Male Gauge
-							GUILayout.BeginHorizontal();
-							{
-								GUILayout.Label("Male Gauge: " + hFlag.gaugeMale, GUILayout.Width(60));
-								hFlag.gaugeMale = (float)GUILayout.HorizontalSlider(hFlag.gaugeMale, 0, 100);
-							}
-							GUILayout.EndHorizontal();
-							//Female Gauge
-							GUILayout.BeginHorizontal();
-							{
-								GUILayout.Label("Female Gauge: " + hFlag.gaugeFemale, GUILayout.Width(60));
-								hFlag.gaugeFemale = (float)GUILayout.HorizontalSlider(hFlag.gaugeFemale, 0, 100);
-							}
-
-							GUILayout.EndHorizontal();
-						}
-						GUILayout.EndVertical();
-					}
+                    var hFlag = FindObjectOfType<HFlag>();
+                    if (hFlag != null)
+                    {
+                        DrawHSceneCheats(hFlag);
+                    }
 
 					
 
@@ -235,6 +169,30 @@ namespace CheatTools
             }
 
             GUI.DragWindow();
+        }
+
+        private static void DrawHSceneCheats(HFlag hFlag)
+        {
+            GUILayout.BeginVertical(GUI.skin.box);
+            {
+                GUILayout.Label("H scene controls");
+
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label("Male Gauge: " + hFlag.gaugeMale.ToString("N1"), GUILayout.Width(150));
+                    hFlag.gaugeMale = GUILayout.HorizontalSlider(hFlag.gaugeMale, 0, 100);
+                }
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label("Female Gauge: " + hFlag.gaugeFemale.ToString("N1"), GUILayout.Width(150));
+                    hFlag.gaugeFemale = GUILayout.HorizontalSlider(hFlag.gaugeFemale, 0, 100);
+                }
+
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndVertical();
         }
 
         private void DrawCurrentHeroineCheats(SaveData.Heroine currentAdvGirl)
@@ -366,7 +324,7 @@ namespace CheatTools
                             {
                                 GUILayout.Label("Time: " + cycle.timer.ToString("N1"), GUILayout.Width(65));
                                 var newVal = GUILayout.HorizontalSlider(cycle.timer, 0, ActionGame.Cycle.TIME_LIMIT);
-                                if(Math.Abs(newVal - cycle.timer) > 0.09)
+                                if (Math.Abs(newVal - cycle.timer) > 0.09)
                                 {
                                     typeof(ActionGame.Cycle)
                                         .GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)
@@ -385,7 +343,7 @@ namespace CheatTools
                             }
                         }
                         GUILayout.EndHorizontal();
-                        
+
                     }
                 }
 
