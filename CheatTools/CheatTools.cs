@@ -120,8 +120,57 @@ namespace CheatTools
                     }
 
 					var hFlag = GameObject.FindObjectOfType<HFlag>();
+					var hSceneProc = GameObject.FindObjectOfType<HSceneProc>();
+					var hScene = FindObjectOfType<HScene>();
+					var hSprite = FindObjectOfType<HSprite>();
+
+					//if (hScene != null) //If is in a H Scene 
+					//{
+					//	if (GUILayout.Button("HScene"))
+					//	{
+					//		InspectorClear();
+					//		InspectorPush(new InspectorStackEntry(hScene, "HScene"));
+					//	}
+					//}
+
+					//if (hSceneProc != null) //If is in a H Scene 
+					//{
+					//	if (GUILayout.Button("HSceneProc"))
+					//	{
+					//		InspectorClear();
+					//		InspectorPush(new InspectorStackEntry(hSceneProc, "HSceneProc"));
+					//	}
+					//}
+					if (hSprite != null) //If is in a H Scene 
+					{
+						//if (GUILayout.Button("HSprite"))
+						//{
+						//	InspectorClear();
+						//	InspectorPush(new InspectorStackEntry(hSprite, "HSprite"));
+						//}
+						//if (GUILayout.Button("objFirstHHelpBase"))
+						//{
+						//	hSprite.objFirstHHelpBase.SetActive(!hSprite.objFirstHHelpBase.activeSelf);
+						//}
+						if (GUILayout.Button("btnEnd"))
+						{
+							InspectorClear();
+							InspectorPush(new InspectorStackEntry(hSprite.btnEnd, "btnEnd"));
+						}
+						if (GUILayout.Button("Quit Scene"))
+						{
+							hSprite.btnEnd.onClick.Invoke();
+						}
+					}
+
+
 					if (hFlag != null) //If is in a H Scene 
 					{
+						if (GUILayout.Button("HFlag"))
+						{
+							InspectorClear();
+							InspectorPush(new InspectorStackEntry(hFlag, "HFlag"));
+						}
 						GUILayout.BeginVertical(GUI.skin.box);
 						{
 							GUILayout.Label("H stats");
@@ -144,7 +193,9 @@ namespace CheatTools
 						GUILayout.EndVertical();
 					}
 
-                    DrawSeparator();
+					
+
+					DrawSeparator();
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
