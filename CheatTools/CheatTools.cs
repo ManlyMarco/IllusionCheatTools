@@ -95,11 +95,6 @@ namespace CheatTools
         {
             try
             {
-                // add club rating cheat (maybe dont change directly,
-                // add points as normal bonus and have player go write a report)
-
-                // todo add time slider?
-
                 cheatsScrollPos = GUILayout.BeginScrollView(cheatsScrollPos);
                 {
                     if (!gameMgr.saveData.isOpening)
@@ -158,8 +153,6 @@ namespace CheatTools
                     GUILayout.Label("Created by MarC0 @ HongFire");
                 }
                 GUILayout.EndScrollView();
-
-                //TODO guibutton to enable/disable full editor
             }
             catch (Exception ex)
             {
@@ -224,12 +217,17 @@ namespace CheatTools
                 }
                 GUILayout.EndVertical();
 
-                if (GUILayout.Button("Set all H experience to 99%"))
+                GUILayout.BeginHorizontal();
                 {
-                    currentAdvGirl.houshiExp = 99f;
-                    for (int i = 0; i < currentAdvGirl.hAreaExps.Length; i++)
-                        currentAdvGirl.hAreaExps[i] = 99f;
+                    GUILayout.Label("Set all H experience to");
+                    if (GUILayout.Button("0%"))
+                        SetGirlHExp(currentAdvGirl, 0f);
+                    if (GUILayout.Button("50%"))
+                        SetGirlHExp(currentAdvGirl, 50f);
+                    if (GUILayout.Button("99%"))
+                        SetGirlHExp(currentAdvGirl, 99f);
                 }
+                GUILayout.EndHorizontal();
 
                 if (GUILayout.Button("Reset conversation time"))
                 {
@@ -256,6 +254,15 @@ namespace CheatTools
                 }
             }
             GUILayout.EndVertical();
+        }
+
+        private static void SetGirlHExp(SaveData.Heroine girl, float amount)
+        {
+            girl.houshiExp = amount;
+            for (var i = 0; i < girl.hAreaExps.Length; i++)
+                girl.hAreaExps[i] = amount;
+            for (var i = 0; i < girl.massageExps.Length; i++)
+                girl.massageExps[i] = amount;
         }
 
         private void DrawEditableValue(ICacheEntry field, object value)
