@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace CheatTools
 {
-    [BepInPlugin("CheatTools", "Cheat Tools", "1.2")]
+    [BepInPlugin("CheatTools", "Cheat Tools", "1.3")]
     public partial class CheatTools : BaseUnityPlugin
     {
         private const int InspectorTypeWidth = 170, InspectorNameWidth = 200;
