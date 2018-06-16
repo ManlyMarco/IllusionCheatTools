@@ -38,6 +38,8 @@ namespace CheatTools
         {
             if (value is string str) return str;
 
+            if (value is Transform) return value.ToString();
+
             if (value is ICollection collection) return $"Count = {collection.Count}";
 
             if (value is IEnumerable enumerable) return "IS ENUMERABLE";
@@ -96,6 +98,8 @@ namespace CheatTools
         {
             try
             {
+                var hFlag = FindObjectOfType<HFlag>();
+
                 cheatsScrollPos = GUILayout.BeginScrollView(cheatsScrollPos);
                 {
                     if (!gameMgr.saveData.isOpening)
@@ -109,15 +113,31 @@ namespace CheatTools
 
                     DrawSeparator();
 
-                    if (GUILayout.Button("Open game state in inspector"))
+                    GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        InspectorClear();
-                        InspectorPush(new InspectorStackEntry(gameMgr, "Manager.Game.Instance"));
+                        GUILayout.Label("Open in inspector");
+                        foreach (var obj in new[]
+                        {
+                            new KeyValuePair<object, string>(gameMgr.HeroineList, "Heroine list"),
+                            new KeyValuePair<object, string>(gameMgr, "Manager.Game.Instance"),
+                            new KeyValuePair<object, string>(Manager.Scene.Instance, "Manager.Scene.Instance"),
+                            new KeyValuePair<object, string>(Manager.Communication.Instance, "Manager.Communication.Instance"),
+                            new KeyValuePair<object, string>(Manager.Sound.Instance, "Manager.Sound.Instance"),
+                            new KeyValuePair<object, string>(hFlag, "HFlag"),
+                        })
+                        {
+                            if (obj.Key == null) continue;
+                            if (GUILayout.Button(obj.Value))
+                            {
+                                InspectorClear();
+                                InspectorPush(new InspectorStackEntry(obj.Key, obj.Value));
+                            }
+                        }
+                        GUILayout.EndVertical();
                     }
 
                     DrawSeparator();
 
-                    var hFlag = FindObjectOfType<HFlag>();
                     if (hFlag != null)
                     {
                         DrawHSceneCheats(hFlag);
@@ -141,14 +161,6 @@ namespace CheatTools
                         }
                     }
                     GUILayout.EndVertical();
-
-                    DrawSeparator();
-
-                    if (GUILayout.Button("Open heroine list in inspector"))
-                    {
-                        InspectorClear();
-                        InspectorPush(new InspectorStackEntry(gameMgr.HeroineList, "Heroine list"));
-                    }
 
                     DrawSeparator();
                     GUILayout.Label("Created by MarC0 @ HongFire");
