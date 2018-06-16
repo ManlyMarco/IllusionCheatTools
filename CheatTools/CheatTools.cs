@@ -27,6 +27,7 @@ namespace CheatTools
         private bool showGui = false;
         private bool userHasHitReturn;
         private Rect windowRect, windowRect2;
+        private SaveData.Heroine _currentVisibleGirl;
 
         private static void DrawSeparator()
         {
@@ -128,11 +129,11 @@ namespace CheatTools
                     {
                         GUILayout.Label("Current girl stats");
 
-                        var currentAdvGirl = GetCurrentAdvHeroine();
+                        _currentVisibleGirl = GetCurrentAdvHeroine() ?? GetCurrentHflagHeroine(hFlag) ?? _currentVisibleGirl;
 
-                        if (currentAdvGirl != null)
+                        if (_currentVisibleGirl != null)
                         {
-                            DrawCurrentHeroineCheats(currentAdvGirl);
+                            DrawCurrentHeroineCheats(_currentVisibleGirl);
                         }
                         else
                         {
@@ -396,6 +397,11 @@ namespace CheatTools
                 return currentAdvGirl;
             }
             catch { return null; }
+        }
+
+        private SaveData.Heroine GetCurrentHflagHeroine(HFlag hFlag)
+        {
+            return hFlag?.lstHeroine?.FirstOrDefault();
         }
 
         private string GetHExpText(SaveData.Heroine currentAdvGirl)
