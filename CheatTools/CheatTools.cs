@@ -4,11 +4,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using BepInEx.Logging;
 using UnityEngine;
+using Logger = BepInEx.Logger;
 
 namespace CheatTools
 {
-    [BepInPlugin("CheatTools", "Cheat Tools", "1.3")]
+    [BepInPlugin("CheatTools", "Cheat Tools", "1.4")]
     public partial class CheatTools : BaseUnityPlugin
     {
         private const int InspectorTypeWidth = 170, InspectorNameWidth = 200;
@@ -80,7 +82,7 @@ namespace CheatTools
             }
             catch (Exception ex)
             {
-                BepInLogger.Log("Inspector crash: " + ex);
+                Logger.Log(LogLevel.Error, "Inspector crash: " + ex);
             }
         }
 
@@ -127,17 +129,17 @@ namespace CheatTools
                         DrawHSceneCheats(hFlag);
                     }
 
-					//Now can quit first time H scene
-					var hSprite = FindObjectOfType<HSprite>();
-					if (hSprite != null)
-					{
-						if (GUILayout.Button("Quit H scene (alpha)"))
-						{
-							hSprite.btnEnd.onClick.Invoke();
-						}
-					}
+                    //Now can quit first time H scene
+                    var hSprite = FindObjectOfType<HSprite>();
+                    if (hSprite != null)
+                    {
+                        if (GUILayout.Button("Quit H scene (alpha)"))
+                        {
+                            hSprite.btnEnd.onClick.Invoke();
+                        }
+                    }
 
-					DrawSeparator();
+                    DrawSeparator();
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
@@ -190,7 +192,7 @@ namespace CheatTools
             }
             catch (Exception ex)
             {
-                BepInLogger.Log("CheatWindow crash: " + ex.Message);
+                Logger.Log(LogLevel.Error, "CheatWindow crash: " + ex.Message);
             }
 
             GUI.DragWindow();
@@ -319,7 +321,7 @@ namespace CheatTools
                     }
                     catch (Exception ex)
                     {
-                        BepInLogger.Log("Failed to set value - " + ex.Message);
+                        Logger.Log(LogLevel.Error, "Failed to set value - " + ex.Message);
                     }
                 }
                 else
@@ -538,13 +540,13 @@ namespace CheatTools
             }
             catch (Exception ex)
             {
-                BepInLogger.Log("Inspector crash: " + ex.Message);
+                Logger.Log(LogLevel.Error, "Inspector crash: " + ex.Message);
             }
 
             GUI.DragWindow();
         }
 
-        public void OnGUI()
+        protected void OnGUI()
         {
             if (!_showGui) return;
 
@@ -573,14 +575,14 @@ namespace CheatTools
             }
         }
 
-        public void Start()
+        protected void Start()
         {
             _gameMgr = Manager.Game.Instance;
 
             _mainWindowTitle = "Cheat Tools" + Assembly.GetExecutingAssembly().GetName().Version;
         }
 
-        public void Update()
+        protected void Update()
         {
             if (_nextToPush != null)
             {
