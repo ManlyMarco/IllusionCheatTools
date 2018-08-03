@@ -10,7 +10,7 @@ using Logger = BepInEx.Logger;
 
 namespace CheatTools
 {
-    [BepInPlugin("CheatTools", "Cheat Tools", "1.3")]
+    [BepInPlugin("CheatTools", "Cheat Tools", "1.4")]
     public partial class CheatTools : BaseUnityPlugin
     {
         private const int InspectorTypeWidth = 170, InspectorNameWidth = 200;
