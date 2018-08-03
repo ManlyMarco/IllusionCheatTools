@@ -127,7 +127,17 @@ namespace CheatTools
                         DrawHSceneCheats(hFlag);
                     }
 
-                    DrawSeparator();
+					//Now can quit first time H scene
+					var hSprite = FindObjectOfType<HSprite>();
+					if (hSprite != null)
+					{
+						if (GUILayout.Button("Quit H scene (alpha)"))
+						{
+							hSprite.btnEnd.onClick.Invoke();
+						}
+					}
+
+					DrawSeparator();
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
