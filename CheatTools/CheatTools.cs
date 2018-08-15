@@ -190,6 +190,7 @@ namespace CheatTools
                             new KeyValuePair<object, string>(Manager.Sound.Instance, "Manager.Sound.Instance"),
                             new KeyValuePair<object, string>(hFlag, "HFlag"),
                             new KeyValuePair<object, string>(talkScene, "TalkScene"),
+                            new KeyValuePair<object, string>(Studio.Studio.Instance, "Studio.Instance"),
                         })
                         {
                             if (obj.Key == null) continue;
