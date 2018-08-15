@@ -53,6 +53,8 @@ namespace CheatTools
                     return o.name;
                 case SaveData.Heroine heroine:
                     return heroine.Name;
+                case SaveData.CharaData.Params.Data d:
+                    return $"[{d.key} | {d.value}]";
                 case ICollection collection:
                     return $"Count = {collection.Count}";
                 case IEnumerable _:
