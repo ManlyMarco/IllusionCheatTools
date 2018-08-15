@@ -42,12 +42,15 @@ namespace CheatTools
 
         private static string ExtractText(object value)
         {
+            if (value == null) return "NULL";
             switch (value)
             {
                 case string str:
                     return str;
-                case Transform _:
-                    return value.ToString();
+                case Transform t:
+                    return t.name;
+                case GameObject o:
+                    return o.name;
                 case SaveData.Heroine heroine:
                     return heroine.Name;
                 case ICollection collection:
@@ -55,7 +58,22 @@ namespace CheatTools
                 case IEnumerable _:
                     return "IS ENUMERABLE";
                 default:
-                    return value?.ToString() ?? "NULL";
+                {
+                    var valueType = value.GetType();
+                    if (valueType.IsGenericType)
+                    {
+                        var baseType = valueType.GetGenericTypeDefinition();
+                        if (baseType == typeof(KeyValuePair<,>))
+                        {
+                            //var argTypes = baseType.GetGenericArguments();
+                            var kvpKey = valueType.GetProperty("Key")?.GetValue(value, null);
+                            var kvpValue = valueType.GetProperty("Value")?.GetValue(value, null);
+                            return $"[{ExtractText(kvpKey)} | {ExtractText(kvpValue)}]";
+                        }
+                    }
+
+                    return value.ToString();
+                }
             }
         }
 
