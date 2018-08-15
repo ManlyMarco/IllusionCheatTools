@@ -225,7 +225,17 @@ namespace CheatTools
             Logger.Log(LogLevel.Debug, "CheatTools: Looking for class instances...");
 
             var query = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(x => x.GetTypes())
+                .SelectMany(x =>
+                {
+                    try
+                    {
+                        return x.GetTypes();
+                    }
+                    catch (SystemException)
+                    {
+                        return Enumerable.Empty<Type>();
+                    }
+                })
                 .Where(t => t.IsClass && !t.IsAbstract && !t.ContainsGenericParameters);
 
             foreach (var type in query)
