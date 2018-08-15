@@ -323,11 +323,11 @@ namespace CheatTools
                 currentAdvGirl.isFirstGirlfriend = GUILayout.Toggle(currentAdvGirl.isFirstGirlfriend, "isFirstGirlfriend");
                 currentAdvGirl.isGirlfriend = GUILayout.Toggle(currentAdvGirl.isGirlfriend, "isGirlfriend");
 
-                currentAdvGirl.denial.notCondom = GUILayout.Toggle(currentAdvGirl.denial.notCondom, "Denies no condom");
-                currentAdvGirl.denial.anal = GUILayout.Toggle(currentAdvGirl.denial.anal, "Denies anal");
-                currentAdvGirl.denial.aibu = GUILayout.Toggle(currentAdvGirl.denial.aibu, "Denies vibrator");
                 currentAdvGirl.denial.kiss = GUILayout.Toggle(currentAdvGirl.denial.kiss, "Denies kiss");
                 currentAdvGirl.denial.massage = GUILayout.Toggle(currentAdvGirl.denial.massage, "Denies strong massage");
+                currentAdvGirl.denial.anal = GUILayout.Toggle(currentAdvGirl.denial.anal, "Denies anal");
+                currentAdvGirl.denial.aibu = GUILayout.Toggle(currentAdvGirl.denial.aibu, "Denies vibrator");
+                currentAdvGirl.denial.notCondom = GUILayout.Toggle(currentAdvGirl.denial.notCondom, "Denies no condom");
 
                 if (GUILayout.Button("Open current girl in inspector"))
                 {
