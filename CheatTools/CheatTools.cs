@@ -58,22 +58,22 @@ namespace CheatTools
                 case IEnumerable _:
                     return "IS ENUMERABLE";
                 default:
-                {
-                    var valueType = value.GetType();
-                    if (valueType.IsGenericType)
                     {
-                        var baseType = valueType.GetGenericTypeDefinition();
-                        if (baseType == typeof(KeyValuePair<,>))
+                        var valueType = value.GetType();
+                        if (valueType.IsGenericType)
                         {
-                            //var argTypes = baseType.GetGenericArguments();
-                            var kvpKey = valueType.GetProperty("Key")?.GetValue(value, null);
-                            var kvpValue = valueType.GetProperty("Value")?.GetValue(value, null);
-                            return $"[{ExtractText(kvpKey)} | {ExtractText(kvpValue)}]";
+                            var baseType = valueType.GetGenericTypeDefinition();
+                            if (baseType == typeof(KeyValuePair<,>))
+                            {
+                                //var argTypes = baseType.GetGenericArguments();
+                                var kvpKey = valueType.GetProperty("Key")?.GetValue(value, null);
+                                var kvpValue = valueType.GetProperty("Value")?.GetValue(value, null);
+                                return $"[{ExtractText(kvpKey)} | {ExtractText(kvpValue)}]";
+                            }
                         }
-                    }
 
-                    return value.ToString();
-                }
+                        return value.ToString();
+                    }
             }
         }
 
@@ -191,6 +191,7 @@ namespace CheatTools
                             new KeyValuePair<object, string>(hFlag, "HFlag"),
                             new KeyValuePair<object, string>(talkScene, "TalkScene"),
                             new KeyValuePair<object, string>(Studio.Studio.Instance, "Studio.Instance"),
+                            new KeyValuePair<object, string>(GetInstanceClassScanner().OrderBy(x=>x.Key), "Look for other Instances"),
                         })
                         {
                             if (obj.Key == null) continue;
@@ -215,6 +216,32 @@ namespace CheatTools
             }
 
             GUI.DragWindow();
+        }
+
+        private static IEnumerable<KeyValuePair<string, object>> GetInstanceClassScanner()
+        {
+            Logger.Log(LogLevel.Debug, "CheatTools: Looking for class instances...");
+
+            var query = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(x => x.GetTypes())
+                .Where(t => t.IsClass && !t.IsAbstract && !t.ContainsGenericParameters);
+
+            foreach (var type in query)
+            {
+                object obj = null;
+                try
+                {
+                    obj = type.GetProperty("Instance",
+                            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                        ?.GetValue(null, null);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log(LogLevel.Debug, ex.ToString());
+                }
+                if (obj != null)
+                    yield return new KeyValuePair<string, object>(type.Name + ".Instance", obj);
+            }
         }
 
         private static void DrawHSceneCheats(HFlag hFlag)
