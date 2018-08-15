@@ -131,7 +131,7 @@ namespace CheatTools
 
                 _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
                 {
-                    if (!_gameMgr.saveData.isOpening)
+                    if (_gameMgr != null && !_gameMgr.saveData.isOpening)
                     {
                         DrawPlayerCheats();
                     }
@@ -445,7 +445,7 @@ namespace CheatTools
         {
             try
             {
-                var nowScene = _gameMgr.actScene?.AdvScene?.nowScene;
+                var nowScene = _gameMgr?.actScene?.AdvScene?.nowScene;
                 var currentAdvGirl = nowScene?.GetType().GetField("m_TargetHeroine", BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(nowScene) as SaveData.Heroine;
                 return currentAdvGirl;
             }
