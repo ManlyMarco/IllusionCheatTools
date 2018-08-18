@@ -109,7 +109,7 @@ namespace CheatTools
             }
             catch (Exception ex)
             {
-                Logger.Log(LogLevel.Error, "Inspector crash: " + ex);
+                Logger.Log(LogLevel.Warning, "Inspector CacheFields crash: " + ex);
             }
         }
 
@@ -657,7 +657,8 @@ namespace CheatTools
             }
             catch (Exception ex)
             {
-                Logger.Log(LogLevel.Error, "Inspector crash: " + ex.Message);
+                Logger.Log(LogLevel.Error, "Inspector crash: " + ex);
+                InspectorClear();
             }
 
             GUI.DragWindow();
