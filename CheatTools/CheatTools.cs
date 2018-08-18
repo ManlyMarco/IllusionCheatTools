@@ -62,19 +62,26 @@ namespace CheatTools
                 default:
                     {
                         var valueType = value.GetType();
-                        if (valueType.IsGenericType)
+                        try
                         {
-                            var baseType = valueType.GetGenericTypeDefinition();
-                            if (baseType == typeof(KeyValuePair<,>))
+                            if (valueType.IsGenericType)
                             {
-                                //var argTypes = baseType.GetGenericArguments();
-                                var kvpKey = valueType.GetProperty("Key")?.GetValue(value, null);
-                                var kvpValue = valueType.GetProperty("Value")?.GetValue(value, null);
-                                return $"[{ExtractText(kvpKey)} | {ExtractText(kvpValue)}]";
+                                var baseType = valueType.GetGenericTypeDefinition();
+                                if (baseType == typeof(KeyValuePair<,>))
+                                {
+                                    //var argTypes = baseType.GetGenericArguments();
+                                    var kvpKey = valueType.GetProperty("Key")?.GetValue(value, null);
+                                    var kvpValue = valueType.GetProperty("Value")?.GetValue(value, null);
+                                    return $"[{ExtractText(kvpKey)} | {ExtractText(kvpValue)}]";
+                                }
                             }
-                        }
 
-                        return value.ToString();
+                            return value.ToString();
+                        }
+                        catch
+                        {
+                            return valueType.Name;
+                        }
                     }
             }
         }
@@ -194,6 +201,8 @@ namespace CheatTools
                             new KeyValuePair<object, string>(talkScene, "TalkScene"),
                             new KeyValuePair<object, string>(Studio.Studio.Instance, "Studio.Instance"),
                             new KeyValuePair<object, string>(GetInstanceClassScanner().OrderBy(x=>x.Key), "Look for other Instances"),
+                            new KeyValuePair<object, string>(GetComponentScanner().OrderBy(x=>x.Key), "Look for Components"),
+                            new KeyValuePair<object, string>(GetMonoBehaviourScanner().OrderBy(x=>x.Key), "Look for MonoBehaviours"),
                         })
                         {
                             if (obj.Key == null) continue;
@@ -218,6 +227,56 @@ namespace CheatTools
             }
 
             GUI.DragWindow();
+        }
+
+        private static IEnumerable<KeyValuePair<string, object>> GetMonoBehaviourScanner()
+        {
+            Logger.Log(LogLevel.Debug, "CheatTools: Looking for MonoBehaviours...");
+
+            var mbt = typeof(MonoBehaviour);
+            var types = GetAllComponentTypes().Where(x => mbt.IsAssignableFrom(x));
+
+            foreach (var component in ScanComponentTypes(types))
+                yield return component;
+        }
+
+        private static IEnumerable<KeyValuePair<string, object>> GetComponentScanner()
+        {
+            Logger.Log(LogLevel.Debug, "CheatTools: Looking for Components...");
+
+            var mbt = typeof(MonoBehaviour);
+            var types = GetAllComponentTypes().Where(x => !mbt.IsAssignableFrom(x));
+
+            foreach (var component in ScanComponentTypes(types))
+                yield return component;
+        }
+
+        private static IEnumerable<KeyValuePair<string, object>> ScanComponentTypes(IEnumerable<Type> types)
+        {
+            return from type in types
+                   let components = FindObjectsOfType(type).OfType<Component>()
+                   from component in components
+                   select new KeyValuePair<string, object>($"{component.name} \\ {type.Name}", component);
+        }
+
+        private static IEnumerable<Type> GetAllComponentTypes()
+        {
+            var compType = typeof(Component);
+            var query = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(x =>
+                {
+                    try
+                    {
+                        return x.GetTypes();
+                    }
+                    catch (SystemException)
+                    {
+                        return Enumerable.Empty<Type>();
+                    }
+                })
+                .Where(t => t.IsClass && !t.IsAbstract && !t.ContainsGenericParameters)
+                .Where(compType.IsAssignableFrom);
+            return query;
         }
 
         private static IEnumerable<KeyValuePair<string, object>> GetInstanceClassScanner()
