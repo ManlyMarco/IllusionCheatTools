@@ -11,7 +11,7 @@ namespace CheatTools
 
         public virtual object EnterValue()
         {
-            return GetValue();
+            return _valueCache = (GetValueToCache() ?? GetValue());
         }
 
         public abstract object GetValueToCache();
