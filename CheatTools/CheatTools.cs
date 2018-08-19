@@ -134,6 +134,7 @@ namespace CheatTools
         {
             var cacheItems = typesToCheck
                 .Where(x => !x.IsConstructor && !x.IsSpecialName && x.ReturnType != typeof(void) && x.GetParameters().Length == 0)
+                .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
                 .Where(x => x.Name != "MemberwiseClone" && x.Name != "obj_address") // Instant game crash
                 .Select(m =>
                 {
