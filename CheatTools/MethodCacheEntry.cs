@@ -4,75 +4,40 @@ using System.Reflection;
 
 namespace CheatTools
 {
-    class MethodCacheEntry : ICacheEntry
+    internal class MethodCacheEntry : CacheEntryBase
     {
-        public MethodCacheEntry(object ins, MethodInfo m)
+        public MethodCacheEntry(object ins, MethodInfo m) : base(m?.Name)
         {
             if (m == null)
                 throw new ArgumentNullException(nameof(m));
 
-            instance = ins;
-            methodInfo = m;
+            _instance = ins;
+            _methodInfo = m;
         }
 
-        readonly MethodInfo methodInfo;
+        private readonly MethodInfo _methodInfo;
 
-        object instance;
+        private readonly object _instance;
 
-        public object Get()
+        public override object GetValueToCache()
         {
-            try { return methodInfo.Invoke(instance, null); }
+            try { return _methodInfo.Invoke(_instance, null); }
             catch (Exception ex)
             {
                 return "ERROR: " + ex.Message;
             }
         }
-
-        string name;
-        string typeName;
-
-        public string Name()
-        {
-            if (name == null)
-            {
-                if (methodInfo != null)
-                {
-                    name = methodInfo.Name;
-
-                    var genericArguments = methodInfo.GetGenericArguments();
-                    if (genericArguments.Any())
-                    {
-                        name += "<" + string.Join(", ", genericArguments.Select(x => x.Name).ToArray()) + ">";
-                    }
-                }
-                else
-                    name = "INVALID";
-            }
-            return name;
-        }
-
-        public string TypeName()
-        {
-            if (typeName == null)
-            {
-                if (methodInfo?.ReturnType != null)
-                    typeName = methodInfo.ReturnType.GetFriendlyName();
-                else
-                    typeName = "INVALID";
-            }
-            return typeName;
-        }
-
-        public void Set(object newValue)
+        
+        public override void SetValue(object newValue)
         {
         }
 
-        public Type Type()
+        public override Type Type()
         {
-            return methodInfo.ReturnType;
+            return _methodInfo.ReturnType;
         }
 
-        public bool CanSet()
+        public override bool CanSetValue()
         {
             return false;
         }

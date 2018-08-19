@@ -52,6 +52,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CacheEntryBase.cs" />
     <Compile Include="CheatTools.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="FieldCacheEntry.cs" />

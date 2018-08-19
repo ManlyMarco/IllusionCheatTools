@@ -3,72 +3,41 @@ using System.Reflection;
 
 namespace CheatTools
 {
-    public partial class CheatTools
+    internal class FieldCacheEntry : CacheEntryBase
     {
-        class FieldCacheEntry : ICacheEntry
+        public FieldCacheEntry(object ins, FieldInfo f) : base(f?.Name)
         {
-            public FieldCacheEntry(object ins, FieldInfo f)
+            if (f == null)
+                throw new ArgumentNullException(nameof(f));
+
+            _instance = ins;
+            _field = f;
+        }
+
+        private readonly FieldInfo _field;
+        private readonly object _instance;
+
+        public override object GetValueToCache()
+        {
+            return _field.GetValue(_instance);
+        }
+        
+        public override void SetValue(object newValue)
+        {
+            if (!_field.IsInitOnly)
             {
-                if (f == null)
-                    throw new ArgumentNullException(nameof(f));
-
-                instance = ins;
-                field = f;
+                _field.SetValue(_instance, newValue);
             }
+        }
 
-            readonly FieldInfo field;
+        public override Type Type()
+        {
+            return _field.FieldType;
+        }
 
-            object instance;
-
-            public object Get()
-            {
-                return field.GetValue(instance);
-            }
-
-            string name;
-            string typeName;
-
-            public string Name()
-            {
-                if (name == null)
-                {
-                    if (field != null)
-                        name = field.Name;
-                    else
-                        name = "INVALID";
-                }
-                return name;
-            }
-
-            public string TypeName()
-            {
-                if (typeName == null)
-                {
-                    if (field != null)
-                        typeName = field.FieldType.GetFriendlyName();
-                    else
-                        typeName = "INVALID";
-                }
-                return typeName;
-            }
-
-            public void Set(object newValue)
-            {
-                if (!field.IsInitOnly)
-                {
-                    field.SetValue(instance, newValue);
-                }
-            }
-
-            public Type Type()
-            {
-                return field.FieldType;
-            }
-
-            public bool CanSet()
-            {
-                return true;
-            }
+        public override bool CanSetValue()
+        {
+            return true;
         }
     }
 }

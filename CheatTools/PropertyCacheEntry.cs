@@ -3,80 +3,52 @@ using System.Reflection;
 
 namespace CheatTools
 {
-    class PropertyCacheEntry : ICacheEntry
+    internal class PropertyCacheEntry : CacheEntryBase
     {
-        public PropertyCacheEntry(object ins, PropertyInfo p)
+        public PropertyCacheEntry(object ins, PropertyInfo p) : base(p?.Name)
         {
             if (p == null)
                 throw new ArgumentNullException(nameof(p));
 
-            instance = ins;
-            prop = p;
+            _instance = ins;
+            _prop = p;
         }
 
-        readonly PropertyInfo prop;
+        private readonly PropertyInfo _prop;
 
-        object instance;
+        private readonly object _instance;
 
-        public object Get()
+        public override object GetValueToCache()
         {
-            if (!prop.CanRead)
+            if (!_prop.CanRead)
                 return "WRITE ONLY";
 
-            if (prop.PropertyType.IsArray)
+            if (_prop.PropertyType.IsArray)
                 return "IS INDEXED";
 
-
-            try { return prop.GetValue(instance, null); }
+            try { return _prop.GetValue(_instance, null); }
             catch (Exception ex)
             {
                 return "ERROR: " + ex.Message;
             }
         }
 
-        string name;
-        string typeName;
-
-        public string Name()
+        public override void SetValue(object newValue)
         {
-            if (name == null)
+            if (_prop.CanWrite)
             {
-                if (prop != null)
-                    name = prop.Name;
-                else
-                    name = "INVALID";
-            }
-            return name;
-        }
-
-        public string TypeName()
-        {
-            if (typeName == null)
-            {
-                if (prop != null)
-                    typeName = prop.PropertyType.GetFriendlyName();
-                else
-                    typeName = "INVALID";
-            }
-            return typeName;
-        }
-
-        public void Set(object newValue)
-        {
-            if (prop.CanWrite)
-            {
-                prop.SetValue(instance, newValue, null);
+                _prop.SetValue(_instance, newValue, null);
             }
         }
 
-        public Type Type()
+        public override Type Type()
         {
-            return prop.PropertyType;
+            return _prop.PropertyType;
         }
 
-        public bool CanSet()
+        public override bool CanSetValue()
         {
-            return prop.CanWrite;
+            return _prop.CanWrite;
         }
     }
 }

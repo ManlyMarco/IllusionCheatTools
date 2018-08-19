@@ -4,12 +4,18 @@ namespace CheatTools
 {
     interface ICacheEntry
     {
-        object Get();
         string Name();
         string TypeName();
 
-        void Set(object newValue);
+        /// <summary>
+        /// Get object that is entered when variable name is clicked in inspector
+        /// </summary>
+        /// <returns></returns>
+        object EnterValue();
+        object GetValue();
+        void SetValue(object newValue);
         Type Type();
-        bool CanSet();
+        bool CanSetValue();
+        bool CanEnterValue();
     }
 }

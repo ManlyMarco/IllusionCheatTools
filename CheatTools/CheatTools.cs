@@ -224,10 +224,10 @@ namespace CheatTools
                             new KeyValuePair<object, string>(hFlag, "HFlag"),
                             new KeyValuePair<object, string>(talkScene, "TalkScene"),
                             new KeyValuePair<object, string>(Studio.Studio.Instance, "Studio.Instance"),
-                            new KeyValuePair<object, string>(GetInstanceClassScanner().OrderBy(x=>x.EntryName), "Look for other Instances"),
-                            new KeyValuePair<object, string>(GetComponentScanner().OrderBy(x=>x.EntryName), "Look for Components"),
-                            new KeyValuePair<object, string>(GetMonoBehaviourScanner().OrderBy(x=>x.EntryName), "Look for MonoBehaviours"),
-                            new KeyValuePair<object, string>(GetTransformScanner().OrderBy(x=>x.EntryName), "Look for Transforms"),
+                            new KeyValuePair<object, string>(GetInstanceClassScanner().OrderBy(x=>x.Name()), "Look for other Instances"),
+                            new KeyValuePair<object, string>(GetComponentScanner().OrderBy(x=>x.Name()), "Look for Components"),
+                            new KeyValuePair<object, string>(GetMonoBehaviourScanner().OrderBy(x=>x.Name()), "Look for MonoBehaviours"),
+                            new KeyValuePair<object, string>(GetTransformScanner().OrderBy(x=>x.Name()), "Look for Transforms"),
                         })
                         {
                             if (obj.Key == null) continue;
@@ -483,7 +483,7 @@ namespace CheatTools
                     {
                         var converted = Convert.ChangeType(result, field.Type());
                         if (!Equals(converted, value))
-                            field.Set(converted);
+                            field.SetValue(converted);
                     }
                     catch (Exception ex)
                     {
@@ -578,13 +578,14 @@ namespace CheatTools
             GUILayout.TextArea(field.Name(), GUI.skin.label, GUILayout.Width(InspectorNameWidth), GUILayout.MaxWidth(InspectorNameWidth));
         }
 
-        private void DrawVariableNameEnterButton(ICacheEntry field, object value)
+        private void DrawVariableNameEnterButton(ICacheEntry field)
         {
             if (GUILayout.Button(field.Name(), _alignedButtonStyle, GUILayout.Width(InspectorNameWidth), GUILayout.MaxWidth(InspectorNameWidth)))
             {
-                if (value != null)
+                var val = field.EnterValue();
+                if (val != null)
                 {
-                    _nextToPush = new InspectorStackEntry(value, field.Name());
+                    _nextToPush = new InspectorStackEntry(val, field.Name());
                 }
             }
         }
@@ -681,18 +682,18 @@ namespace CheatTools
                         {
                             GUILayout.BeginVertical();
                             bool widthCalculated = false;
-                            foreach (var field in _fieldCache)
+                            foreach (var entry in _fieldCache)
                             {
                                 GUILayout.BeginHorizontal();
                                 {
-                                    GUILayout.Label(field.TypeName(), GUILayout.Width(InspectorTypeWidth), GUILayout.MaxWidth(InspectorTypeWidth));
+                                    GUILayout.Label(entry.TypeName(), GUILayout.Width(InspectorTypeWidth), GUILayout.MaxWidth(InspectorTypeWidth));
 
-                                    var value = field.Get();
+                                    var value = entry.GetValue();
 
-                                    if (field.Type().IsPrimitive)
-                                        DrawVariableName(field);
+                                    if (entry.CanEnterValue())
+                                        DrawVariableNameEnterButton(entry);
                                     else
-                                        DrawVariableNameEnterButton(field, value);
+                                        DrawVariableName(entry);
 
                                     if (_fieldCache.Count < 300)
                                     {
@@ -700,8 +701,8 @@ namespace CheatTools
                                             ? GUILayout.Width(_inspectorValueWidth)
                                             : GUILayout.ExpandWidth(true);
 
-                                        if (CanCovert(ExtractText(value), field.Type()) && field.CanSet())
-                                            DrawEditableValue(field, value, widthParam);
+                                        if (entry.CanSetValue() && CanCovert(ExtractText(value), entry.Type()))
+                                            DrawEditableValue(entry, value, widthParam);
                                         else
                                             DrawValue(value, widthParam);
 

@@ -2,45 +2,33 @@
 
 namespace CheatTools
 {
-    class ReadonlyCacheEntry : ICacheEntry
+    class ReadonlyCacheEntry : CacheEntryBase
     {
-        public readonly string EntryName;
         public readonly object Object;
         private readonly Type _type;
         private string _tostringCashe;
 
-        public ReadonlyCacheEntry(string name, object obj)
+        public ReadonlyCacheEntry(string name, object obj) : base(name)
         {
             Object = obj;
-            EntryName = name;
             _type = obj.GetType();
         }
 
-        public object Get()
+        public override object GetValueToCache()
         {
             return Object;
         }
 
-        public string Name()
-        {
-            return EntryName;
-        }
-
-        public string TypeName()
-        {
-            return _type.Name;
-        }
-
-        public void Set(object newValue)
+        public override void SetValue(object newValue)
         {
         }
 
-        public Type Type()
+        public override Type Type()
         {
             return _type;
         }
 
-        public bool CanSet()
+        public override bool CanSetValue()
         {
             return false;
         }

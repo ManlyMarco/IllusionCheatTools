@@ -2,52 +2,41 @@
 
 namespace CheatTools
 {
-    public partial class CheatTools
+    internal class ListCacheEntry : CacheEntryBase
     {
-        class ListCacheEntry : ICacheEntry
+        private readonly object _target;
+        private readonly Type _type;
+
+        public ListCacheEntry(object o, int index) : base("ID: " + index)
         {
-            private object target;
-            Type type;
-
-            public ListCacheEntry(object o, int index)
-            {
-                target = o;
-                type = o.GetType();
-                typeName = type.GetFriendlyName();
-                name = "ID: " + index;
-            }
-
-            string typeName, name;
-
-            public object Get()
-            {
-                return target;
-            }
-
-            public string Name()
-            {
-                return name;
-            }
-
-            public string TypeName()
-            {
-                return typeName;
-            }
-
-            public void Set(object newValue)
-            {
-
-            }
-
-            public Type Type()
-            {
-                return type;
-            }
-
-            public bool CanSet()
-            {
-                return false;
-            }
+            _target = o;
+            _type = o.GetType();
         }
+
+        public override object GetValueToCache()
+        {
+            return null;
+        }
+
+        public override object GetValue()
+        {
+            return _target;
+        }
+        
+        public override void SetValue(object newValue)
+        {
+
+        }
+
+        public override Type Type()
+        {
+            return _type;
+        }
+
+        public override bool CanSetValue()
+        {
+            return false;
+        }
+
     }
 }
