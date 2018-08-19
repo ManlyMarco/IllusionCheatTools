@@ -58,6 +58,7 @@
     <Compile Include="ICacheEntry.cs" />
     <Compile Include="InspectorStackEntry.cs" />
     <Compile Include="ListCacheEntry.cs" />
+    <Compile Include="MethodCacheEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyCacheEntry.cs" />
     <Compile Include="ReadonlyCacheEntry.cs" />

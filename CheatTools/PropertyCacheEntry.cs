@@ -3,83 +3,80 @@ using System.Reflection;
 
 namespace CheatTools
 {
-    public partial class CheatTools
+    class PropertyCacheEntry : ICacheEntry
     {
-        class PropertyCacheEntry : ICacheEntry
+        public PropertyCacheEntry(object ins, PropertyInfo p)
         {
-            public PropertyCacheEntry(object ins, PropertyInfo p)
+            if (p == null)
+                throw new ArgumentNullException(nameof(p));
+
+            instance = ins;
+            prop = p;
+        }
+
+        readonly PropertyInfo prop;
+
+        object instance;
+
+        public object Get()
+        {
+            if (!prop.CanRead)
+                return "WRITE ONLY";
+
+            if (prop.PropertyType.IsArray)
+                return "IS INDEXED";
+
+
+            try { return prop.GetValue(instance, null); }
+            catch (Exception ex)
             {
-                if (p == null)
-                    throw new ArgumentNullException(nameof(p));
-
-                instance = ins;
-                prop = p;
+                return "ERROR: " + ex.Message;
             }
+        }
 
-            readonly PropertyInfo prop;
+        string name;
+        string typeName;
 
-            object instance;
-
-            public object Get()
+        public string Name()
+        {
+            if (name == null)
             {
-                if (!prop.CanRead)
-                    return "WRITE ONLY";
-
-                if (prop.PropertyType.IsArray)
-                    return "IS INDEXED";
-
-
-                try { return prop.GetValue(instance, null); }
-                catch (Exception ex)
-                {
-                    return "ERROR: " + ex.Message;
-                }
+                if (prop != null)
+                    name = prop.Name;
+                else
+                    name = "INVALID";
             }
+            return name;
+        }
 
-            string name;
-            string typeName;
-
-            public string Name()
+        public string TypeName()
+        {
+            if (typeName == null)
             {
-                if (name == null)
-                {
-                    if (prop != null)
-                        name = prop.Name;
-                    else 
-                        name = "INVALID";
-                }
-                return name;
+                if (prop != null)
+                    typeName = prop.PropertyType.GetFriendlyName();
+                else
+                    typeName = "INVALID";
             }
+            return typeName;
+        }
 
-            public string TypeName()
+        public void Set(object newValue)
+        {
+            if (prop.CanWrite)
             {
-                if (typeName == null)
-                {
-                    if (prop != null)
-                        typeName = prop.PropertyType.GetFriendlyName();
-                    else
-                        typeName = "INVALID";
-                }
-                return typeName;
+                prop.SetValue(instance, newValue, null);
             }
+        }
 
-            public void Set(object newValue)
-            {
-                if (prop.CanWrite)
-                {
-                    prop.SetValue(instance, newValue, null);
-                }
-            }
+        public Type Type()
+        {
+            return prop.PropertyType;
+        }
 
-            public Type Type()
-            {
-                return prop.PropertyType;
-            }
-
-            public bool CanSet ()
-            {
-                return prop.CanWrite;
-            }
+        public bool CanSet()
+        {
+            return prop.CanWrite;
         }
     }
 }

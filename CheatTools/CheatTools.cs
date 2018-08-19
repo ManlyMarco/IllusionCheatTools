@@ -94,6 +94,11 @@ namespace CheatTools
                 _fieldCache.Clear();
                 if (o != null)
                 {
+                    /*if (o is Transform t)
+                    {
+                        _fieldCache
+                    }*/
+
                     if (!(o is Transform) && o is IEnumerable enumerable)
                     {
                         _fieldCache.AddRange(enumerable.Cast<object>().Select((x, y) => x is ICacheEntry ? x : new ListCacheEntry(x, y)).Cast<ICacheEntry>());
@@ -103,6 +108,24 @@ namespace CheatTools
                         var type = o.GetType();
                         _fieldCache.AddRange(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Select(f => new FieldCacheEntry(o, f)).Cast<ICacheEntry>());
                         _fieldCache.AddRange(type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Select(p => new PropertyCacheEntry(o, p)).Cast<ICacheEntry>());
+
+                        _fieldCache.AddRange(type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+                            .Where(x => !x.IsConstructor && !x.IsSpecialName && x.ReturnType != typeof(void) && x.GetParameters().Length == 0)
+                            .Where(x=>x.Name != "MemberwiseClone") // Instant game crash
+                            .Select(m =>
+                            {
+                                if (m.ContainsGenericParameters)
+                                    try
+                                    {
+                                        return m.MakeGenericMethod(typeof(UnityEngine.Object));
+                                    }
+                                    catch (Exception)
+                                    {
+                                        return null;
+                                    }
+                                return m;
+                            }).Where(x => x != null)
+                            .Select(m => new MethodCacheEntry(o, m)).Cast<ICacheEntry>());
                     }
                 }
 
@@ -626,7 +649,7 @@ namespace CheatTools
                     }
                     GUILayout.EndHorizontal();
 
-                    _inspectorStackScrollPos = GUILayout.BeginScrollView(_inspectorStackScrollPos, true, false, 
+                    _inspectorStackScrollPos = GUILayout.BeginScrollView(_inspectorStackScrollPos, true, false,
                         GUI.skin.horizontalScrollbar, GUIStyle.none, GUIStyle.none, GUILayout.Height(46));
                     {
                         GUILayout.BeginHorizontal(GUI.skin.box, GUILayout.ExpandWidth(false), GUILayout.ExpandHeight(false));
