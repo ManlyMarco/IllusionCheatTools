@@ -95,7 +95,7 @@ namespace CheatTools
                 {
                     if (!(o is Transform) && o is IEnumerable enumerable)
                     {
-                        _fieldCache.AddRange(enumerable.Cast<object>().Select((x, y) => new ListCacheEntry(x, y)).Cast<ICacheEntry>());
+                        _fieldCache.AddRange(enumerable.Cast<object>().Select((x, y) => x is ICacheEntry ? x : new ListCacheEntry(x, y)).Cast<ICacheEntry>());
                     }
                     else
                     {
@@ -201,9 +201,9 @@ namespace CheatTools
                             new KeyValuePair<object, string>(talkScene, "TalkScene"),
                             new KeyValuePair<object, string>(Studio.Studio.Instance, "Studio.Instance"),
                             new KeyValuePair<object, string>(GetInstanceClassScanner().OrderBy(x=>x.Key), "Look for other Instances"),
-                            new KeyValuePair<object, string>(GetComponentScanner().OrderBy(x=>x.Key), "Look for Components"),
-                            new KeyValuePair<object, string>(GetMonoBehaviourScanner().OrderBy(x=>x.Key), "Look for MonoBehaviours"),
-                            new KeyValuePair<object, string>(GetTransformScanner().OrderBy(x=>x.Key), "Look for Transforms"),
+                            new KeyValuePair<object, string>(GetComponentScanner().OrderBy(x=>x.EntryName), "Look for Components"),
+                            new KeyValuePair<object, string>(GetMonoBehaviourScanner().OrderBy(x=>x.EntryName), "Look for MonoBehaviours"),
+                            new KeyValuePair<object, string>(GetTransformScanner().OrderBy(x=>x.EntryName), "Look for Transforms"),
                         })
                         {
                             if (obj.Key == null) continue;
@@ -230,7 +230,7 @@ namespace CheatTools
             GUI.DragWindow();
         }
 
-        private static IEnumerable<KeyValuePair<string, object>> GetTransformScanner()
+        private static IEnumerable<ReadonlyCacheEntry> GetTransformScanner()
         {
             Logger.Log(LogLevel.Debug, "CheatTools: Looking for Transforms...");
 
@@ -241,7 +241,7 @@ namespace CheatTools
                 yield return component;
         }
 
-        private static IEnumerable<KeyValuePair<string, object>> GetMonoBehaviourScanner()
+        private static IEnumerable<ReadonlyCacheEntry> GetMonoBehaviourScanner()
         {
             Logger.Log(LogLevel.Debug, "CheatTools: Looking for MonoBehaviours...");
 
@@ -252,7 +252,7 @@ namespace CheatTools
                 yield return component;
         }
 
-        private static IEnumerable<KeyValuePair<string, object>> GetComponentScanner()
+        private static IEnumerable<ReadonlyCacheEntry> GetComponentScanner()
         {
             Logger.Log(LogLevel.Debug, "CheatTools: Looking for Components...");
 
@@ -265,7 +265,7 @@ namespace CheatTools
                 yield return component;
         }
 
-        private static IEnumerable<KeyValuePair<string, object>> ScanComponentTypes(IEnumerable<Type> types, bool noTransfroms)
+        private static IEnumerable<ReadonlyCacheEntry> ScanComponentTypes(IEnumerable<Type> types, bool noTransfroms)
         {
             var allObjects = from type in types
                              let components = FindObjectsOfType(type).OfType<Component>()
@@ -273,9 +273,17 @@ namespace CheatTools
                              where !(noTransfroms && component is Transform)
                              select component;
 
+            string GetTransformPath(Transform tr)
+            {
+                if (tr.parent != null)
+                    return GetTransformPath(tr.parent) + "/" + tr.name;
+                return tr.name;
+            }
+
             foreach (var obj in allObjects.Distinct())
-                yield return new KeyValuePair<string, object>($"<b>{obj.name}</b> \\ <b>{obj.GetType().Name}</b>", obj);
+                yield return new ReadonlyCacheEntry(GetTransformPath(obj.transform), obj);
         }
+
 
         private static IEnumerable<Type> GetAllComponentTypes()
         {
@@ -657,10 +665,13 @@ namespace CheatTools
                                     else
                                         DrawVariableNameEnterButton(field, value);
 
-                                    if (CanCovert(ExtractText(value), field.Type()) && field.CanSet())
-                                        DrawEditableValue(field, value);
-                                    else
-                                        DrawValue(value);
+                                    if(_fieldCache.Count < 200)
+                                    {
+                                        if (CanCovert(ExtractText(value), field.Type()) && field.CanSet())
+                                            DrawEditableValue(field, value);
+                                        else
+                                            DrawValue(value);
+                                    }
                                 }
                                 GUILayout.EndHorizontal();
                             }

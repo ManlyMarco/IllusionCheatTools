@@ -60,6 +60,7 @@
     <Compile Include="ListCacheEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyCacheEntry.cs" />
+    <Compile Include="ReadonlyCacheEntry.cs" />
     <Compile Include="TypeNameExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
