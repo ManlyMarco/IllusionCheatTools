@@ -100,8 +100,8 @@ namespace CheatTools
                     else
                     {
                         var type = o.GetType();
-                        _fieldCache.AddRange(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Select(f => new FieldCacheEntry(o, f)).Cast<ICacheEntry>());
-                        _fieldCache.AddRange(type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Select(p => new PropertyCacheEntry(o, p)).Cast<ICacheEntry>());
+                        _fieldCache.AddRange(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Select(f => new FieldCacheEntry(o, f)).Cast<ICacheEntry>());
+                        _fieldCache.AddRange(type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Select(p => new PropertyCacheEntry(o, p)).Cast<ICacheEntry>());
                     }
                 }
 
@@ -256,7 +256,7 @@ namespace CheatTools
             return from type in types
                    let components = FindObjectsOfType(type).OfType<Component>()
                    from component in components
-                   select new KeyValuePair<string, object>($"{component.name} \\ {type.Name}", component);
+                   select new KeyValuePair<string, object>($"<b>{component.name}</b> \\ <b>{type.Name}</b>", component);
         }
 
         private static IEnumerable<Type> GetAllComponentTypes()
