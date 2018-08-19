@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using BepInEx.Logging;
 using UnityEngine;
 using Logger = BepInEx.Logger;
@@ -106,11 +107,15 @@ namespace CheatTools
                     else
                     {
                         var type = o.GetType();
-                        if(type == typeof(string))
+                        if (type == typeof(string))
                             _fieldCache.Add(new ReadonlyCacheEntry("this", o));
 
-                        _fieldCache.AddRange(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Select(f => new FieldCacheEntry(o, f)).Cast<ICacheEntry>());
-                        _fieldCache.AddRange(type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Select(p => new PropertyCacheEntry(o, p)).Cast<ICacheEntry>());
+                        _fieldCache.AddRange(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+                            .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                            .Select(f => new FieldCacheEntry(o, f)).Cast<ICacheEntry>());
+                        _fieldCache.AddRange(type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+                            .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                            .Select(p => new PropertyCacheEntry(o, p)).Cast<ICacheEntry>());
 
                         _fieldCache.AddRange(CacheMethods(o, type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy)));
                         _fieldCache.AddRange(CacheMethods(null, type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy)));
