@@ -200,7 +200,7 @@ namespace CheatTools
                             new KeyValuePair<object, string>(hFlag, "HFlag"),
                             new KeyValuePair<object, string>(talkScene, "TalkScene"),
                             new KeyValuePair<object, string>(Studio.Studio.Instance, "Studio.Instance"),
-                            new KeyValuePair<object, string>(GetInstanceClassScanner().OrderBy(x=>x.Key), "Look for other Instances"),
+                            new KeyValuePair<object, string>(GetInstanceClassScanner().OrderBy(x=>x.EntryName), "Look for other Instances"),
                             new KeyValuePair<object, string>(GetComponentScanner().OrderBy(x=>x.EntryName), "Look for Components"),
                             new KeyValuePair<object, string>(GetMonoBehaviourScanner().OrderBy(x=>x.EntryName), "Look for MonoBehaviours"),
                             new KeyValuePair<object, string>(GetTransformScanner().OrderBy(x=>x.EntryName), "Look for Transforms"),
@@ -304,7 +304,7 @@ namespace CheatTools
                 .Where(compType.IsAssignableFrom);
         }
 
-        private static IEnumerable<KeyValuePair<string, object>> GetInstanceClassScanner()
+        private static IEnumerable<ReadonlyCacheEntry> GetInstanceClassScanner()
         {
             Logger.Log(LogLevel.Debug, "CheatTools: Looking for class instances...");
 
@@ -336,7 +336,7 @@ namespace CheatTools
                     Logger.Log(LogLevel.Debug, ex.ToString());
                 }
                 if (obj != null)
-                    yield return new KeyValuePair<string, object>(type.Name + ".Instance", obj);
+                    yield return new ReadonlyCacheEntry(type.Name + ".Instance", obj);
             }
         }
 
