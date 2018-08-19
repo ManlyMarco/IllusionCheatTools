@@ -444,11 +444,11 @@ namespace CheatTools
                 girl.massageExps[i] = amount;
         }
 
-        private void DrawEditableValue(ICacheEntry field, object value)
+        private void DrawEditableValue(ICacheEntry field, object value, params GUILayoutOption[] layoutParams)
         {
             var isBeingEdited = _currentlyEditingTag == field;
             var text = isBeingEdited ? _currentlyEditingText : ExtractText(value);
-            var result = GUILayout.TextField(text, GUILayout.Width(_inspectorValueWidth));
+            var result = GUILayout.TextField(text, layoutParams);
 
             if (!Equals(text, result) || isBeingEdited)
             {
@@ -545,9 +545,9 @@ namespace CheatTools
             GUILayout.EndVertical();
         }
 
-        private void DrawValue(object value)
+        private void DrawValue(object value, params GUILayoutOption[] layoutParams)
         {
-            GUILayout.TextArea(ExtractText(value), GUI.skin.label, GUILayout.Width(_inspectorValueWidth));
+            GUILayout.TextArea(ExtractText(value), GUI.skin.label, layoutParams);
         }
 
         private void DrawVariableName(ICacheEntry field)
@@ -668,10 +668,14 @@ namespace CheatTools
 
                                     if (_fieldCache.Count < 300)
                                     {
+                                        var widthParam = widthCalculated
+                                            ? GUILayout.Width(_inspectorValueWidth)
+                                            : GUILayout.ExpandWidth(true);
+
                                         if (CanCovert(ExtractText(value), field.Type()) && field.CanSet())
-                                            DrawEditableValue(field, value);
+                                            DrawEditableValue(field, value, widthParam);
                                         else
-                                            DrawValue(value);
+                                            DrawValue(value, widthParam);
 
                                         // Calculate width only once
                                         if (!widthCalculated && Event.current.type == EventType.Repaint)
