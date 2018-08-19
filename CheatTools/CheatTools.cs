@@ -117,6 +117,13 @@ namespace CheatTools
                             .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
                             .Select(p => new PropertyCacheEntry(o, p)).Cast<ICacheEntry>());
 
+                        _fieldCache.AddRange(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                            .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                            .Select(f => new FieldCacheEntry(null, f)).Cast<ICacheEntry>());
+                        _fieldCache.AddRange(type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+                            .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                            .Select(p => new PropertyCacheEntry(null, p)).Cast<ICacheEntry>());
+
                         _fieldCache.AddRange(CacheMethods(o, type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy)));
                         _fieldCache.AddRange(CacheMethods(null, type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy)));
                     }
