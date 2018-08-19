@@ -253,16 +253,19 @@ namespace CheatTools
 
         private static IEnumerable<KeyValuePair<string, object>> ScanComponentTypes(IEnumerable<Type> types)
         {
-            return from type in types
-                   let components = FindObjectsOfType(type).OfType<Component>()
-                   from component in components
-                   select new KeyValuePair<string, object>($"<b>{component.name}</b> \\ <b>{type.Name}</b>", component);
+            var allObjects = from type in types
+                             let components = FindObjectsOfType(type).OfType<Component>()
+                             from component in components
+                             select component;
+
+            foreach (var obj in allObjects.Distinct())
+                yield return new KeyValuePair<string, object>($"<b>{obj.name}</b> \\ <b>{obj.GetType().Name}</b>", obj);
         }
 
         private static IEnumerable<Type> GetAllComponentTypes()
         {
             var compType = typeof(Component);
-            var query = AppDomain.CurrentDomain.GetAssemblies()
+            return AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(x =>
                 {
                     try
@@ -276,7 +279,6 @@ namespace CheatTools
                 })
                 .Where(t => t.IsClass && !t.IsAbstract && !t.ContainsGenericParameters)
                 .Where(compType.IsAssignableFrom);
-            return query;
         }
 
         private static IEnumerable<KeyValuePair<string, object>> GetInstanceClassScanner()
