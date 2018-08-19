@@ -93,7 +93,7 @@ namespace CheatTools
                 _fieldCache.Clear();
                 if (o != null)
                 {
-                    if (o is IEnumerable enumerable)
+                    if (!(o is Transform) && o is IEnumerable enumerable)
                     {
                         _fieldCache.AddRange(enumerable.Cast<object>().Select((x, y) => new ListCacheEntry(x, y)).Cast<ICacheEntry>());
                     }
