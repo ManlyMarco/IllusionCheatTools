@@ -193,7 +193,7 @@ namespace CheatTools
                         GUILayout.Label("Open in inspector");
                         foreach (var obj in new[]
                         {
-                            new KeyValuePair<object, string>(_gameMgr?.HeroineList, "Heroine list"),
+                            new KeyValuePair<object, string>(_gameMgr?.HeroineList.Select(x=>new ReadonlyCacheEntry(x.ChaName, x)), "Heroine list"),
                             new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
                             new KeyValuePair<object, string>(Manager.Scene.Instance, "Manager.Scene.Instance"),
                             new KeyValuePair<object, string>(Manager.Communication.Instance, "Manager.Communication.Instance"),
@@ -225,7 +225,7 @@ namespace CheatTools
             }
             catch (Exception ex)
             {
-                Logger.Log(LogLevel.Error, "CheatWindow crash: " + ex.Message);
+                Logger.Log(LogLevel.Error, "[CheatTools] CheatWindow crash: " + ex.Message);
             }
 
             GUI.DragWindow();
@@ -233,7 +233,7 @@ namespace CheatTools
 
         private static IEnumerable<ReadonlyCacheEntry> GetTransformScanner()
         {
-            Logger.Log(LogLevel.Debug, "CheatTools: Looking for Transforms...");
+            Logger.Log(LogLevel.Debug, "[CheatTools] Looking for Transforms...");
 
             var trt = typeof(Transform);
             var types = GetAllComponentTypes().Where(x => trt.IsAssignableFrom(x));
@@ -244,7 +244,7 @@ namespace CheatTools
 
         private static IEnumerable<ReadonlyCacheEntry> GetMonoBehaviourScanner()
         {
-            Logger.Log(LogLevel.Debug, "CheatTools: Looking for MonoBehaviours...");
+            Logger.Log(LogLevel.Debug, "[CheatTools] Looking for MonoBehaviours...");
 
             var mbt = typeof(MonoBehaviour);
             var types = GetAllComponentTypes().Where(x => mbt.IsAssignableFrom(x));
@@ -255,7 +255,7 @@ namespace CheatTools
 
         private static IEnumerable<ReadonlyCacheEntry> GetComponentScanner()
         {
-            Logger.Log(LogLevel.Debug, "CheatTools: Looking for Components...");
+            Logger.Log(LogLevel.Debug, "[CheatTools] Looking for Components...");
 
             var mbt = typeof(MonoBehaviour);
             var trt = typeof(Transform);
@@ -282,7 +282,7 @@ namespace CheatTools
             }
 
             foreach (var obj in allObjects.Distinct())
-                yield return new ReadonlyCacheEntry(GetTransformPath(obj.transform), obj);
+                yield return new ReadonlyCacheEntry($"{GetTransformPath(obj.transform)} ({obj.GetType().Name})", obj);
         }
 
 
@@ -307,7 +307,7 @@ namespace CheatTools
 
         private static IEnumerable<ReadonlyCacheEntry> GetInstanceClassScanner()
         {
-            Logger.Log(LogLevel.Debug, "CheatTools: Looking for class instances...");
+            Logger.Log(LogLevel.Debug, "[CheatTools] Looking for class instances...");
 
             var query = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(x =>
@@ -693,7 +693,7 @@ namespace CheatTools
             }
             catch (Exception ex)
             {
-                Logger.Log(LogLevel.Error, "Inspector crash: " + ex);
+                Logger.Log(LogLevel.Error, "[CheatTools] Inspector crash: " + ex);
                 InspectorClear();
             }
 
