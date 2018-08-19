@@ -11,13 +11,13 @@ using Logger = BepInEx.Logger;
 
 namespace CheatTools
 {
-    [BepInPlugin("CheatTools", "Cheat Tools", "1.4")]
+    [BepInPlugin("CheatTools", "Cheat Tools", "1.6")]
     public partial class CheatTools : BaseUnityPlugin
     {
         private const int InspectorTypeWidth = 170, InspectorNameWidth = 240;
         private int _inspectorValueWidth;
         private const int ScreenOffset = 20;
-        private readonly string[] _hExpNames = { "First time", "Inexperienced", "Used to", "Perverted" };
+        private readonly string[] _hExpNames = { "First time", "Inexperienced", "Experienced", "Perverted" };
 
         private Rect _screenRect;
         private bool _showGui;
