@@ -22,7 +22,7 @@ namespace CheatTools
         private bool _showGui;
         private bool _userHasHitReturn;
         private Rect _windowRect, _windowRect2;
-        private Vector2 _inspectorScrollPos, _cheatsScrollPos;
+        private Vector2 _inspectorScrollPos, _cheatsScrollPos, _inspectorStackScrollPos;
         private string _mainWindowTitle;
 
         private readonly Dictionary<Type, bool> _canCovertCache = new Dictionary<Type, bool>();
@@ -626,18 +626,23 @@ namespace CheatTools
                     }
                     GUILayout.EndHorizontal();
 
-                    GUILayout.BeginHorizontal(GUI.skin.box);
-                    foreach (var item in _inspectorStack.Reverse().ToArray())
+                    _inspectorStackScrollPos = GUILayout.BeginScrollView(_inspectorStackScrollPos, true, false, 
+                        GUI.skin.horizontalScrollbar, GUIStyle.none, GUIStyle.none, GUILayout.Height(46));
                     {
-                        if (GUILayout.Button(item.Name, GUILayout.ExpandWidth(false)))
+                        GUILayout.BeginHorizontal(GUI.skin.box, GUILayout.ExpandWidth(false), GUILayout.ExpandHeight(false));
+                        foreach (var item in _inspectorStack.Reverse().ToArray())
                         {
-                            while (_inspectorStack.Peek() != item)
-                                InspectorPop();
+                            if (GUILayout.Button(item.Name, GUILayout.ExpandWidth(false)))
+                            {
+                                while (_inspectorStack.Peek() != item)
+                                    InspectorPop();
 
-                            return;
+                                return;
+                            }
                         }
+                        GUILayout.EndHorizontal();
                     }
-                    GUILayout.EndHorizontal();
+                    GUILayout.EndScrollView();
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
