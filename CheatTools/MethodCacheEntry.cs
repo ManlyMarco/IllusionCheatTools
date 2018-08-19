@@ -37,15 +37,33 @@ namespace CheatTools
         private readonly MethodInfo _methodInfo;
 
         private readonly object _instance;
+        private object _valueCache;
 
         public override object GetValueToCache()
         {
             return (_instance == null ? "Static " : "") + "Method call - enter to evaluate";
         }
 
+        public override object GetValue()
+        {
+            return _valueCache ?? base.GetValue();
+        }
+
         public override object EnterValue()
         {
-            try { return _methodInfo.Invoke(_instance, null); }
+            try
+            {
+                var result = _methodInfo.Invoke(_instance, null);
+
+                // If this is the first user clicked, eval the method and display the result. second time enter as normal
+                if (_valueCache == null)
+                {
+                    _valueCache = result;
+                    return null;
+                }
+
+                return result;
+            }
             catch (Exception ex)
             {
                 Logger.Log(LogLevel.Warning, $"[CheatTools] Failed to evaluate the method {Name()} - {ex.Message}");
@@ -69,7 +87,7 @@ namespace CheatTools
 
         public override bool CanEnterValue()
         {
-            return true;
+            return _valueCache == null || base.CanEnterValue();
         }
     }
 }
