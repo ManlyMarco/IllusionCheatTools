@@ -99,13 +99,16 @@ namespace CheatTools
                         _fieldCache
                     }*/
 
-                    if (!(o is Transform) && o is IEnumerable enumerable)
+                    if (!(o is Transform) && !(o is string) && o is IEnumerable enumerable)
                     {
                         _fieldCache.AddRange(enumerable.Cast<object>().Select((x, y) => x is ICacheEntry ? x : new ListCacheEntry(x, y)).Cast<ICacheEntry>());
                     }
                     else
                     {
                         var type = o.GetType();
+                        if(type == typeof(string))
+                            _fieldCache.Add(new ReadonlyCacheEntry("this", o));
+
                         _fieldCache.AddRange(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Select(f => new FieldCacheEntry(o, f)).Cast<ICacheEntry>());
                         _fieldCache.AddRange(type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Select(p => new PropertyCacheEntry(o, p)).Cast<ICacheEntry>());
 
