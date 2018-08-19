@@ -13,7 +13,8 @@ namespace CheatTools
     [BepInPlugin("CheatTools", "Cheat Tools", "1.4")]
     public partial class CheatTools : BaseUnityPlugin
     {
-        private const int InspectorTypeWidth = 170, InspectorNameWidth = 200;
+        private const int InspectorTypeWidth = 170, InspectorNameWidth = 240;
+        private int _inspectorValueWidth;
         private const int ScreenOffset = 20;
         private readonly string[] _hExpNames = { "First time", "Inexperienced", "Used to", "Perverted" };
 
@@ -447,7 +448,7 @@ namespace CheatTools
         {
             var isBeingEdited = _currentlyEditingTag == field;
             var text = isBeingEdited ? _currentlyEditingText : ExtractText(value);
-            var result = GUILayout.TextField(text, GUILayout.ExpandWidth(true));
+            var result = GUILayout.TextField(text, GUILayout.Width(_inspectorValueWidth));
 
             if (!Equals(text, result) || isBeingEdited)
             {
@@ -546,7 +547,7 @@ namespace CheatTools
 
         private void DrawValue(object value)
         {
-            GUILayout.TextArea(ExtractText(value), GUI.skin.label, GUILayout.ExpandWidth(true));
+            GUILayout.TextArea(ExtractText(value), GUI.skin.label, GUILayout.Width(_inspectorValueWidth));
         }
 
         private void DrawVariableName(ICacheEntry field)
@@ -556,7 +557,7 @@ namespace CheatTools
 
         private void DrawVariableNameEnterButton(ICacheEntry field, object value)
         {
-            if (GUILayout.Button(field.Name(), GUILayout.Width(InspectorNameWidth), GUILayout.MaxWidth(InspectorNameWidth)))
+            if (GUILayout.Button(field.Name(), _alignedButtonStyle, GUILayout.Width(InspectorNameWidth), GUILayout.MaxWidth(InspectorNameWidth)))
             {
                 if (value != null)
                 {
@@ -651,7 +652,7 @@ namespace CheatTools
                         _inspectorScrollPos = GUILayout.BeginScrollView(_inspectorScrollPos);
                         {
                             GUILayout.BeginVertical();
-
+                            bool widthCalculated = false;
                             foreach (var field in _fieldCache)
                             {
                                 GUILayout.BeginHorizontal();
@@ -665,12 +666,19 @@ namespace CheatTools
                                     else
                                         DrawVariableNameEnterButton(field, value);
 
-                                    if(_fieldCache.Count < 200)
+                                    if (_fieldCache.Count < 300)
                                     {
                                         if (CanCovert(ExtractText(value), field.Type()) && field.CanSet())
                                             DrawEditableValue(field, value);
                                         else
                                             DrawValue(value);
+
+                                        // Calculate width only once
+                                        if (!widthCalculated && Event.current.type == EventType.Repaint)
+                                        {
+                                            _inspectorValueWidth = (int)GUILayoutUtility.GetLastRect().width;
+                                            widthCalculated = true;
+                                        }
                                     }
                                 }
                                 GUILayout.EndHorizontal();
@@ -695,6 +703,13 @@ namespace CheatTools
         protected void OnGUI()
         {
             if (!_showGui) return;
+
+            if (_alignedButtonStyle == null)
+                _alignedButtonStyle = new GUIStyle(GUI.skin.button)
+                {
+                    alignment = TextAnchor.MiddleLeft,
+                    wordWrap = true
+                };
 
             var e = Event.current;
             if (e.keyCode == KeyCode.Return) _userHasHitReturn = true;
@@ -727,6 +742,8 @@ namespace CheatTools
 
             _mainWindowTitle = "Cheat Tools" + Assembly.GetExecutingAssembly().GetName().Version;
         }
+
+        private GUIStyle _alignedButtonStyle;
 
         protected void Update()
         {
