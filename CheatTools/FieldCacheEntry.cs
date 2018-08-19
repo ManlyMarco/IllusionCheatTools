@@ -5,13 +5,19 @@ namespace CheatTools
 {
     internal class FieldCacheEntry : CacheEntryBase
     {
-        public FieldCacheEntry(object ins, FieldInfo f) : base(f?.Name)
+        public FieldCacheEntry(object ins, FieldInfo f) : base(GetMemberName(ins, f))
         {
             if (f == null)
                 throw new ArgumentNullException(nameof(f));
 
             _instance = ins;
             _field = f;
+        }
+
+        internal static string GetMemberName(object ins, MemberInfo f)
+        {
+            if (ins != null) return f?.Name;
+            return "S/" + f?.Name;
         }
 
         private readonly FieldInfo _field;

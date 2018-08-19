@@ -5,7 +5,7 @@ namespace CheatTools
 {
     internal class PropertyCacheEntry : CacheEntryBase
     {
-        public PropertyCacheEntry(object ins, PropertyInfo p) : base(p?.Name)
+        public PropertyCacheEntry(object ins, PropertyInfo p) : base(FieldCacheEntry.GetMemberName(ins, p))
         {
             if (p == null)
                 throw new ArgumentNullException(nameof(p));

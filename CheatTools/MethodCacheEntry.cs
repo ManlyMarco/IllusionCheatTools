@@ -8,7 +8,7 @@ namespace CheatTools
 {
     internal class MethodCacheEntry : CacheEntryBase
     {
-        public MethodCacheEntry(object ins, MethodInfo m) : base(GetMethodName(m))
+        public MethodCacheEntry(object ins, MethodInfo m) : base(GetMethodName(ins, m))
         {
             if (m == null)
                 throw new ArgumentNullException(nameof(m));
@@ -17,11 +17,11 @@ namespace CheatTools
             _methodInfo = m;
         }
 
-        private static string GetMethodName(MethodBase methodInfo)
+        private static string GetMethodName(object ins, MethodBase methodInfo)
         {
             if (methodInfo != null)
             {
-                var name = methodInfo.Name;
+                var name = FieldCacheEntry.GetMemberName(ins, methodInfo);
 
                 var genericArguments = methodInfo.GetGenericArguments();
                 if (genericArguments.Any())
