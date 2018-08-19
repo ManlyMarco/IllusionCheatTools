@@ -109,23 +109,8 @@ namespace CheatTools
                         _fieldCache.AddRange(type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Select(f => new FieldCacheEntry(o, f)).Cast<ICacheEntry>());
                         _fieldCache.AddRange(type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy).Select(p => new PropertyCacheEntry(o, p)).Cast<ICacheEntry>());
 
-                        _fieldCache.AddRange(type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
-                            .Where(x => !x.IsConstructor && !x.IsSpecialName && x.ReturnType != typeof(void) && x.GetParameters().Length == 0)
-                            .Where(x=>x.Name != "MemberwiseClone") // Instant game crash
-                            .Select(m =>
-                            {
-                                if (m.ContainsGenericParameters)
-                                    try
-                                    {
-                                        return m.MakeGenericMethod(typeof(UnityEngine.Object));
-                                    }
-                                    catch (Exception)
-                                    {
-                                        return null;
-                                    }
-                                return m;
-                            }).Where(x => x != null)
-                            .Select(m => new MethodCacheEntry(o, m)).Cast<ICacheEntry>());
+                        _fieldCache.AddRange(CacheMethods(o, type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.FlattenHierarchy)));
+                        _fieldCache.AddRange(CacheMethods(null, type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.FlattenHierarchy)));
                     }
                 }
 
@@ -135,6 +120,28 @@ namespace CheatTools
             {
                 Logger.Log(LogLevel.Warning, "Inspector CacheFields crash: " + ex);
             }
+        }
+
+        private static IEnumerable<ICacheEntry> CacheMethods(object o, MethodInfo[] typesToCheck)
+        {
+            var cacheItems = typesToCheck
+                .Where(x => !x.IsConstructor && !x.IsSpecialName && x.ReturnType != typeof(void) && x.GetParameters().Length == 0)
+                .Where(x => x.Name != "MemberwiseClone" && x.Name != "obj_address") // Instant game crash
+                .Select(m =>
+                {
+                    if (m.ContainsGenericParameters)
+                        try
+                        {
+                            return m.MakeGenericMethod(typeof(UnityEngine.Object));
+                        }
+                        catch (Exception)
+                        {
+                            return null;
+                        }
+                    return m;
+                }).Where(x => x != null)
+                .Select(m => new MethodCacheEntry(o, m)).Cast<ICacheEntry>();
+            return cacheItems;
         }
 
         private Boolean CanCovert(string value, Type type)
@@ -695,7 +702,7 @@ namespace CheatTools
                                     else
                                         DrawVariableName(entry);
 
-                                    if (_fieldCache.Count < 300)
+                                    if (_fieldCache.Count < 200)
                                     {
                                         var widthParam = widthCalculated
                                             ? GUILayout.Width(_inspectorValueWidth)

@@ -40,7 +40,7 @@ namespace CheatTools
 
         public override object GetValueToCache()
         {
-            return "Method call - enter to evaluate";
+            return (_instance == null ? "Static " : "") + "Method call - enter to evaluate";
         }
 
         public override object EnterValue()
