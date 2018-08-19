@@ -195,9 +195,7 @@ namespace CheatTools
                     {
                         GUILayout.Label("Start the game to see player cheats");
                     }
-
-                    DrawSeparator();
-
+                    
                     if (hFlag != null)
                     {
                         DrawHSceneCheats(hFlag);
@@ -212,9 +210,7 @@ namespace CheatTools
                             hSprite.btnEnd.onClick.Invoke();
                         }
                     }
-
-                    DrawSeparator();
-
+                    
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
                         GUILayout.Label("Current girl stats");
@@ -232,8 +228,16 @@ namespace CheatTools
                     }
                     GUILayout.EndVertical();
 
-                    DrawSeparator();
-
+                    GUILayout.BeginHorizontal(GUI.skin.box);
+                    {
+                        GUILayout.Label("Speed", GUILayout.ExpandWidth(false));
+                        GUILayout.Label((int)Math.Round(Time.timeScale * 100) + "%", GUILayout.Width(35));
+                        Time.timeScale = GUILayout.HorizontalSlider(Time.timeScale, 0, 5, GUILayout.ExpandWidth(true));
+                        if (GUILayout.Button("Reset", GUILayout.ExpandWidth(false)))
+                            Time.timeScale = 1;
+                    }
+                    GUILayout.EndHorizontal();
+                    
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
                         GUILayout.Label("Open in inspector");
