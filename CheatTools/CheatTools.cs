@@ -203,6 +203,7 @@ namespace CheatTools
                             new KeyValuePair<object, string>(GetInstanceClassScanner().OrderBy(x=>x.Key), "Look for other Instances"),
                             new KeyValuePair<object, string>(GetComponentScanner().OrderBy(x=>x.Key), "Look for Components"),
                             new KeyValuePair<object, string>(GetMonoBehaviourScanner().OrderBy(x=>x.Key), "Look for MonoBehaviours"),
+                            new KeyValuePair<object, string>(GetTransformScanner().OrderBy(x=>x.Key), "Look for Transforms"),
                         })
                         {
                             if (obj.Key == null) continue;
@@ -229,6 +230,17 @@ namespace CheatTools
             GUI.DragWindow();
         }
 
+        private static IEnumerable<KeyValuePair<string, object>> GetTransformScanner()
+        {
+            Logger.Log(LogLevel.Debug, "CheatTools: Looking for Transforms...");
+
+            var trt = typeof(Transform);
+            var types = GetAllComponentTypes().Where(x => trt.IsAssignableFrom(x));
+
+            foreach (var component in ScanComponentTypes(types, false))
+                yield return component;
+        }
+
         private static IEnumerable<KeyValuePair<string, object>> GetMonoBehaviourScanner()
         {
             Logger.Log(LogLevel.Debug, "CheatTools: Looking for MonoBehaviours...");
@@ -236,7 +248,7 @@ namespace CheatTools
             var mbt = typeof(MonoBehaviour);
             var types = GetAllComponentTypes().Where(x => mbt.IsAssignableFrom(x));
 
-            foreach (var component in ScanComponentTypes(types))
+            foreach (var component in ScanComponentTypes(types, true))
                 yield return component;
         }
 
@@ -245,17 +257,20 @@ namespace CheatTools
             Logger.Log(LogLevel.Debug, "CheatTools: Looking for Components...");
 
             var mbt = typeof(MonoBehaviour);
-            var types = GetAllComponentTypes().Where(x => !mbt.IsAssignableFrom(x));
+            var trt = typeof(Transform);
+            var allComps = GetAllComponentTypes().ToList();
+            var types = allComps.Where(x => !mbt.IsAssignableFrom(x) && !trt.IsAssignableFrom(x));
 
-            foreach (var component in ScanComponentTypes(types))
+            foreach (var component in ScanComponentTypes(types, true))
                 yield return component;
         }
 
-        private static IEnumerable<KeyValuePair<string, object>> ScanComponentTypes(IEnumerable<Type> types)
+        private static IEnumerable<KeyValuePair<string, object>> ScanComponentTypes(IEnumerable<Type> types, bool noTransfroms)
         {
             var allObjects = from type in types
                              let components = FindObjectsOfType(type).OfType<Component>()
                              from component in components
+                             where !(noTransfroms && component is Transform)
                              select component;
 
             foreach (var obj in allObjects.Distinct())
