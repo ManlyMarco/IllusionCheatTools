@@ -251,7 +251,7 @@ namespace CheatTools
                             new KeyValuePair<object, string>(hFlag, "HFlag"),
                             new KeyValuePair<object, string>(talkScene, "TalkScene"),
                             new KeyValuePair<object, string>(Studio.Studio.Instance, "Studio.Instance"),
-                            new KeyValuePair<object, string>(_gameMgr.transform.root.GetComponents<object>(), "Game Root"),
+                            new KeyValuePair<object, string>(GetRootGOScanner(), "Root Objects"),
                         })
                         {
                             if (obj.Key == null) continue;
@@ -287,6 +287,14 @@ namespace CheatTools
 
             foreach (var component in ScanComponentTypes(types, false))
                 yield return component;
+        }
+
+        private static IEnumerable<ReadonlyCacheEntry> GetRootGOScanner()
+        {
+            Logger.Log(LogLevel.Debug, "[CheatTools] Looking for Root Game Objects...");
+
+            foreach (GameObject go in Resources.FindObjectsOfTypeAll<GameObject>().Where(x => x.transform == x.transform.root))
+                yield return new ReadonlyCacheEntry($"GameObject({go.name})", go);
         }
 
         private static IEnumerable<ReadonlyCacheEntry> GetMonoBehaviourScanner()
