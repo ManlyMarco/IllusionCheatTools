@@ -251,10 +251,7 @@ namespace CheatTools
                             new KeyValuePair<object, string>(hFlag, "HFlag"),
                             new KeyValuePair<object, string>(talkScene, "TalkScene"),
                             new KeyValuePair<object, string>(Studio.Studio.Instance, "Studio.Instance"),
-                            new KeyValuePair<object, string>(GetInstanceClassScanner().OrderBy(x=>x.Name()), "Look for other Instances"),
-                            new KeyValuePair<object, string>(GetComponentScanner().OrderBy(x=>x.Name()), "Look for Components"),
-                            new KeyValuePair<object, string>(GetMonoBehaviourScanner().OrderBy(x=>x.Name()), "Look for MonoBehaviours"),
-                            new KeyValuePair<object, string>(GetTransformScanner().OrderBy(x=>x.Name()), "Look for Transforms"),
+                            new KeyValuePair<object, string>(GetRootGOScanner(), "Root Objects"),
                         })
                         {
                             if (obj.Key == null) continue;
@@ -290,6 +287,14 @@ namespace CheatTools
 
             foreach (var component in ScanComponentTypes(types, false))
                 yield return component;
+        }
+
+        private static IEnumerable<ReadonlyCacheEntry> GetRootGOScanner()
+        {
+            Logger.Log(LogLevel.Debug, "[CheatTools] Looking for Root Game Objects...");
+
+            foreach (GameObject go in Resources.FindObjectsOfTypeAll<GameObject>().Where(x => x.transform == x.transform.root))
+                yield return new ReadonlyCacheEntry($"GameObject({go.name})", go);
         }
 
         private static IEnumerable<ReadonlyCacheEntry> GetMonoBehaviourScanner()
@@ -470,11 +475,11 @@ namespace CheatTools
                 //currentAdvGirl.isFirstGirlfriend = GUILayout.Toggle(currentAdvGirl.isFirstGirlfriend, "isFirstGirlfriend");
                 currentAdvGirl.isGirlfriend = GUILayout.Toggle(currentAdvGirl.isGirlfriend, "isGirlfriend");
 
-                currentAdvGirl.denial.kiss = GUILayout.Toggle(currentAdvGirl.denial.kiss, "Denies kiss");
-                currentAdvGirl.denial.massage = GUILayout.Toggle(currentAdvGirl.denial.massage, "Denies strong massage");
-                currentAdvGirl.denial.anal = GUILayout.Toggle(currentAdvGirl.denial.anal, "Denies anal");
-                currentAdvGirl.denial.aibu = GUILayout.Toggle(currentAdvGirl.denial.aibu, "Denies vibrator");
-                currentAdvGirl.denial.notCondom = GUILayout.Toggle(currentAdvGirl.denial.notCondom, "Denies no condom");
+                currentAdvGirl.denial.kiss = GUILayout.Toggle(currentAdvGirl.denial.kiss, "Won't refuse kiss");
+                currentAdvGirl.denial.massage = GUILayout.Toggle(currentAdvGirl.denial.massage, "Won't refuse strong massage");
+                currentAdvGirl.denial.anal = GUILayout.Toggle(currentAdvGirl.denial.anal, "Won't refuse anal");
+                currentAdvGirl.denial.aibu = GUILayout.Toggle(currentAdvGirl.denial.aibu, "Won't refuse vibrator");
+                currentAdvGirl.denial.notCondom = GUILayout.Toggle(currentAdvGirl.denial.notCondom, "Insert w/o condom OK");
 
                 if (GUILayout.Button("Open current girl in inspector"))
                 {
@@ -669,13 +674,31 @@ namespace CheatTools
                 {
                     GUILayout.BeginHorizontal();
                     {
-                        if (GUILayout.Button("Exit the inspector"))
+                        if (GUILayout.Button("Close Inspector"))
                         {
                             InspectorClear();
                         }
-                        GUILayout.Label("To go deeper click on the variable names. Click on the list below to go back. To edit variables type in a new value and press enter.");
+                        GUILayout.Label("Find");
+                        foreach (var obj in new[]
+                          {
+                            new KeyValuePair<object, string>(GetInstanceClassScanner().OrderBy(x=>x.Name()), "Instances"),
+                            new KeyValuePair<object, string>(GetComponentScanner().OrderBy(x=>x.Name()), "Components"),
+                            new KeyValuePair<object, string>(GetMonoBehaviourScanner().OrderBy(x=>x.Name()), "MonoBehaviours"),
+                            new KeyValuePair<object, string>(GetTransformScanner().OrderBy(x=>x.Name()), "Transforms"),
+//                            new KeyValuePair<object, string>(GetTypeScanner(_inspectorStack.Peek().GetType()).OrderBy(x=>x.Name()), _inspectorStack.Peek().GetType().ToString()+"s"),
+                        })
+                        {
+                            if (obj.Key == null) continue;
+                            if (GUILayout.Button(obj.Value))
+                            {
+                                InspectorClear();
+                                InspectorPush(new InspectorStackEntry(obj.Key, obj.Value));
+                            }
+                        }
                     }
                     GUILayout.EndHorizontal();
+
+                    GUILayout.Label("To go deeper click on the variable names. Click on the list below to go back. To edit variables type in a new value and press enter.");
 
                     _inspectorStackScrollPos = GUILayout.BeginScrollView(_inspectorStackScrollPos, true, false,
                         GUI.skin.horizontalScrollbar, GUIStyle.none, GUIStyle.none, GUILayout.Height(46));
@@ -758,6 +781,11 @@ namespace CheatTools
             }
 
             GUI.DragWindow();
+        }
+
+        private object GetTypeScanner(Type type)
+        {
+            throw new NotImplementedException();
         }
 
         protected void OnGUI()
