@@ -61,6 +61,8 @@ namespace CheatTools
                     return $"Count = {collection.Count}";
                 case IEnumerable _:
                     return "IS ENUMERABLE";
+                case Exception ex:
+                    return "EXCEPTION: " + ex.Message;
                 default:
                     {
                         var valueType = value.GetType();

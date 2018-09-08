@@ -53,20 +53,21 @@ namespace CheatTools
         {
             try
             {
-                var result = _methodInfo.Invoke(_instance, null);
-
                 // If this is the first user clicked, eval the method and display the result. second time enter as normal
                 if (_valueCache == null)
                 {
+                    var result = _methodInfo.Invoke(_instance, null);
+
                     _valueCache = result;
                     return null;
                 }
 
-                return result;
+                return _valueCache;
             }
             catch (Exception ex)
             {
                 Logger.Log(LogLevel.Warning, $"[CheatTools] Failed to evaluate the method {Name()} - {ex.Message}");
+                _valueCache = ex;
                 return null;
             }
         }
