@@ -65,6 +65,7 @@
     <Compile Include="PropertyCacheEntry.cs" />
     <Compile Include="ReadonlyCacheEntry.cs" />
     <Compile Include="TypeNameExtensions.cs" />
+    <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CheatTools.ruleset" />
