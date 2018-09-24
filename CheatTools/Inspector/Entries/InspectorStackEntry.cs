@@ -1,6 +1,6 @@
 ﻿namespace CheatTools
 {
-    class InspectorStackEntry
+    public class InspectorStackEntry
     {
         public InspectorStackEntry(object instance, string name)
         {
