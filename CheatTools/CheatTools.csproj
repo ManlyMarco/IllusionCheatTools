@@ -52,6 +52,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CheatWindow.cs" />
     <Compile Include="Inspector\Inspector.cs" />
     <Compile Include="Inspector\Entries\CacheEntryBase.cs" />
     <Compile Include="CheatTools.cs" />

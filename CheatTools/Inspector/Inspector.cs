@@ -13,20 +13,24 @@ namespace CheatTools
 {
     public class Inspector
     {
+        private const int InspectorTypeWidth = 170;
+        private const int InspectorNameWidth = 240;
+
         private readonly Dictionary<Type, bool> _canCovertCache = new Dictionary<Type, bool>();
         private readonly List<ICacheEntry> _fieldCache = new List<ICacheEntry>();
         private readonly Stack<InspectorStackEntry> _inspectorStack = new Stack<InspectorStackEntry>();
-        public GUIStyle _alignedButtonStyle;
+
+        private GUIStyle _alignedButtonStyle;
         private Rect _inspectorWindowRect;
-        private object _currentlyEditingTag;
-        private string _currentlyEditingText;
         private Vector2 _inspectorScrollPos;
         private Vector2 _inspectorStackScrollPos;
         private int _inspectorValueWidth;
+
         private InspectorStackEntry _nextToPush;
-        public bool _userHasHitReturn;
-        private const int InspectorTypeWidth = 170;
-        private const int InspectorNameWidth = 240;
+
+        private object _currentlyEditingTag;
+        private string _currentlyEditingText;
+        private bool _userHasHitReturn;
 
         private void CacheFields(object objectToOpen)
         {
@@ -66,9 +70,12 @@ namespace CheatTools
                     else
                     {
                         var type = objectToOpen.GetType();
+
+                        // If we somehow enter a string, this allows user to see what the string actually says
                         if (type == typeof(string))
                             _fieldCache.Add(new ReadonlyCacheEntry("this", objectToOpen));
 
+                        // Instance members
                         _fieldCache.AddRange(type
                             .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
                                        BindingFlags.FlattenHierarchy)
@@ -80,6 +87,7 @@ namespace CheatTools
                             .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
                             .Select(p => new PropertyCacheEntry(objectToOpen, p)).Cast<ICacheEntry>());
 
+                        // Static members
                         _fieldCache.AddRange(type
                             .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static |
                                        BindingFlags.FlattenHierarchy)
@@ -91,6 +99,7 @@ namespace CheatTools
                             .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
                             .Select(p => new PropertyCacheEntry(null, p)).Cast<ICacheEntry>());
 
+                        // Methods
                         _fieldCache.AddRange(CacheMethods(objectToOpen,
                             type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
                                             BindingFlags.FlattenHierarchy)));
@@ -301,7 +310,7 @@ namespace CheatTools
                                         // Calculate width only once
                                         if (!widthCalculated && Event.current.type == EventType.Repaint)
                                         {
-                                            _inspectorValueWidth = (int) GUILayoutUtility.GetLastRect().width;
+                                            _inspectorValueWidth = (int)GUILayoutUtility.GetLastRect().width;
                                             widthCalculated = true;
                                         }
                                     }
@@ -327,6 +336,17 @@ namespace CheatTools
 
         public void DisplayInspector()
         {
+            if (_alignedButtonStyle == null)
+            {
+                _alignedButtonStyle = new GUIStyle(GUI.skin.button)
+                {
+                    alignment = TextAnchor.MiddleLeft,
+                    wordWrap = true
+                };
+            }
+
+            if (Event.current.keyCode == KeyCode.Return) _userHasHitReturn = true;
+
             if (_inspectorStack.Count != 0)
                 _inspectorWindowRect = GUILayout.Window(592, _inspectorWindowRect, InspectorWindow, "Inspector");
         }
