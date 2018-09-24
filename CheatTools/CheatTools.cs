@@ -742,7 +742,7 @@ namespace CheatTools
 
                                     var value = entry.GetValue();
 
-                                    if (entry.CanEnterValue())
+                                    if (entry.CanEnterValue() || value is Exception)
                                         DrawVariableNameEnterButton(entry);
                                     else
                                         DrawVariableName(entry);
