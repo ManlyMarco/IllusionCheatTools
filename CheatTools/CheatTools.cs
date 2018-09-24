@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using ActionGame;
-using BepInEx;
-using BepInEx.Logging;
-using Manager;
+﻿using BepInEx;
 using UnityEngine;
-using Logger = BepInEx.Logger;
 
 namespace CheatTools
 {
-    [BepInPlugin("CheatTools", "Cheat Tools", "1.6")]
+    [BepInPlugin("CheatTools", "Cheat Tools", "1.7")]
     public class CheatTools : BaseUnityPlugin
     {
         private CheatWindow _cheatWindow;
@@ -25,8 +17,7 @@ namespace CheatTools
         {
             _cheatWindow.DisplayCheatWindow();
         }
-
-
+        
         protected void Update()
         {
             _cheatWindow.OnUpdate();
