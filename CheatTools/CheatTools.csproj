@@ -57,6 +57,7 @@
     <Compile Include="Extensions.cs" />
     <Compile Include="FieldCacheEntry.cs" />
     <Compile Include="ICacheEntry.cs" />
+    <Compile Include="InspectorHelpObj.cs" />
     <Compile Include="InspectorStackEntry.cs" />
     <Compile Include="ListCacheEntry.cs" />
     <Compile Include="MethodCacheEntry.cs" />

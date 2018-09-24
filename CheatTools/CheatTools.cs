@@ -22,7 +22,7 @@ namespace CheatTools
         private Rect _screenRect;
         private bool _showGui;
         private bool _userHasHitReturn;
-        private Rect _windowRect, _windowRect2;
+        private Rect _cheatWindowRect, _inspectorWindowRect;
         private Vector2 _inspectorScrollPos, _cheatsScrollPos, _inspectorStackScrollPos;
         private string _mainWindowTitle;
 
@@ -197,7 +197,7 @@ namespace CheatTools
                     {
                         GUILayout.Label("Start the game to see player cheats");
                     }
-                    
+
                     if (hFlag != null)
                     {
                         DrawHSceneCheats(hFlag);
@@ -212,7 +212,7 @@ namespace CheatTools
                             hSprite.btnEnd.onClick.Invoke();
                         }
                     }
-                    
+
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
                         GUILayout.Label("Current girl stats");
@@ -239,7 +239,7 @@ namespace CheatTools
                             Time.timeScale = 1;
                     }
                     GUILayout.EndHorizontal();
-                    
+
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
                         GUILayout.Label("Open in inspector");
@@ -676,31 +676,44 @@ namespace CheatTools
                 {
                     GUILayout.BeginHorizontal();
                     {
-                        if (GUILayout.Button("Close Inspector"))
+                        GUILayout.BeginHorizontal(GUI.skin.box);
                         {
-                            InspectorClear();
-                        }
-                        GUILayout.Label("Find");
-                        foreach (var obj in new[]
-                          {
+                            GUILayout.Label("Find:");
+                            foreach (var obj in new[]
+                            {
                             new KeyValuePair<object, string>(GetInstanceClassScanner().OrderBy(x=>x.Name()), "Instances"),
                             new KeyValuePair<object, string>(GetComponentScanner().OrderBy(x=>x.Name()), "Components"),
                             new KeyValuePair<object, string>(GetMonoBehaviourScanner().OrderBy(x=>x.Name()), "MonoBehaviours"),
                             new KeyValuePair<object, string>(GetTransformScanner().OrderBy(x=>x.Name()), "Transforms"),
-//                            new KeyValuePair<object, string>(GetTypeScanner(_inspectorStack.Peek().GetType()).OrderBy(x=>x.Name()), _inspectorStack.Peek().GetType().ToString()+"s"),
-                        })
-                        {
-                            if (obj.Key == null) continue;
-                            if (GUILayout.Button(obj.Value))
+                            //                            new KeyValuePair<object, string>(GetTypeScanner(_inspectorStack.Peek().GetType()).OrderBy(x=>x.Name()), _inspectorStack.Peek().GetType().ToString()+"s"),
+                            })
                             {
-                                InspectorClear();
-                                InspectorPush(new InspectorStackEntry(obj.Key, obj.Value));
+                                if (obj.Key == null) continue;
+                                if (GUILayout.Button(obj.Value))
+                                {
+                                    InspectorClear();
+                                    InspectorPush(new InspectorStackEntry(obj.Key, obj.Value));
+                                }
                             }
                         }
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.Space(13);
+
+                        GUILayout.BeginHorizontal(GUI.skin.box);
+                        {
+                            if (GUILayout.Button("Help"))
+                            {
+                                InspectorPush(InspectorHelpObj.Create());
+                            }
+                            if (GUILayout.Button("Close"))
+                            {
+                                InspectorClear();
+                            }
+                        }
+                        GUILayout.EndHorizontal();
                     }
                     GUILayout.EndHorizontal();
-
-                    GUILayout.Label("To go deeper click on the variable names. Click on the list below to go back. To edit variables type in a new value and press enter.");
 
                     _inspectorStackScrollPos = GUILayout.BeginScrollView(_inspectorStackScrollPos, true, false,
                         GUI.skin.horizontalScrollbar, GUIStyle.none, GUIStyle.none, GUILayout.Height(46));
@@ -804,10 +817,10 @@ namespace CheatTools
             var e = Event.current;
             if (e.keyCode == KeyCode.Return) _userHasHitReturn = true;
 
-            _windowRect = GUILayout.Window(591, _windowRect, CheatWindow, _mainWindowTitle);
+            _cheatWindowRect = GUILayout.Window(591, _cheatWindowRect, CheatWindow, _mainWindowTitle);
 
             if (_inspectorStack.Count != 0)
-                _windowRect2 = GUILayout.Window(592, _windowRect2, InspectorWindow, "Inspector");
+                _inspectorWindowRect = GUILayout.Window(592, _inspectorWindowRect, InspectorWindow, "Inspector");
         }
 
         private void SetWindowSizes()
@@ -815,14 +828,14 @@ namespace CheatTools
             int w = Screen.width, h = Screen.height;
             _screenRect = new Rect(ScreenOffset, ScreenOffset, w - ScreenOffset * 2, h - ScreenOffset * 2);
 
-            if (_windowRect.IsDefault())
-                _windowRect = new Rect(_screenRect.width - 50 - 270, 100, 270, 380);
+            if (_cheatWindowRect.IsDefault())
+                _cheatWindowRect = new Rect(_screenRect.width - 50 - 270, 100, 270, 380);
 
-            if (_windowRect2.IsDefault())
+            if (_inspectorWindowRect.IsDefault())
             {
                 const int width = 800;
                 const int height = 600;
-                _windowRect2 = new Rect(_screenRect.width / 2 - width / 2, _screenRect.height / 2 - height / 2, width, height);
+                _inspectorWindowRect = new Rect(_screenRect.width / 2 - width / 2, _screenRect.height / 2 - height / 2, width, height);
             }
         }
 
