@@ -31,6 +31,9 @@
         public string Help7 = "Above you can find various objects to display in the inspector. " +
                               "WARNING - If you search a heavily populated scene, you will get A LOT of results. Your FPS will drop, that's normal.";
 
+        public string Help8 = "'IS ENUMERABLE' means that opening the member will give you anywhere from 0 to infinitely many values. They might even be generated as you view them. " +
+                              "If the number of values is known, it will be displayed instead of this text.";
+
         public static string HelpS = "If a member name has an S/ in front of it, it means that this is a static member. It will be the same in all instances of an object.";
     }
 }
