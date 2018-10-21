@@ -74,6 +74,10 @@ namespace CheatTools
                         // If we somehow enter a string, this allows user to see what the string actually says
                         if (type == typeof(string))
                             _fieldCache.Add(new ReadonlyCacheEntry("this", objectToOpen));
+                        else if(objectToOpen is Transform tr)
+                            _fieldCache.Add(new ReadonlyCacheEntry("Child objects", tr.Cast<Transform>().ToArray()));
+                        else if (objectToOpen is GameObject ob && ob.transform != null)
+                            _fieldCache.Add(new ReadonlyCacheEntry("Child objects", ob.transform.Cast<Transform>().ToArray()));
 
                         // Instance members
                         _fieldCache.AddRange(type
