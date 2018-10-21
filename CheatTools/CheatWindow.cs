@@ -26,6 +26,7 @@ namespace CheatTools
 
         private SaveData.Heroine _currentVisibleGirl;
         private Game _gameMgr;
+        private string _typeNameToSearchBox = "Specify type name to search";
 
         public CheatWindow()
         {
@@ -117,8 +118,32 @@ namespace CheatTools
                                 _inspector.InspectorPush(new InspectorStackEntry(obj.Key, obj.Value));
                             }
                         }
-                        GUILayout.EndVertical();
+
+                        GUILayout.Space(8);
+
+                        _typeNameToSearchBox = GUILayout.TextField(_typeNameToSearchBox, GUILayout.ExpandWidth(true));
+                        if (GUILayout.Button("Find objects of this type"))
+                        {
+                            if (string.IsNullOrEmpty(_typeNameToSearchBox))
+                            {
+                                _typeNameToSearchBox = "Specify type name to search";
+                            }
+                            else
+                            {
+                                var matchedTypes = AppDomain.CurrentDomain.GetAssemblies()
+                                    .SelectMany(x => x.GetTypes())
+                                    .Where(x => x.GetFriendlyName().Equals(_typeNameToSearchBox, StringComparison.OrdinalIgnoreCase));
+
+                                var objects = new List<Object>();
+                                foreach (var matchedType in matchedTypes)
+                                    objects.AddRange(Object.FindObjectsOfType(matchedType) ?? Enumerable.Empty<Object>());
+
+                                _inspector.InspectorClear();
+                                _inspector.InspectorPush(new InspectorStackEntry(objects.AsEnumerable(), "Objects of type " + _typeNameToSearchBox));
+                            }
+                        }
                     }
+                    GUILayout.EndVertical();
                 }
                 GUILayout.EndScrollView();
             }
