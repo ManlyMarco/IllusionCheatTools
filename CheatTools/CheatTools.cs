@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace CheatTools
 {
-    [BepInPlugin("CheatTools", "Cheat Tools", "1.7")]
+    [BepInPlugin("CheatTools", "Cheat Tools", "1.8")]
     public class CheatTools : BaseUnityPlugin
     {
         private CheatWindow _cheatWindow;
