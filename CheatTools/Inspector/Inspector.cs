@@ -34,6 +34,11 @@ namespace CheatTools
 
         private void CacheFields(object objectToOpen)
         {
+            _inspectorScrollPos = Vector2.zero;
+            _fieldCache.Clear();
+
+            if (objectToOpen == null) return;
+
             IEnumerable<ICacheEntry> CacheMethods(object instance, MethodInfo[] typesToCheck)
             {
                 var cacheItems = typesToCheck
@@ -60,59 +65,53 @@ namespace CheatTools
 
             try
             {
-                _fieldCache.Clear();
-                if (objectToOpen != null)
-                    if (!(objectToOpen is Transform) && !(objectToOpen is string) && objectToOpen is IEnumerable enumerable)
-                    {
-                        _fieldCache.AddRange(enumerable.Cast<object>()
-                            .Select((x, y) => x is ICacheEntry ? x : new ListCacheEntry(x, y)).Cast<ICacheEntry>());
-                    }
-                    else
-                    {
-                        var type = objectToOpen.GetType();
+                var type = objectToOpen.GetType();
 
-                        // If we somehow enter a string, this allows user to see what the string actually says
-                        if (type == typeof(string))
-                            _fieldCache.Add(new ReadonlyCacheEntry("this", objectToOpen));
-                        else if(objectToOpen is Transform tr)
-                            _fieldCache.Add(new ReadonlyCacheEntry("Child objects", tr.Cast<Transform>().ToArray()));
-                        else if (objectToOpen is GameObject ob && ob.transform != null)
-                            _fieldCache.Add(new ReadonlyCacheEntry("Child objects", ob.transform.Cast<Transform>().ToArray()));
+                // If we somehow enter a string, this allows user to see what the string actually says
+                if (type == typeof(string))
+                    _fieldCache.Add(new ReadonlyCacheEntry("this", objectToOpen));
+                else if (objectToOpen is Transform tr)
+                    _fieldCache.Add(new ReadonlyCacheEntry("Child objects", tr.Cast<Transform>().ToArray()));
+                else if (objectToOpen is GameObject ob && ob.transform != null)
+                    _fieldCache.Add(new ReadonlyCacheEntry("Child objects", ob.transform.Cast<Transform>().ToArray()));
+                else if (objectToOpen is IEnumerable enumerable)
+                {
+                    _fieldCache.AddRange(enumerable.Cast<object>()
+                        .Select((x, y) => x is ICacheEntry ? x : new ListCacheEntry(x, y))
+                        .Cast<ICacheEntry>());
+                }
 
-                        // Instance members
-                        _fieldCache.AddRange(type
-                            .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
-                                       BindingFlags.FlattenHierarchy)
-                            .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
-                            .Select(f => new FieldCacheEntry(objectToOpen, f)).Cast<ICacheEntry>());
-                        _fieldCache.AddRange(type
-                            .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
-                                           BindingFlags.FlattenHierarchy)
-                            .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
-                            .Select(p => new PropertyCacheEntry(objectToOpen, p)).Cast<ICacheEntry>());
+                // Instance members
+                _fieldCache.AddRange(type
+                    .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
+                               BindingFlags.FlattenHierarchy)
+                    .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                    .Select(f => new FieldCacheEntry(objectToOpen, f)).Cast<ICacheEntry>());
+                _fieldCache.AddRange(type
+                    .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
+                                   BindingFlags.FlattenHierarchy)
+                    .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                    .Select(p => new PropertyCacheEntry(objectToOpen, p)).Cast<ICacheEntry>());
 
-                        // Static members
-                        _fieldCache.AddRange(type
-                            .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static |
-                                       BindingFlags.FlattenHierarchy)
-                            .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
-                            .Select(f => new FieldCacheEntry(null, f)).Cast<ICacheEntry>());
-                        _fieldCache.AddRange(type
-                            .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static |
-                                           BindingFlags.FlattenHierarchy)
-                            .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
-                            .Select(p => new PropertyCacheEntry(null, p)).Cast<ICacheEntry>());
+                // Static members
+                _fieldCache.AddRange(type
+                    .GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static |
+                               BindingFlags.FlattenHierarchy)
+                    .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                    .Select(f => new FieldCacheEntry(null, f)).Cast<ICacheEntry>());
+                _fieldCache.AddRange(type
+                    .GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static |
+                                   BindingFlags.FlattenHierarchy)
+                    .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                    .Select(p => new PropertyCacheEntry(null, p)).Cast<ICacheEntry>());
 
-                        // Methods
-                        _fieldCache.AddRange(CacheMethods(objectToOpen,
-                            type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
-                                            BindingFlags.FlattenHierarchy)));
-                        _fieldCache.AddRange(CacheMethods(null,
-                            type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static |
-                                            BindingFlags.FlattenHierarchy)));
-                    }
-
-                _inspectorScrollPos = Vector2.zero;
+                // Methods
+                _fieldCache.AddRange(CacheMethods(objectToOpen,
+                    type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance |
+                                    BindingFlags.FlattenHierarchy)));
+                _fieldCache.AddRange(CacheMethods(null,
+                    type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static |
+                                    BindingFlags.FlattenHierarchy)));
             }
             catch (Exception ex)
             {
