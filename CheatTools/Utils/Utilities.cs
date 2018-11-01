@@ -24,6 +24,7 @@ namespace CheatTools
                 WindowBackground = windowBackground;
             }
 
+            // It's necessary to make a new GUIStyle here or the texture doesn't show up
             GUI.Box(windowRect, GUIContent.none, new GUIStyle { normal = new GUIStyleState { background = WindowBackground } });
         }
 

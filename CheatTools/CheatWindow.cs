@@ -27,10 +27,13 @@ namespace CheatTools
 
         private SaveData.Heroine _currentVisibleGirl;
         private Game _gameMgr;
+        private HFlag _hFlag;
+        private TalkScene _talkScene;
+        private HSprite _hSprite;
         private string _typeNameToSearchBox = "Specify type name to search";
 
-        private readonly bool _isStudio;
-        private bool _noCtrlConditionDone;
+        private readonly FieldInfo _advSceneTargetHeroineProp = typeof(ADV.ADVScene).GetField("m_TargetHeroine",
+            BindingFlags.Instance | BindingFlags.NonPublic);
 
         public CheatWindow()
         {
@@ -42,8 +45,6 @@ namespace CheatTools
                 _inspector.InspectorClear();
                 _inspector.InspectorPush(new InspectorStackEntry(obj, name));
             });
-
-            _isStudio = Application.productName == "CharaStudio";
         }
 
         public Game GameMgr => _gameMgr ?? (_gameMgr = Game.Instance);
@@ -56,6 +57,12 @@ namespace CheatTools
                 _show = value;
                 if (value)
                     SetWindowSizes();
+
+                CursorBlocker.DisableCameraControls = _show;
+
+                _hFlag = Object.FindObjectOfType<HFlag>();
+                _talkScene = Object.FindObjectOfType<TalkScene>();
+                _hSprite = Object.FindObjectOfType<HSprite>();
             }
         }
 
@@ -63,9 +70,6 @@ namespace CheatTools
         {
             try
             {
-                var hFlag = Object.FindObjectOfType<HFlag>();
-                var talkScene = Object.FindObjectOfType<TalkScene>();
-
                 _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
                 {
                     if (GameMgr != null && !GameMgr.saveData.isOpening)
@@ -73,21 +77,20 @@ namespace CheatTools
                     else
                         GUILayout.Label("Start the game to see player cheats");
 
-                    if (hFlag != null)
-                        DrawHSceneCheats(hFlag);
+                    if (_hFlag != null)
+                        DrawHSceneCheats(_hFlag);
 
                     //Now can quit first time H scene
-                    var hSprite = Object.FindObjectOfType<HSprite>();
-                    if (hSprite != null)
+                    if (_hSprite != null)
                         if (GUILayout.Button("Quit H scene (alpha)"))
-                            hSprite.btnEnd.onClick.Invoke();
+                            _hSprite.btnEnd.onClick.Invoke();
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
                         GUILayout.Label("Current girl stats");
 
-                        _currentVisibleGirl = GetCurrentAdvHeroine() ?? GetCurrentTalkSceneHeroine(talkScene) ??
-                                              GetCurrentHflagHeroine(hFlag) ?? _currentVisibleGirl;
+                        _currentVisibleGirl =  GetCurrentTalkSceneHeroine(_talkScene) ?? GetCurrentHflagHeroine(_hFlag) ?? 
+                            GetCurrentAdvHeroine() ?? _currentVisibleGirl;
 
                         if (_currentVisibleGirl != null)
                             DrawCurrentHeroineCheats(_currentVisibleGirl);
@@ -105,12 +108,12 @@ namespace CheatTools
                             Time.timeScale = 1;
                     }
                     GUILayout.EndHorizontal();
-
+                    
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
                         if (GUILayout.Button("Open scene object browser"))
                             _treeViewer.Enabled = !_treeViewer.Enabled;
-
+                        
                         GUILayout.Label("Open in inspector");
                         foreach (var obj in new[]
                         {
@@ -121,8 +124,8 @@ namespace CheatTools
                             new KeyValuePair<object, string>(Scene.Instance, "Manager.Scene.Instance"),
                             new KeyValuePair<object, string>(Communication.Instance, "Manager.Communication.Instance"),
                             new KeyValuePair<object, string>(Manager.Sound.Instance, "Manager.Sound.Instance"),
-                            new KeyValuePair<object, string>(hFlag, "HFlag"),
-                            new KeyValuePair<object, string>(talkScene, "TalkScene"),
+                            new KeyValuePair<object, string>(_hFlag, "HFlag"),
+                            new KeyValuePair<object, string>(_talkScene, "TalkScene"),
                             new KeyValuePair<object, string>(Studio.Studio.Instance, "Studio.Instance"),
                             new KeyValuePair<object, string>(Utilities.GetRootGoScanner(), "Root Objects")
                         })
@@ -342,10 +345,9 @@ namespace CheatTools
             try
             {
                 var nowScene = GameMgr?.actScene?.AdvScene?.nowScene;
-                var currentAdvGirl =
-                    nowScene?.GetType().GetField("m_TargetHeroine", BindingFlags.Instance | BindingFlags.NonPublic)
-                        ?.GetValue(nowScene) as SaveData.Heroine;
-                return currentAdvGirl;
+                if (!nowScene) return null;
+
+                return _advSceneTargetHeroineProp.GetValue(nowScene) as SaveData.Heroine;
             }
             catch
             {
@@ -398,14 +400,6 @@ namespace CheatTools
         public void OnUpdate()
         {
             _inspector.InspectorUpdate();
-
-            // TODO add mouse blocking for main game as well
-            if (_isStudio && !_noCtrlConditionDone)
-            {
-                var oldCondition = Studio.Studio.Instance.cameraCtrl.noCtrlCondition;
-                Studio.Studio.Instance.cameraCtrl.noCtrlCondition = () => Show || oldCondition();
-                _noCtrlConditionDone = true;
-            }
         }
     }
 }
