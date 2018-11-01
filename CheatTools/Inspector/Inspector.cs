@@ -13,6 +13,7 @@ namespace CheatTools
 {
     public class Inspector
     {
+        private readonly Action<Transform> _treelistShowCallback;
         private const int InspectorTypeWidth = 170;
         private const int InspectorNameWidth = 240;
 
@@ -31,6 +32,11 @@ namespace CheatTools
         private object _currentlyEditingTag;
         private string _currentlyEditingText;
         private bool _userHasHitReturn;
+
+        public Inspector(Action<Transform> treelistShowCallback)
+        {
+            _treelistShowCallback = treelistShowCallback ?? throw new ArgumentNullException(nameof(treelistShowCallback));
+        }
 
         private void CacheFields(object objectToOpen)
         {
@@ -65,15 +71,38 @@ namespace CheatTools
 
             try
             {
+                CallbackCacheEntey<Action> CreateTransfromCallback(Transform tr)
+                {
+                    return new CallbackCacheEntey<Action>("Open in Scene Object Browser",
+                        "Navigate to this object in the Scene Object Browser",
+                        () =>
+                        {
+                            _treelistShowCallback(tr);
+                            return null;
+                        });
+                }
+                ReadonlyCacheEntry CreateTransfromChildEntry(Transform tr)
+                {
+                    return new ReadonlyCacheEntry("Child objects", tr.Cast<Transform>().ToArray());
+                }
+
                 var type = objectToOpen.GetType();
 
                 // If we somehow enter a string, this allows user to see what the string actually says
                 if (type == typeof(string))
+                {
                     _fieldCache.Add(new ReadonlyCacheEntry("this", objectToOpen));
+                }
                 else if (objectToOpen is Transform tr)
-                    _fieldCache.Add(new ReadonlyCacheEntry("Child objects", tr.Cast<Transform>().ToArray()));
+                {
+                    _fieldCache.Add(CreateTransfromCallback(tr));
+                    _fieldCache.Add(CreateTransfromChildEntry(tr));
+                }
                 else if (objectToOpen is GameObject ob && ob.transform != null)
-                    _fieldCache.Add(new ReadonlyCacheEntry("Child objects", ob.transform.Cast<Transform>().ToArray()));
+                {
+                    _fieldCache.Add(CreateTransfromCallback(ob.transform));
+                    _fieldCache.Add(CreateTransfromChildEntry(ob.transform));
+                }
                 else if (objectToOpen is IEnumerable enumerable)
                 {
                     _fieldCache.AddRange(enumerable.Cast<object>()
@@ -362,7 +391,7 @@ namespace CheatTools
             const int width = 800;
             //const int height = 600;
             //_inspectorWindowRect = new Rect(screenRect.width / 2 - width / 2, screenRect.height / 2 - height / 2, width, height);
-            
+
             int height = (int)(screenRect.height / 3) * 2;
 
             _inspectorWindowRect = new Rect(screenRect.xMin + screenRect.width / 2 - width / 2 + 22, screenRect.yMin, width, height);

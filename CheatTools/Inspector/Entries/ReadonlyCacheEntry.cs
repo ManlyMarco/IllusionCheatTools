@@ -2,7 +2,7 @@
 
 namespace CheatTools
 {
-    class ReadonlyCacheEntry : CacheEntryBase
+    internal class ReadonlyCacheEntry : CacheEntryBase
     {
         public readonly object Object;
         private readonly Type _type;

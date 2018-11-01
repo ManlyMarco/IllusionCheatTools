@@ -39,7 +39,7 @@ namespace CheatTools
         {
             _mainWindowTitle = "Cheat Tools" + Assembly.GetExecutingAssembly().GetName().Version;
 
-            _inspector = new Inspector();
+            _inspector = new Inspector(transform => _treeViewer.SelectAndShowObject(transform));
             _treeViewer = new ObjectTreeViewer((obj, name) =>
             {
                 _inspector.InspectorClear();
@@ -111,7 +111,7 @@ namespace CheatTools
                     
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        if (GUILayout.Button("Open scene object browser"))
+                        if (GUILayout.Button("Open Scene Object Browser"))
                             _treeViewer.Enabled = !_treeViewer.Enabled;
                         
                         GUILayout.Label("Open in inspector");

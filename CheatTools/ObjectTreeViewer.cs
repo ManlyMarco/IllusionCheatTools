@@ -19,6 +19,22 @@ namespace CheatTools
         private Vector2 _treeScrollPosition;
         private int _treeViewWidth = 400;
         private Rect _windowRect;
+        private bool _scrollTreeToSelected;
+
+        public void SelectAndShowObject(Transform target)
+        {
+            _selectedTransform = target;
+
+            target = target.parent;
+            while (target != null)
+            {
+                _openedObjects.Add(target.gameObject);
+                target = target.parent;
+            }
+
+            _scrollTreeToSelected = true;
+            Enabled = true;
+        }
 
         public ObjectTreeViewer(Action<object, string> inspectorOpenCallback)
         {
@@ -53,7 +69,14 @@ namespace CheatTools
         {
             var c = GUI.color;
             if (_selectedTransform == go.transform)
+            {
                 GUI.color = Color.cyan;
+                if(_scrollTreeToSelected && Event.current.type == EventType.Repaint)
+                {
+                    _scrollTreeToSelected = false;
+                    _treeScrollPosition.y = GUILayoutUtility.GetLastRect().y - 50;
+                }
+            }
 
             GUILayout.BeginHorizontal();
             {
@@ -95,7 +118,7 @@ namespace CheatTools
             if (Enabled)
             {
                 Utilities.DrawSolidWindowBackground(_windowRect);
-                _windowRect = GUILayout.Window(593, _windowRect, WindowFunc, "Scene object tree viewer");
+                _windowRect = GUILayout.Window(593, _windowRect, WindowFunc, "Scene Object Browser");
             }
         }
 
