@@ -14,9 +14,10 @@ namespace CheatTools
     public class CheatWindow
     {
         private const int ScreenOffset = 20;
-        private readonly string[] _hExpNames = {"First time", "Inexperienced", "Experienced", "Perverted"};
+        private readonly string[] _hExpNames = { "First time", "Inexperienced", "Experienced", "Perverted" };
 
-        private readonly Inspector _inspector = new Inspector();
+        private readonly Inspector _inspector;
+        private readonly ObjectTreeViewer _treeViewer;
 
         private Vector2 _cheatsScrollPos;
         private Rect _cheatWindowRect;
@@ -28,9 +29,21 @@ namespace CheatTools
         private Game _gameMgr;
         private string _typeNameToSearchBox = "Specify type name to search";
 
+        private readonly bool _isStudio;
+        private bool _noCtrlConditionDone;
+
         public CheatWindow()
         {
             _mainWindowTitle = "Cheat Tools" + Assembly.GetExecutingAssembly().GetName().Version;
+
+            _inspector = new Inspector();
+            _treeViewer = new ObjectTreeViewer((obj, name) =>
+            {
+                _inspector.InspectorClear();
+                _inspector.InspectorPush(new InspectorStackEntry(obj, name));
+            });
+
+            _isStudio = Application.productName == "CharaStudio";
         }
 
         public Game GameMgr => _gameMgr ?? (_gameMgr = Game.Instance);
@@ -86,7 +99,7 @@ namespace CheatTools
                     GUILayout.BeginHorizontal(GUI.skin.box);
                     {
                         GUILayout.Label("Speed", GUILayout.ExpandWidth(false));
-                        GUILayout.Label((int) Math.Round(Time.timeScale * 100) + "%", GUILayout.Width(35));
+                        GUILayout.Label((int)Math.Round(Time.timeScale * 100) + "%", GUILayout.Width(35));
                         Time.timeScale = GUILayout.HorizontalSlider(Time.timeScale, 0, 5, GUILayout.ExpandWidth(true));
                         if (GUILayout.Button("Reset", GUILayout.ExpandWidth(false)))
                             Time.timeScale = 1;
@@ -95,6 +108,9 @@ namespace CheatTools
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
+                        if (GUILayout.Button("Open scene object browser"))
+                            _treeViewer.Enabled = !_treeViewer.Enabled;
+
                         GUILayout.Label("Open in inspector");
                         foreach (var obj in new[]
                         {
@@ -192,19 +208,19 @@ namespace CheatTools
                     GUILayout.BeginHorizontal();
                     {
                         GUILayout.Label("Favor: " + currentAdvGirl.favor, GUILayout.Width(60));
-                        currentAdvGirl.favor = (int) GUILayout.HorizontalSlider(currentAdvGirl.favor, 0, 100);
+                        currentAdvGirl.favor = (int)GUILayout.HorizontalSlider(currentAdvGirl.favor, 0, 100);
                     }
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
                     {
                         GUILayout.Label("Lewd: " + currentAdvGirl.lewdness, GUILayout.Width(60));
-                        currentAdvGirl.lewdness = (int) GUILayout.HorizontalSlider(currentAdvGirl.lewdness, 0, 100);
+                        currentAdvGirl.lewdness = (int)GUILayout.HorizontalSlider(currentAdvGirl.lewdness, 0, 100);
                     }
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
                     {
                         GUILayout.Label("Anger: " + currentAdvGirl.anger, GUILayout.Width(60));
-                        currentAdvGirl.anger = (int) GUILayout.HorizontalSlider(currentAdvGirl.anger, 0, 100);
+                        currentAdvGirl.anger = (int)GUILayout.HorizontalSlider(currentAdvGirl.anger, 0, 100);
                     }
                     GUILayout.EndHorizontal();
                 }
@@ -267,18 +283,18 @@ namespace CheatTools
                 GUILayout.BeginHorizontal();
                 {
                     GUILayout.Label("STR: " + GameMgr.Player.physical, GUILayout.Width(60));
-                    GameMgr.Player.physical = (int) GUILayout.HorizontalSlider(GameMgr.Player.physical, 0, 100);
+                    GameMgr.Player.physical = (int)GUILayout.HorizontalSlider(GameMgr.Player.physical, 0, 100);
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
                     {
                         GUILayout.Label("INT: " + GameMgr.Player.intellect, GUILayout.Width(60));
-                        GameMgr.Player.intellect = (int) GUILayout.HorizontalSlider(GameMgr.Player.intellect, 0, 100);
+                        GameMgr.Player.intellect = (int)GUILayout.HorizontalSlider(GameMgr.Player.intellect, 0, 100);
                     }
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
                     {
                         GUILayout.Label("H: " + GameMgr.Player.hentai, GUILayout.Width(60));
-                        GameMgr.Player.hentai = (int) GUILayout.HorizontalSlider(GameMgr.Player.hentai, 0, 100);
+                        GameMgr.Player.hentai = (int)GUILayout.HorizontalSlider(GameMgr.Player.hentai, 0, 100);
                     }
                     GUILayout.EndHorizontal();
 
@@ -349,16 +365,18 @@ namespace CheatTools
 
         private string GetHExpText(SaveData.Heroine currentAdvGirl)
         {
-            return _hExpNames[(int) currentAdvGirl.HExperience];
+            return _hExpNames[(int)currentAdvGirl.HExperience];
         }
 
         public void DisplayCheatWindow()
         {
             if (!Show) return;
 
+            Utilities.DrawSolidWindowBackground(_cheatWindowRect);
             _cheatWindowRect = GUILayout.Window(591, _cheatWindowRect, CheatWindowContents, _mainWindowTitle);
 
             _inspector.DisplayInspector();
+            _treeViewer.DisplayViewer();
         }
 
         private void SetWindowSizes()
@@ -366,20 +384,28 @@ namespace CheatTools
             int w = Screen.width, h = Screen.height;
             _screenRect = new Rect(ScreenOffset, ScreenOffset, w - ScreenOffset * 2, h - ScreenOffset * 2);
 
-            InitializeWindowSize(_screenRect);
+            UpdateWindowSize(_screenRect);
         }
 
-        private void InitializeWindowSize(Rect screenRect)
+        private void UpdateWindowSize(Rect screenRect)
         {
-            if (_cheatWindowRect.IsDefault())
-                _cheatWindowRect = new Rect(screenRect.width - 50 - 270, 100, 270, 380);
+            _cheatWindowRect = new Rect(screenRect.width - 50 - 270, 100, 270, 380);
 
-            _inspector.InitializeInspectorWindowSize(_screenRect);
+            _inspector.UpdateWindowSize(_screenRect);
+            _treeViewer.UpdateWindowSize(_screenRect);
         }
 
         public void OnUpdate()
         {
             _inspector.InspectorUpdate();
+
+            // TODO add mouse blocking for main game as well
+            if (_isStudio && !_noCtrlConditionDone)
+            {
+                var oldCondition = Studio.Studio.Instance.cameraCtrl.noCtrlCondition;
+                Studio.Studio.Instance.cameraCtrl.noCtrlCondition = () => Show || oldCondition();
+                _noCtrlConditionDone = true;
+            }
         }
     }
 }

@@ -56,6 +56,7 @@
     <Compile Include="Inspector\Inspector.cs" />
     <Compile Include="Inspector\Entries\CacheEntryBase.cs" />
     <Compile Include="CheatTools.cs" />
+    <Compile Include="ObjectTreeViewer.cs" />
     <Compile Include="Utils\Extensions.cs" />
     <Compile Include="Inspector\Entries\FieldCacheEntry.cs" />
     <Compile Include="Inspector\Entries\ICacheEntry.cs" />

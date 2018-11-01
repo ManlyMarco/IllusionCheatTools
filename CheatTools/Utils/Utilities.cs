@@ -12,6 +12,21 @@ namespace CheatTools
 {
     internal class Utilities
     {
+        private static Texture2D WindowBackground { get; set; }
+
+        public static void DrawSolidWindowBackground(Rect windowRect)
+        {
+            if (WindowBackground == null)
+            {
+                var windowBackground = new Texture2D(1, 1, TextureFormat.ARGB32, false);
+                windowBackground.SetPixel(0, 0, new Color(0.6f, 0.6f, 0.6f, 1));
+                windowBackground.Apply();
+                WindowBackground = windowBackground;
+            }
+
+            GUI.Box(windowRect, GUIContent.none, new GUIStyle { normal = new GUIStyleState { background = WindowBackground } });
+        }
+
         public static void DrawSeparator()
         {
             GUILayout.Space(5);
@@ -39,29 +54,29 @@ namespace CheatTools
                 case Exception ex:
                     return "EXCEPTION: " + ex.Message;
                 default:
-                {
-                    var valueType = value.GetType();
-                    try
                     {
-                        if (valueType.IsGenericType)
+                        var valueType = value.GetType();
+                        try
                         {
-                            var baseType = valueType.GetGenericTypeDefinition();
-                            if (baseType == typeof(KeyValuePair<,>))
+                            if (valueType.IsGenericType)
                             {
-                                //var argTypes = baseType.GetGenericArguments();
-                                var kvpKey = valueType.GetProperty("Key")?.GetValue(value, null);
-                                var kvpValue = valueType.GetProperty("Value")?.GetValue(value, null);
-                                return $"[{ExtractText(kvpKey)} | {ExtractText(kvpValue)}]";
+                                var baseType = valueType.GetGenericTypeDefinition();
+                                if (baseType == typeof(KeyValuePair<,>))
+                                {
+                                    //var argTypes = baseType.GetGenericArguments();
+                                    var kvpKey = valueType.GetProperty("Key")?.GetValue(value, null);
+                                    var kvpValue = valueType.GetProperty("Value")?.GetValue(value, null);
+                                    return $"[{ExtractText(kvpKey)} | {ExtractText(kvpValue)}]";
+                                }
                             }
-                        }
 
-                        return value.ToString();
+                            return value.ToString();
+                        }
+                        catch
+                        {
+                            return valueType.Name;
+                        }
                     }
-                    catch
-                    {
-                        return valueType.Name;
-                    }
-                }
             }
         }
 
@@ -111,10 +126,10 @@ namespace CheatTools
         private static IEnumerable<ReadonlyCacheEntry> ScanComponentTypes(IEnumerable<Type> types, bool noTransfroms)
         {
             var allObjects = from type in types
-                let components = Object.FindObjectsOfType(type).OfType<Component>()
-                from component in components
-                where !(noTransfroms && component is Transform)
-                select component;
+                             let components = Object.FindObjectsOfType(type).OfType<Component>()
+                             from component in components
+                             where !(noTransfroms && component is Transform)
+                             select component;
 
             string GetTransformPath(Transform tr)
             {

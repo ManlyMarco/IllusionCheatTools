@@ -351,17 +351,21 @@ namespace CheatTools
             if (Event.current.keyCode == KeyCode.Return) _userHasHitReturn = true;
 
             if (_inspectorStack.Count != 0)
+            {
+                Utilities.DrawSolidWindowBackground(_inspectorWindowRect);
                 _inspectorWindowRect = GUILayout.Window(592, _inspectorWindowRect, InspectorWindow, "Inspector");
+            }
         }
 
-        public void InitializeInspectorWindowSize(Rect screenRect)
+        public void UpdateWindowSize(Rect screenRect)
         {
-            if (_inspectorWindowRect.IsDefault())
-            {
-                const int width = 800;
-                const int height = 600;
-                _inspectorWindowRect = new Rect(screenRect.width / 2 - width / 2, screenRect.height / 2 - height / 2, width, height);
-            }
+            const int width = 800;
+            //const int height = 600;
+            //_inspectorWindowRect = new Rect(screenRect.width / 2 - width / 2, screenRect.height / 2 - height / 2, width, height);
+            
+            int height = (int)(screenRect.height / 3) * 2;
+
+            _inspectorWindowRect = new Rect(screenRect.xMin + screenRect.width / 2 - width / 2 + 22, screenRect.yMin, width, height);
         }
 
         public void InspectorUpdate()
