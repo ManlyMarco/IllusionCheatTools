@@ -52,17 +52,12 @@ namespace CheatTools
         public void UpdateWindowSize(Rect screenRect)
         {
             const int width = 1000;
-            //const int height = 600;
-            //_inspectorWindowRect = new Rect(screenRect.width / 2 - width / 2, screenRect.height / 2 - height / 2, width, height);
+            const int padding = 3;
 
-            const int padding = 2;
+            var height = (int)(screenRect.height / 3) - padding;
 
-            var height = (int) (screenRect.height / 3) - padding;
-
-            _windowRect = new Rect(screenRect.xMin + screenRect.width / 2 - width / 2, screenRect.yMax - height, width,
-                height);
-            //_windowRect = new Rect(padding, screenRect.height - height - padding, screenRect.width - padding * 2, height);
-            _treeViewWidth = (int) (_windowRect.width / 1.8);
+            _windowRect = new Rect(screenRect.xMin + screenRect.width / 2 - width / 2, screenRect.yMax - height, width, height);
+            _treeViewWidth = (int)(_windowRect.width / 2);
         }
 
         private void DisplayObjectTreeHelper(GameObject go, int indent)
@@ -71,7 +66,7 @@ namespace CheatTools
             if (_selectedTransform == go.transform)
             {
                 GUI.color = Color.cyan;
-                if(_scrollTreeToSelected && Event.current.type == EventType.Repaint)
+                if (_scrollTreeToSelected && Event.current.type == EventType.Repaint)
                 {
                     _scrollTreeToSelected = false;
                     _treeScrollPosition.y = GUILayoutUtility.GetLastRect().y - 50;
@@ -147,8 +142,8 @@ namespace CheatTools
             {
                 if (GUILayout.Button("Clear AssetBundle Cache"))
                     foreach (var pair in AssetBundleManager.ManifestBundlePack)
-                    foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
-                        AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
+                        foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
+                            AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
 
                 if (GUILayout.Button("Open log file", GUILayout.ExpandWidth(false)))
                     Process.Start(Path.Combine(Application.dataPath, "output_log.txt"));
@@ -171,28 +166,31 @@ namespace CheatTools
                 }
                 else
                 {
-                    var fullTransfromPath = GetFullTransfromPath(_selectedTransform);
-
-                    GUILayout.TextArea(fullTransfromPath, GUI.skin.box);
-
-                    GUILayout.BeginHorizontal(GUI.skin.box);
+                    GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        GUILayout.Label(
-                            $"Layer {_selectedTransform.gameObject.layer} ({LayerMask.LayerToName(_selectedTransform.gameObject.layer)})");
+                        var fullTransfromPath = GetFullTransfromPath(_selectedTransform);
 
-                        GUILayout.Space(8);
+                        GUILayout.TextArea(fullTransfromPath, GUI.skin.label);
 
-                        GUILayout.Toggle(_selectedTransform.gameObject.isStatic, "isStatic");
+                        GUILayout.BeginHorizontal();
+                        {
+                            GUILayout.Label($"Layer {_selectedTransform.gameObject.layer} ({LayerMask.LayerToName(_selectedTransform.gameObject.layer)})");
 
-                        GUILayout.FlexibleSpace();
+                            GUILayout.Space(8);
 
-                        if (GUILayout.Button("Destroy"))
-                            Object.Destroy(_selectedTransform.gameObject);
+                            GUILayout.Toggle(_selectedTransform.gameObject.isStatic, "isStatic");
 
-                        if (GUILayout.Button("Inspect"))
-                            OnInspectorOpen(_selectedTransform, fullTransfromPath);
+                            GUILayout.FlexibleSpace();
+
+                            if (GUILayout.Button("Destroy"))
+                                Object.Destroy(_selectedTransform.gameObject);
+
+                            if (GUILayout.Button("Inspect"))
+                                OnInspectorOpen(_selectedTransform, fullTransfromPath);
+                        }
+                        GUILayout.EndHorizontal();
                     }
-                    GUILayout.EndHorizontal();
+                    GUILayout.EndVertical();
 
                     foreach (var component in _selectedTransform.GetComponents<Component>())
                     {
@@ -249,12 +247,12 @@ namespace CheatTools
                             }*/
                         break;
                     case Slider b:
-                    {
-                        for (var i = 0; i < b.onValueChanged.GetPersistentEventCount(); ++i)
-                            GUILayout.Label(
-                                $"{b.onValueChanged.GetPersistentTarget(i).GetType().FullName}.{b.onValueChanged.GetPersistentMethodName(i)}");
-                        break;
-                    }
+                        {
+                            for (var i = 0; i < b.onValueChanged.GetPersistentEventCount(); ++i)
+                                GUILayout.Label(
+                                    $"{b.onValueChanged.GetPersistentTarget(i).GetType().FullName}.{b.onValueChanged.GetPersistentMethodName(i)}");
+                            break;
+                        }
                     case Text text:
                         GUILayout.Label(
                             $"{text.text} {text.font} {text.fontStyle} {text.fontSize} {text.alignment} {text.alignByGeometry} {text.resizeTextForBestFit} {text.color}");
@@ -268,35 +266,35 @@ namespace CheatTools
                             : "[No material]");
                         break;
                     case Button b:
-                    {
-                        for (var i = 0; i < b.onClick.GetPersistentEventCount(); ++i)
-                            GUILayout.Label(
-                                $"{b.onClick.GetPersistentTarget(i).GetType().FullName}.{b.onClick.GetPersistentMethodName(i)}");
-                        var calls = b.onClick.GetPrivateExplicit<UnityEventBase>("m_Calls")
-                            .GetPrivate("m_RuntimeCalls") as IList;
-                        foreach (var call in calls)
                         {
-                            var unityAction = (UnityAction) call.GetPrivate("Delegate");
-                            GUILayout.Label(
-                                $"{unityAction.Target.GetType().FullName}.{unityAction.Method.Name}");
+                            for (var i = 0; i < b.onClick.GetPersistentEventCount(); ++i)
+                                GUILayout.Label(
+                                    $"{b.onClick.GetPersistentTarget(i).GetType().FullName}.{b.onClick.GetPersistentMethodName(i)}");
+                            var calls = b.onClick.GetPrivateExplicit<UnityEventBase>("m_Calls")
+                                .GetPrivate("m_RuntimeCalls") as IList;
+                            foreach (var call in calls)
+                            {
+                                var unityAction = (UnityAction)call.GetPrivate("Delegate");
+                                GUILayout.Label(
+                                    $"{unityAction.Target.GetType().FullName}.{unityAction.Method.Name}");
+                            }
+                            break;
                         }
-                        break;
-                    }
                     case Toggle b:
-                    {
-                        for (var i = 0; i < b.onValueChanged.GetPersistentEventCount(); ++i)
-                            GUILayout.Label(
-                                $"{b.onValueChanged.GetPersistentTarget(i).GetType().FullName}.{b.onValueChanged.GetPersistentMethodName(i)}");
-                        var calls = b.onValueChanged.GetPrivateExplicit<UnityEventBase>("m_Calls")
-                            .GetPrivate("m_RuntimeCalls") as IList;
-                        foreach (var call in calls)
                         {
-                            var unityAction = (UnityAction<bool>) call.GetPrivate("Delegate");
-                            GUILayout.Label(
-                                $"{unityAction.Target.GetType().FullName}.{unityAction.Method.Name}");
+                            for (var i = 0; i < b.onValueChanged.GetPersistentEventCount(); ++i)
+                                GUILayout.Label(
+                                    $"{b.onValueChanged.GetPersistentTarget(i).GetType().FullName}.{b.onValueChanged.GetPersistentMethodName(i)}");
+                            var calls = b.onValueChanged.GetPrivateExplicit<UnityEventBase>("m_Calls")
+                                .GetPrivate("m_RuntimeCalls") as IList;
+                            foreach (var call in calls)
+                            {
+                                var unityAction = (UnityAction<bool>)call.GetPrivate("Delegate");
+                                GUILayout.Label(
+                                    $"{unityAction.Target.GetType().FullName}.{unityAction.Method.Name}");
+                            }
+                            break;
                         }
-                        break;
-                    }
                     case RectTransform rt:
                         GUILayout.Label("anchorMin " + rt.anchorMin);
                         GUILayout.Label("anchorMax " + rt.anchorMax);
