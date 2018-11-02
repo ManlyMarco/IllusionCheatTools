@@ -15,7 +15,7 @@ namespace CheatTools
         private static bool _disableCameraControls;
 
         private static bool _hooksInstalled;
-        private static List<string> _sceneNameOverride;
+        //private static List<string> _sceneNameOverride;
 
         public static bool DisableCameraControls
         {
@@ -29,6 +29,9 @@ namespace CheatTools
                 }
 
                 _disableCameraControls = value;
+
+                var hSceneProc = Object.FindObjectOfType<HSceneProc>();
+                if (hSceneProc != null) hSceneProc.enabled = !value;
             }
         }
 
@@ -42,11 +45,11 @@ namespace CheatTools
             else
             {
                 HarmonyInstance.Create("CursorBlockerHooks").PatchAll(typeof(CursorBlocker));
-                _sceneNameOverride = new List<string> {"CursorBlocker"};
+                //_sceneNameOverride = new List<string> {"CursorBlocker"};
             }
         }
 
-        [HarmonyPrefix]
+        /*[HarmonyPrefix]
         [HarmonyPatch(typeof(Scene))]
         [HarmonyPatch("NowSceneNames", PropertyMethod.Getter)]
         public static bool NowSceneNamesOverride(Scene __instance, ref List<string> __result)
@@ -57,7 +60,7 @@ namespace CheatTools
                 return false;
             }
             return true;
-        }
+        }*/
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(CameraControl_Ver2), "LateUpdate")]
