@@ -11,22 +11,22 @@ namespace CheatTools
                 throw new ArgumentNullException(nameof(p));
 
             _instance = ins;
-            _prop = p;
+            PropertyInfo = p;
         }
 
-        private readonly PropertyInfo _prop;
+        public PropertyInfo PropertyInfo { get; }
 
         private readonly object _instance;
 
         public override object GetValueToCache()
         {
-            if (!_prop.CanRead)
+            if (!PropertyInfo.CanRead)
                 return "WRITE ONLY";
 
-            if (_prop.PropertyType.IsArray)
+            if (PropertyInfo.PropertyType.IsArray)
                 return "IS INDEXED";
 
-            try { return _prop.GetValue(_instance, null); }
+            try { return PropertyInfo.GetValue(_instance, null); }
             catch (Exception ex)
             {
                 return "ERROR: " + ex.Message;
@@ -35,20 +35,20 @@ namespace CheatTools
 
         public override void SetValue(object newValue)
         {
-            if (_prop.CanWrite)
+            if (PropertyInfo.CanWrite)
             {
-                _prop.SetValue(_instance, newValue, null);
+                PropertyInfo.SetValue(_instance, newValue, null);
             }
         }
 
         public override Type Type()
         {
-            return _prop.PropertyType;
+            return PropertyInfo.PropertyType;
         }
 
         public override bool CanSetValue()
         {
-            return _prop.CanWrite;
+            return PropertyInfo.CanWrite;
         }
     }
 }

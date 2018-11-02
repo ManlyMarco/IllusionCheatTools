@@ -14,7 +14,7 @@ namespace CheatTools
                 throw new ArgumentNullException(nameof(m));
 
             _instance = ins;
-            _methodInfo = m;
+            MethodInfo = m;
         }
 
         private static string GetMethodName(object ins, MethodBase methodInfo)
@@ -34,7 +34,7 @@ namespace CheatTools
             return "INVALID";
         }
 
-        private readonly MethodInfo _methodInfo;
+        public MethodInfo MethodInfo { get; }
 
         private readonly object _instance;
         private object _valueCache;
@@ -56,7 +56,7 @@ namespace CheatTools
                 // If this is the first user clicked, eval the method and display the result. second time enter as normal
                 if (_valueCache == null)
                 {
-                    var result = _methodInfo.Invoke(_instance, null);
+                    var result = MethodInfo.Invoke(_instance, null);
 
                     _valueCache = result;
                     return null;
@@ -78,7 +78,7 @@ namespace CheatTools
 
         public override Type Type()
         {
-            return _methodInfo.ReturnType;
+            return MethodInfo.ReturnType;
         }
 
         public override bool CanSetValue()

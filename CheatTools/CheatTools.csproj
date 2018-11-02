@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="CheatWindow.cs" />
     <Compile Include="CursorBlocker.cs" />
+    <Compile Include="DnSpyHelper.cs" />
     <Compile Include="Inspector\Entries\CallbackCacheEntey.cs" />
     <Compile Include="Inspector\Inspector.cs" />
     <Compile Include="Inspector\Entries\CacheEntryBase.cs" />

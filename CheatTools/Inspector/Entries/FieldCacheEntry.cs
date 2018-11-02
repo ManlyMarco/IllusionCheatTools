@@ -11,7 +11,7 @@ namespace CheatTools
                 throw new ArgumentNullException(nameof(f));
 
             _instance = ins;
-            _field = f;
+            FieldInfo = f;
         }
 
         internal static string GetMemberName(object ins, MemberInfo f)
@@ -20,25 +20,25 @@ namespace CheatTools
             return "S/" + f?.Name;
         }
 
-        private readonly FieldInfo _field;
+        public FieldInfo FieldInfo { get; }
         private readonly object _instance;
 
         public override object GetValueToCache()
         {
-            return _field.GetValue(_instance);
+            return FieldInfo.GetValue(_instance);
         }
         
         public override void SetValue(object newValue)
         {
-            if (!_field.IsInitOnly)
+            if (!FieldInfo.IsInitOnly)
             {
-                _field.SetValue(_instance, newValue);
+                FieldInfo.SetValue(_instance, newValue);
             }
         }
 
         public override Type Type()
         {
-            return _field.FieldType;
+            return FieldInfo.FieldType;
         }
 
         public override bool CanSetValue()

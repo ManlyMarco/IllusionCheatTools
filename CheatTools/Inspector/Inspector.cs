@@ -346,6 +346,9 @@ namespace CheatTools
                                             widthCalculated = true;
                                         }
                                     }
+
+                                    if (DnSpyHelper.IsAvailable && GUILayout.Button("^", GUILayout.Width(19)))
+                                        DnSpyHelper.OpenTypeInDnSpy(entry);
                                 }
                                 GUILayout.EndHorizontal();
                             }
