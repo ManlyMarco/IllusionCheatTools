@@ -1,4 +1,4 @@
-# Koikatu! Trained and Debugging Tools
+# Koikatu! Trainer and Debugging Tools
 Trainer for Koikatsu with advanced debugging tools. It allows control over player, girls, and most other aspects of the game. It is possible to view objects in current scene and inspect all of their variables and components. Inspector allows modifying values of the components in real time, while the browser allows disabling/enabling and destroying objects.
 
 ![All windows opened at the same time](https://user-images.githubusercontent.com/39247311/47887130-17985d00-de3e-11e8-9e15-1fed99ace4f3.png)
