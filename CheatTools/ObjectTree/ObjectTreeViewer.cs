@@ -3,12 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-namespace CheatTools
+namespace CheatTools.ObjectTree
 {
     public class ObjectTreeViewer
     {
@@ -20,6 +22,8 @@ namespace CheatTools
         private int _treeViewWidth = 400;
         private Rect _windowRect;
         private bool _scrollTreeToSelected;
+        private bool _enabled;
+        private List<GameObject> _dontDestroyRootObjects;
 
         public void SelectAndShowObject(Transform target)
         {
@@ -42,7 +46,26 @@ namespace CheatTools
                 inspectorOpenCallback ?? throw new ArgumentNullException(nameof(inspectorOpenCallback));
         }
 
-        public bool Enabled { get; set; }
+        public bool Enabled
+        {
+            get { return _enabled; }
+            set
+            {
+                _enabled = value;
+                if (value)
+                {
+                    var go = new GameObject(nameof(ObjectTreeViewer));
+                    Object.DontDestroyOnLoad(go);
+                    var dontDestroyOnLoadScene = go.scene;
+                    Object.Destroy(go);
+
+                    _dontDestroyRootObjects = Resources.FindObjectsOfTypeAll<Transform>()
+                        .Where(t => t.parent == null && t.gameObject.scene == dontDestroyOnLoadScene)
+                        .Select(x => x.gameObject)
+                        .ToList();
+                }
+            }
+        }
 
         protected void OnInspectorOpen(object obj, string name)
         {
@@ -227,10 +250,9 @@ namespace CheatTools
                 {
                     case Image img:
                         if (img.sprite != null && img.sprite.texture != null)
-                            GUILayout.Label(img.sprite.name); /*
+                            GUILayout.Label(img.sprite.name);
                             try
                             {
-                                GUILayout.Label(img.sprite.name);
                                 var newImg = img.sprite.texture.GetPixels(
                                     (int)img.sprite.textureRect.x, (int)img.sprite.textureRect.y,
                                     (int)img.sprite.textureRect.width,
@@ -241,10 +263,9 @@ namespace CheatTools
                                 tex.Apply();
                                 GUILayout.Label(tex);
                             }
-                            catch (Exception ex)
+                            catch (Exception)
                             {
-                                //BepInEx.Logger.Log(LogLevel.Error, ex);
-                            }*/
+                            }
                         break;
                     case Slider b:
                         {
@@ -329,9 +350,13 @@ namespace CheatTools
             _treeScrollPosition = GUILayout.BeginScrollView(_treeScrollPosition, GUI.skin.box,
                 GUILayout.ExpandHeight(true), GUILayout.Width(_treeViewWidth));
             {
-                foreach (var t in Resources.FindObjectsOfTypeAll<Transform>())
-                    if (t.parent == null)
-                        DisplayObjectTreeHelper(t.gameObject, 0);
+                foreach (var rootGameObject in
+                    SceneManager.GetActiveScene().GetRootGameObjects()
+                    .Concat(_dontDestroyRootObjects.Where(x => x != null))
+                    .OrderBy(x => x.name))
+                {
+                    DisplayObjectTreeHelper(rootGameObject, 0);
+                }
             }
             GUILayout.EndScrollView();
         }
