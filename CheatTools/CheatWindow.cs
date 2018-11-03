@@ -13,28 +13,32 @@ namespace CheatTools
 {
     public class CheatWindow
     {
+        private readonly FieldInfo _advSceneTargetHeroineProp = typeof(ADV.ADVScene).GetField("m_TargetHeroine",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
         private const int ScreenOffset = 20;
         private readonly string[] _hExpNames = { "First time", "Inexperienced", "Experienced", "Perverted" };
 
         private readonly Inspector _inspector;
         private readonly ObjectTreeViewer _treeViewer;
 
+        private readonly string _mainWindowTitle;
+        private string _typeNameToSearchBox = "Specify type name to search";
         private Vector2 _cheatsScrollPos;
         private Rect _cheatWindowRect;
         private Rect _screenRect;
-        private readonly string _mainWindowTitle;
         private bool _show;
 
         private SaveData.Heroine _currentVisibleGirl;
-        private Game _gameMgr;
         private HFlag _hFlag;
         private TalkScene _talkScene;
         private HSprite _hSprite;
-        private string _typeNameToSearchBox = "Specify type name to search";
-
-        private readonly FieldInfo _advSceneTargetHeroineProp = typeof(ADV.ADVScene).GetField("m_TargetHeroine",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
+        private Studio.Studio _studioInstance;
+        private Manager.Sound _soundInstance;
+        private Communication _communicationInstance;
+        private Scene _sceneInstance;
+        private Game _gameMgr;
+        
         public CheatWindow()
         {
             _mainWindowTitle = "Cheat Tools" + Assembly.GetExecutingAssembly().GetName().Version;
@@ -46,9 +50,7 @@ namespace CheatTools
                 _inspector.InspectorPush(new InspectorStackEntry(obj, name));
             });
         }
-
-        public Game GameMgr => _gameMgr ?? (_gameMgr = Game.Instance);
-
+        
         public bool Show
         {
             get => _show;
@@ -63,6 +65,11 @@ namespace CheatTools
                 _hFlag = Object.FindObjectOfType<HFlag>();
                 _talkScene = Object.FindObjectOfType<TalkScene>();
                 _hSprite = Object.FindObjectOfType<HSprite>();
+                _studioInstance = Studio.Studio.Instance;
+                _soundInstance = Manager.Sound.Instance;
+                _communicationInstance = Communication.Instance;
+                _sceneInstance = Scene.Instance;
+                _gameMgr = Game.Instance;
             }
         }
 
@@ -72,7 +79,7 @@ namespace CheatTools
             {
                 _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
                 {
-                    if (GameMgr != null && !GameMgr.saveData.isOpening)
+                    if (_gameMgr != null && !_gameMgr.saveData.isOpening)
                         DrawPlayerCheats();
                     else
                         GUILayout.Label("Start the game to see player cheats");
@@ -118,15 +125,15 @@ namespace CheatTools
                         foreach (var obj in new[]
                         {
                             new KeyValuePair<object, string>(
-                                GameMgr?.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x)),
+                                _gameMgr?.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x)),
                                 "Heroine list"),
-                            new KeyValuePair<object, string>(GameMgr, "Manager.Game.Instance"),
-                            new KeyValuePair<object, string>(Scene.Instance, "Manager.Scene.Instance"),
-                            new KeyValuePair<object, string>(Communication.Instance, "Manager.Communication.Instance"),
-                            new KeyValuePair<object, string>(Manager.Sound.Instance, "Manager.Sound.Instance"),
+                            new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
+                            new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
+                            new KeyValuePair<object, string>(_communicationInstance, "Manager.Communication.Instance"),
+                            new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
                             new KeyValuePair<object, string>(_hFlag, "HFlag"),
                             new KeyValuePair<object, string>(_talkScene, "TalkScene"),
-                            new KeyValuePair<object, string>(Studio.Studio.Instance, "Studio.Instance"),
+                            new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
                             new KeyValuePair<object, string>(Utilities.GetRootGoScanner(), "Root Objects")
                         })
                         {
@@ -285,19 +292,19 @@ namespace CheatTools
 
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Label("STR: " + GameMgr.Player.physical, GUILayout.Width(60));
-                    GameMgr.Player.physical = (int)GUILayout.HorizontalSlider(GameMgr.Player.physical, 0, 100);
+                    GUILayout.Label("STR: " + _gameMgr.Player.physical, GUILayout.Width(60));
+                    _gameMgr.Player.physical = (int)GUILayout.HorizontalSlider(_gameMgr.Player.physical, 0, 100);
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
                     {
-                        GUILayout.Label("INT: " + GameMgr.Player.intellect, GUILayout.Width(60));
-                        GameMgr.Player.intellect = (int)GUILayout.HorizontalSlider(GameMgr.Player.intellect, 0, 100);
+                        GUILayout.Label("INT: " + _gameMgr.Player.intellect, GUILayout.Width(60));
+                        _gameMgr.Player.intellect = (int)GUILayout.HorizontalSlider(_gameMgr.Player.intellect, 0, 100);
                     }
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
                     {
-                        GUILayout.Label("H: " + GameMgr.Player.hentai, GUILayout.Width(60));
-                        GameMgr.Player.hentai = (int)GUILayout.HorizontalSlider(GameMgr.Player.hentai, 0, 100);
+                        GUILayout.Label("H: " + _gameMgr.Player.hentai, GUILayout.Width(60));
+                        _gameMgr.Player.hentai = (int)GUILayout.HorizontalSlider(_gameMgr.Player.hentai, 0, 100);
                     }
                     GUILayout.EndHorizontal();
 
@@ -311,9 +318,11 @@ namespace CheatTools
                                 GUILayout.Label("Time: " + cycle.timer.ToString("N1"), GUILayout.Width(65));
                                 var newVal = GUILayout.HorizontalSlider(cycle.timer, 0, Cycle.TIME_LIMIT);
                                 if (Math.Abs(newVal - cycle.timer) > 0.09)
+                                {
                                     typeof(Cycle)
-                                        .GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)?
-                                        .SetValue(cycle, newVal);
+                                        .GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)
+                                        ?.SetValue(cycle, newVal);
+                                }
                             }
                             GUILayout.EndHorizontal();
                         }
@@ -329,12 +338,12 @@ namespace CheatTools
                 }
 
                 if (GUILayout.Button("Add 10000 club points (+1 level)"))
-                    GameMgr.saveData.clubReport.comAdd += 10000;
+                    _gameMgr.saveData.clubReport.comAdd += 10000;
 
                 if (GUILayout.Button("Open player data in inspector"))
                 {
                     _inspector.InspectorClear();
-                    _inspector.InspectorPush(new InspectorStackEntry(GameMgr.saveData.player, "Player data"));
+                    _inspector.InspectorPush(new InspectorStackEntry(_gameMgr.saveData.player, "Player data"));
                 }
             }
             GUILayout.EndVertical();
@@ -344,7 +353,7 @@ namespace CheatTools
         {
             try
             {
-                var nowScene = GameMgr?.actScene?.AdvScene?.nowScene;
+                var nowScene = _gameMgr?.actScene?.AdvScene?.nowScene;
                 if (!nowScene) return null;
 
                 return _advSceneTargetHeroineProp.GetValue(nowScene) as SaveData.Heroine;
