@@ -303,8 +303,8 @@ namespace CheatTools
                     {
                         GUILayout.BeginHorizontal();
                         {
-                            GUILayout.Label("Value type", GUI.skin.box, GUILayout.Width(InspectorTypeWidth));
-                            GUILayout.Label("Variable name", GUI.skin.box, GUILayout.Width(InspectorNameWidth));
+                            GUILayout.Label("Value/return type", GUI.skin.box, GUILayout.Width(InspectorTypeWidth + 2));
+                            GUILayout.Label("Member name", GUI.skin.box, GUILayout.Width(InspectorNameWidth + 2));
                             GUILayout.Label("Value", GUI.skin.box, GUILayout.ExpandWidth(true));
                         }
                         GUILayout.EndHorizontal();
