@@ -209,7 +209,7 @@ namespace CheatTools.ObjectTree
                                 Object.Destroy(_selectedTransform.gameObject);
 
                             if (GUILayout.Button("Inspect"))
-                                OnInspectorOpen(_selectedTransform, fullTransfromPath);
+                                OnInspectorOpen(_selectedTransform.gameObject, fullTransfromPath);
                         }
                         GUILayout.EndHorizontal();
                     }
@@ -328,7 +328,7 @@ namespace CheatTools.ObjectTree
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Inspect"))
                     OnInspectorOpen(component,
-                        $"{GetFullTransfromPath(component.transform)}>{component.GetType().FullName}");
+                        $"{GetFullTransfromPath(component.transform)} > {component.GetType().FullName}");
             }
             GUILayout.EndHorizontal();
         }
