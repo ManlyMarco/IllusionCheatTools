@@ -27,13 +27,15 @@ namespace CheatTools
         {
             return FieldInfo.GetValue(_instance);
         }
-        
-        public override void SetValue(object newValue)
+
+        protected override bool OnSetValue(object newValue)
         {
             if (!FieldInfo.IsInitOnly)
             {
                 FieldInfo.SetValue(_instance, newValue);
+                return true;
             }
+            return false;
         }
 
         public override Type Type()

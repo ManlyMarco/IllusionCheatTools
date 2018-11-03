@@ -18,10 +18,6 @@ namespace CheatTools
             return _message;
         }
 
-        public override void SetValue(object newValue)
-        {
-        }
-
         public override bool CanEnterValue()
         {
             return true;
@@ -30,6 +26,11 @@ namespace CheatTools
         public override object EnterValue()
         {
             return _callback();
+        }
+
+        protected override bool OnSetValue(object newValue)
+        {
+            return false;
         }
 
         public override Type Type()

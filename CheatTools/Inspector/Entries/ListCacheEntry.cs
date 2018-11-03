@@ -22,10 +22,10 @@ namespace CheatTools
         {
             return _target;
         }
-        
-        public override void SetValue(object newValue)
-        {
 
+        protected override bool OnSetValue(object newValue)
+        {
+            return false;
         }
 
         public override Type Type()

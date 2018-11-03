@@ -21,7 +21,14 @@ namespace CheatTools
             return _valueCache ?? (_valueCache = GetValueToCache());
         }
 
-        public abstract void SetValue(object newValue);
+        public void SetValue(object newValue)
+        {
+            if (OnSetValue(newValue))
+                _valueCache = newValue;
+        }
+
+        protected abstract bool OnSetValue(object newValue);
+
         public abstract Type Type();
         public abstract bool CanSetValue();
 

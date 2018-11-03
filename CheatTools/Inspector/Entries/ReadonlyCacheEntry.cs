@@ -19,8 +19,9 @@ namespace CheatTools
             return Object;
         }
 
-        public override void SetValue(object newValue)
+        protected override bool OnSetValue(object newValue)
         {
+            return false;
         }
 
         public override Type Type()

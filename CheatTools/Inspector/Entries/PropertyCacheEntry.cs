@@ -33,12 +33,14 @@ namespace CheatTools
             }
         }
 
-        public override void SetValue(object newValue)
+        protected override bool OnSetValue(object newValue)
         {
             if (PropertyInfo.CanWrite)
             {
                 PropertyInfo.SetValue(_instance, newValue, null);
+                return true;
             }
+            return false;
         }
 
         public override Type Type()
