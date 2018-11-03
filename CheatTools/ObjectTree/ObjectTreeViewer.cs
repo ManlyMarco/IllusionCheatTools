@@ -100,7 +100,7 @@ namespace CheatTools.ObjectTree
             {
                 GUILayout.Space(indent * 20f);
 
-                GUILayout.BeginHorizontal(GUI.skin.box);
+                GUILayout.BeginHorizontal();
                 {
                     if (go.transform.childCount != 0)
                         if (GUILayout.Toggle(_openedObjects.Contains(go), "", GUILayout.ExpandWidth(false)))
@@ -117,10 +117,18 @@ namespace CheatTools.ObjectTree
                         GUILayout.Space(20f);
 
                     if (GUILayout.Button(go.name, GUI.skin.label, GUILayout.ExpandWidth(true)))
+                    {
+                        if(_selectedTransform == go.transform)
+                        {
+                            if (_openedObjects.Contains(go) == false)
+                                _openedObjects.Add(go);
+                            else
+                                _openedObjects.Remove(go);
+                        }
                         _selectedTransform = go.transform;
+                    }
 
                     GUI.color = c;
-                    go.SetActive(GUILayout.Toggle(go.activeSelf, "Active", GUILayout.ExpandWidth(false)));
                 }
                 GUILayout.EndHorizontal();
             }
@@ -202,6 +210,8 @@ namespace CheatTools.ObjectTree
                             GUILayout.Space(8);
 
                             GUILayout.Toggle(_selectedTransform.gameObject.isStatic, "isStatic");
+
+                            _selectedTransform.gameObject.SetActive(GUILayout.Toggle(_selectedTransform.gameObject.activeSelf, "Active", GUILayout.ExpandWidth(false)));
 
                             GUILayout.FlexibleSpace();
 
