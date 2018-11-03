@@ -95,6 +95,10 @@ namespace CheatTools.ObjectTree
                     _treeScrollPosition.y = GUILayoutUtility.GetLastRect().y - 50;
                 }
             }
+            else if (!go.activeSelf)
+            {
+                GUI.color = new Color(1, 1, 1, 0.6f);
+            }
 
             GUILayout.BeginHorizontal();
             {
