@@ -63,7 +63,7 @@ namespace CheatTools
                     SetWindowSizes();
 
                     if (_treeViewer.Enabled)
-                        _treeViewer.UpdateRootGameobjectCache();
+                        _treeViewer.UpdateCaches();
                 }
 
                 CursorBlocker.DisableCameraControls = _show;

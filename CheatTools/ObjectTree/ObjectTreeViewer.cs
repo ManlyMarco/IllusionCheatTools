@@ -24,6 +24,7 @@ namespace CheatTools.ObjectTree
         private bool _scrollTreeToSelected;
         private bool _enabled;
         private List<GameObject> _cachedRootGameObjects;
+        private readonly Dictionary<Image, Texture2D> _imagePreviewCache = new Dictionary<Image, Texture2D>();
 
         public void SelectAndShowObject(Transform target)
         {
@@ -48,24 +49,27 @@ namespace CheatTools.ObjectTree
 
         public bool Enabled
         {
-            get { return _enabled; }
+            get => _enabled;
             set
             {
+                if (value && !_enabled)
+                    UpdateCaches();
+
                 _enabled = value;
-                if (value)
-                    UpdateRootGameobjectCache();
             }
         }
 
-        public void UpdateRootGameobjectCache()
+        public void UpdateCaches()
         {
             _cachedRootGameObjects = Resources.FindObjectsOfTypeAll<Transform>()
                                     .Where(t => t.parent == null)
                                     .Select(x => x.gameObject)
                                     .ToList();
+
+            _imagePreviewCache.Clear();
         }
 
-        protected void OnInspectorOpen(object obj, string name)
+        private void OnInspectorOpen(object obj, string name)
         {
             _inspectorOpenCallback.Invoke(obj, name);
         }
@@ -265,22 +269,30 @@ namespace CheatTools.ObjectTree
                         {
                             GUILayout.Label(img.sprite.name);
 
-                            try
-                            {//todo save results in a cache
-                                var newImg = img.sprite.texture.GetPixels(
-                                    (int)img.sprite.textureRect.x, (int)img.sprite.textureRect.y,
-                                    (int)img.sprite.textureRect.width,
-                                    (int)img.sprite.textureRect.height);
-                                var tex = new Texture2D((int)img.sprite.textureRect.width,
-                                    (int)img.sprite.textureRect.height);
-                                tex.SetPixels(newImg);
-                                //todo tex.Resize(0, 0); get proper width
-                                tex.Apply();
-                                GUILayout.Label(tex);
-                            }
-                            catch (Exception)
+                            if (!_imagePreviewCache.TryGetValue(img, out var tex))
                             {
+                                try
+                                {
+                                    var newImg = img.sprite.texture.GetPixels(
+                                        (int)img.sprite.textureRect.x, (int)img.sprite.textureRect.y,
+                                        (int)img.sprite.textureRect.width,
+                                        (int)img.sprite.textureRect.height);
+                                    tex = new Texture2D((int)img.sprite.textureRect.width,
+                                        (int)img.sprite.textureRect.height);
+                                    tex.SetPixels(newImg);
+                                    //todo tex.Resize(0, 0); get proper width
+                                    tex.Apply();
+
+                                    _imagePreviewCache.Add(img, tex);
+                                }
+                                catch (Exception)
+                                {
+                                    tex = null;
+                                }
                             }
+
+                            if(tex != null)
+                                GUILayout.Label(tex);
                         }
                         //todo img.sprite.texture.EncodeToPNG() button
                         break;
@@ -308,8 +320,8 @@ namespace CheatTools.ObjectTree
                             for (var i = 0; i < b.onClick.GetPersistentEventCount(); ++i)
                                 GUILayout.Label(
                                     $"{b.onClick.GetPersistentTarget(i).GetType().FullName}.{b.onClick.GetPersistentMethodName(i)}");
-                            var calls = b.onClick.GetPrivateExplicit<UnityEventBase>("m_Calls")
-                                .GetPrivate("m_RuntimeCalls") as IList;
+                            var calls = (IList)b.onClick.GetPrivateExplicit<UnityEventBase>("m_Calls")
+                                .GetPrivate("m_RuntimeCalls");
                             foreach (var call in calls)
                             {
                                 var unityAction = (UnityAction)call.GetPrivate("Delegate");
@@ -323,8 +335,8 @@ namespace CheatTools.ObjectTree
                             for (var i = 0; i < b.onValueChanged.GetPersistentEventCount(); ++i)
                                 GUILayout.Label(
                                     $"{b.onValueChanged.GetPersistentTarget(i).GetType().FullName}.{b.onValueChanged.GetPersistentMethodName(i)}");
-                            var calls = b.onValueChanged.GetPrivateExplicit<UnityEventBase>("m_Calls")
-                                .GetPrivate("m_RuntimeCalls") as IList;
+                            var calls = (IList)b.onValueChanged.GetPrivateExplicit<UnityEventBase>("m_Calls")
+                                .GetPrivate("m_RuntimeCalls");
                             foreach (var call in calls)
                             {
                                 var unityAction = (UnityAction<bool>)call.GetPrivate("Delegate");
