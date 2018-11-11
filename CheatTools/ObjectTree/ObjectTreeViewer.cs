@@ -23,7 +23,7 @@ namespace CheatTools.ObjectTree
         private Rect _windowRect;
         private bool _scrollTreeToSelected;
         private bool _enabled;
-        private List<GameObject> _dontDestroyRootObjects;
+        private List<GameObject> _cachedRootGameObjects;
 
         public void SelectAndShowObject(Transform target)
         {
@@ -53,18 +53,16 @@ namespace CheatTools.ObjectTree
             {
                 _enabled = value;
                 if (value)
-                {
-                    var go = new GameObject(nameof(ObjectTreeViewer));
-                    Object.DontDestroyOnLoad(go);
-                    var dontDestroyOnLoadScene = go.scene;
-                    Object.Destroy(go);
-
-                    _dontDestroyRootObjects = Resources.FindObjectsOfTypeAll<Transform>()
-                        .Where(t => t.parent == null && t.gameObject.scene == dontDestroyOnLoadScene)
-                        .Select(x => x.gameObject)
-                        .ToList();
-                }
+                    UpdateRootGameobjectCache();
             }
+        }
+
+        public void UpdateRootGameobjectCache()
+        {
+            _cachedRootGameObjects = Resources.FindObjectsOfTypeAll<Transform>()
+                                    .Where(t => t.parent == null)
+                                    .Select(x => x.gameObject)
+                                    .ToList();
         }
 
         protected void OnInspectorOpen(object obj, string name)
@@ -122,7 +120,7 @@ namespace CheatTools.ObjectTree
 
                     if (GUILayout.Button(go.name, GUI.skin.label, GUILayout.ExpandWidth(true)))
                     {
-                        if(_selectedTransform == go.transform)
+                        if (_selectedTransform == go.transform)
                         {
                             if (_openedObjects.Contains(go) == false)
                                 _openedObjects.Add(go);
@@ -264,9 +262,11 @@ namespace CheatTools.ObjectTree
                 {
                     case Image img:
                         if (img.sprite != null && img.sprite.texture != null)
+                        {
                             GUILayout.Label(img.sprite.name);
+
                             try
-                            {
+                            {//todo save results in a cache
                                 var newImg = img.sprite.texture.GetPixels(
                                     (int)img.sprite.textureRect.x, (int)img.sprite.textureRect.y,
                                     (int)img.sprite.textureRect.width,
@@ -274,12 +274,15 @@ namespace CheatTools.ObjectTree
                                 var tex = new Texture2D((int)img.sprite.textureRect.width,
                                     (int)img.sprite.textureRect.height);
                                 tex.SetPixels(newImg);
+                                //todo tex.Resize(0, 0); get proper width
                                 tex.Apply();
                                 GUILayout.Label(tex);
                             }
                             catch (Exception)
                             {
                             }
+                        }
+                        //todo img.sprite.texture.EncodeToPNG() button
                         break;
                     case Slider b:
                         {
@@ -340,6 +343,30 @@ namespace CheatTools.ObjectTree
                 }
 
                 GUILayout.FlexibleSpace();
+
+                if (!(component is Transform))
+                {
+                    if (GUILayout.Button("Reset"))
+                    {
+                        var t = component.GetType();
+                        var g = component.gameObject;
+
+                        IEnumerator RecreateCo()
+                        {
+                            Object.Destroy(component);
+                            yield return null;
+                            g.AddComponent(t);
+                        }
+
+                        Object.FindObjectOfType<CheatTools>().StartCoroutine(RecreateCo());
+                    }
+
+                    if (GUILayout.Button("Destroy"))
+                    {
+                        Object.Destroy(component);
+                    }
+                }
+
                 if (GUILayout.Button("Inspect"))
                     OnInspectorOpen(component,
                         $"{GetFullTransfromPath(component.transform)} > {component.GetType().FullName}");
@@ -366,7 +393,8 @@ namespace CheatTools.ObjectTree
             {
                 foreach (var rootGameObject in
                     SceneManager.GetActiveScene().GetRootGameObjects()
-                    .Concat(_dontDestroyRootObjects.Where(x => x != null))
+                    .Concat(_cachedRootGameObjects.Where(x => x != null))
+                    .Distinct()
                     .OrderBy(x => x.name))
                 {
                     DisplayObjectTreeHelper(rootGameObject, 0);

@@ -39,7 +39,7 @@ namespace CheatTools
         private Communication _communicationInstance;
         private Scene _sceneInstance;
         private Game _gameMgr;
-        
+
         public CheatWindow()
         {
             _mainWindowTitle = "Cheat Tools" + Assembly.GetExecutingAssembly().GetName().Version;
@@ -51,7 +51,7 @@ namespace CheatTools
                 _inspector.InspectorPush(new InspectorStackEntry(obj, name));
             });
         }
-        
+
         public bool Show
         {
             get => _show;
@@ -59,7 +59,12 @@ namespace CheatTools
             {
                 _show = value;
                 if (value)
+                {
                     SetWindowSizes();
+
+                    if (_treeViewer.Enabled)
+                        _treeViewer.UpdateRootGameobjectCache();
+                }
 
                 CursorBlocker.DisableCameraControls = _show;
 
@@ -97,7 +102,7 @@ namespace CheatTools
                     {
                         GUILayout.Label("Current girl stats");
 
-                        _currentVisibleGirl =  GetCurrentTalkSceneHeroine(_talkScene) ?? GetCurrentHflagHeroine(_hFlag) ?? 
+                        _currentVisibleGirl = GetCurrentTalkSceneHeroine(_talkScene) ?? GetCurrentHflagHeroine(_hFlag) ??
                             GetCurrentAdvHeroine() ?? _currentVisibleGirl;
 
                         if (_currentVisibleGirl != null)
@@ -116,12 +121,12 @@ namespace CheatTools
                             Time.timeScale = 1;
                     }
                     GUILayout.EndHorizontal();
-                    
+
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
                         if (GUILayout.Button("Open Scene Object Browser"))
                             _treeViewer.Enabled = !_treeViewer.Enabled;
-                        
+
                         GUILayout.Label("Open in inspector");
                         foreach (var obj in new[]
                         {

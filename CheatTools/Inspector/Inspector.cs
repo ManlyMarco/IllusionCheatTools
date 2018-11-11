@@ -45,11 +45,12 @@ namespace CheatTools
 
             if (objectToOpen == null) return;
 
+            var type = objectToOpen.GetType();
+
             IEnumerable<ICacheEntry> CacheMethods(object instance, MethodInfo[] typesToCheck)
             {
                 var cacheItems = typesToCheck
-                    .Where(x => !x.IsConstructor && !x.IsSpecialName && x.ReturnType != typeof(void) &&
-                                x.GetParameters().Length == 0)
+                    .Where(x => !x.IsConstructor && !x.IsSpecialName && x.GetParameters().Length == 0)
                     .Where(f => !f.IsDefined(typeof(CompilerGeneratedAttribute), false))
                     .Where(x => x.Name != "MemberwiseClone" && x.Name != "obj_address") // Instant game crash
                     .Select(m =>
@@ -57,7 +58,7 @@ namespace CheatTools
                         if (m.ContainsGenericParameters)
                             try
                             {
-                                return m.MakeGenericMethod(typeof(Object));
+                                return m.MakeGenericMethod(type);
                             }
                             catch (Exception)
                             {
@@ -85,8 +86,6 @@ namespace CheatTools
                 {
                     return new ReadonlyCacheEntry("Child objects", tr.Cast<Transform>().ToArray());
                 }
-
-                var type = objectToOpen.GetType();
 
                 // If we somehow enter a string, this allows user to see what the string actually says
                 if (type == typeof(string))
