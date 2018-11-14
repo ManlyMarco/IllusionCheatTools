@@ -282,17 +282,19 @@ namespace CheatTools.ObjectTree
                                     tex.SetPixels(newImg);
                                     //todo tex.Resize(0, 0); get proper width
                                     tex.Apply();
-
-                                    _imagePreviewCache.Add(img, tex);
                                 }
                                 catch (Exception)
                                 {
                                     tex = null;
                                 }
+
+                                _imagePreviewCache.Add(img, tex);
                             }
 
                             if(tex != null)
                                 GUILayout.Label(tex);
+                            else
+                                GUILayout.Label("Can't display texture");
                         }
                         //todo img.sprite.texture.EncodeToPNG() button
                         break;
