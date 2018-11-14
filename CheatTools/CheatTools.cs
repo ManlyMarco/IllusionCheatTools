@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace CheatTools
 {
-    [BepInPlugin("CheatTools", "Cheat Tools", "1.9")]
+    [BepInPlugin("CheatTools", "Cheat Tools", "2.0")]
     public class CheatTools : BaseUnityPlugin
     {
         [DisplayName("Path to dnSpy.exe")]
