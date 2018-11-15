@@ -45,10 +45,11 @@ namespace CheatTools
             _mainWindowTitle = "Cheat Tools" + Assembly.GetExecutingAssembly().GetName().Version;
 
             _inspector = new Inspector(transform => _treeViewer.SelectAndShowObject(transform));
-            _treeViewer = new ObjectTreeViewer((obj, name) =>
+            _treeViewer = new ObjectTreeViewer(items =>
             {
                 _inspector.InspectorClear();
-                _inspector.InspectorPush(new InspectorStackEntry(obj, name));
+                foreach (var stackEntry in items)
+                    _inspector.InspectorPush(stackEntry);
             });
         }
 
@@ -406,7 +407,7 @@ namespace CheatTools
 
         private void UpdateWindowSize(Rect screenRect)
         {
-            _cheatWindowRect = new Rect(screenRect.width - 50 - 270, 100, 270, 380);
+            _cheatWindowRect = new Rect(screenRect.xMin, screenRect.yMax - 380, 270, 380);
 
             _inspector.UpdateWindowSize(_screenRect);
             _treeViewer.UpdateWindowSize(_screenRect);

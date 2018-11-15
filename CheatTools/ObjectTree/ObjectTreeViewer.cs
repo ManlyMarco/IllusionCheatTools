@@ -14,12 +14,11 @@ namespace CheatTools.ObjectTree
 {
     public class ObjectTreeViewer
     {
-        private readonly Action<object, string> _inspectorOpenCallback;
+        private readonly Action<InspectorStackEntry[]> _inspectorOpenCallback;
         private readonly HashSet<GameObject> _openedObjects = new HashSet<GameObject>();
         private Vector2 _propertiesScrollPosition;
         private Transform _selectedTransform;
         private Vector2 _treeScrollPosition;
-        private int _treeViewWidth = 400;
         private Rect _windowRect;
         private bool _scrollTreeToSelected;
         private bool _enabled;
@@ -41,10 +40,9 @@ namespace CheatTools.ObjectTree
             Enabled = true;
         }
 
-        public ObjectTreeViewer(Action<object, string> inspectorOpenCallback)
+        public ObjectTreeViewer(Action<InspectorStackEntry[]> inspectorOpenCallback)
         {
-            _inspectorOpenCallback =
-                inspectorOpenCallback ?? throw new ArgumentNullException(nameof(inspectorOpenCallback));
+            _inspectorOpenCallback = inspectorOpenCallback ?? throw new ArgumentNullException(nameof(inspectorOpenCallback));
         }
 
         public bool Enabled
@@ -69,20 +67,19 @@ namespace CheatTools.ObjectTree
             _imagePreviewCache.Clear();
         }
 
-        private void OnInspectorOpen(object obj, string name)
+        private void OnInspectorOpen(params InspectorStackEntry[] items)
         {
-            _inspectorOpenCallback.Invoke(obj, name);
+            _inspectorOpenCallback.Invoke(items);
         }
 
         public void UpdateWindowSize(Rect screenRect)
         {
-            const int width = 1000;
-            const int padding = 3;
+            const int width = 300;
+            //const int padding = 3;
 
-            var height = (int)(screenRect.height / 3) - padding;
+            var height = screenRect.height;
 
-            _windowRect = new Rect(screenRect.xMin + screenRect.width / 2 - width / 2, screenRect.yMax - height, width, height);
-            _treeViewWidth = (int)(_windowRect.width / 2);
+            _windowRect = new Rect(screenRect.xMax - width, screenRect.yMin, width, height);
         }
 
         private void DisplayObjectTreeHelper(GameObject go, int indent)
@@ -122,7 +119,7 @@ namespace CheatTools.ObjectTree
                     else
                         GUILayout.Space(20f);
 
-                    if (GUILayout.Button(go.name, GUI.skin.label, GUILayout.ExpandWidth(true)))
+                    if (GUILayout.Button(go.name, GUI.skin.label, GUILayout.ExpandWidth(true), GUILayout.MinWidth(200)))
                     {
                         if (_selectedTransform == go.transform)
                         {
@@ -156,17 +153,13 @@ namespace CheatTools.ObjectTree
 
         private void WindowFunc(int id)
         {
-            GUILayout.BeginHorizontal();
+            GUILayout.BeginVertical();
             {
                 DisplayObjectTree();
 
-                GUILayout.BeginVertical();
-                {
-                    DisplayControls();
+                DisplayControls();
 
-                    DisplayObjectProperties();
-                }
-                GUILayout.EndVertical();
+                DisplayObjectProperties();
             }
             GUILayout.EndHorizontal();
 
@@ -221,11 +214,11 @@ namespace CheatTools.ObjectTree
 
                             GUILayout.FlexibleSpace();
 
-                            if (GUILayout.Button("Destroy"))
-                                Object.Destroy(_selectedTransform.gameObject);
-
                             if (GUILayout.Button("Inspect"))
-                                OnInspectorOpen(_selectedTransform.gameObject, fullTransfromPath);
+                                OnInspectorOpen(new InspectorStackEntry(_selectedTransform.gameObject, fullTransfromPath));
+
+                            if (GUILayout.Button("X"))
+                                Object.Destroy(_selectedTransform.gameObject);
                         }
                         GUILayout.EndHorizontal();
                     }
@@ -247,19 +240,13 @@ namespace CheatTools.ObjectTree
         {
             GUILayout.BeginHorizontal(GUI.skin.box);
             {
-                switch (component)
+                if (component is Behaviour bh)
+                    bh.enabled = GUILayout.Toggle(bh.enabled, "", GUILayout.ExpandWidth(false));
+
+                if(GUILayout.Button(component.GetType().Name, GUI.skin.label))
                 {
-                    case MonoBehaviour m:
-                        m.enabled = GUILayout.Toggle(m.enabled, component.GetType().FullName,
-                            GUILayout.ExpandWidth(false));
-                        break;
-                    case Animator an:
-                        an.enabled = GUILayout.Toggle(an.enabled, component.GetType().FullName,
-                            GUILayout.ExpandWidth(false));
-                        break;
-                    default:
-                        GUILayout.Label(component.GetType().FullName);
-                        break;
+                    OnInspectorOpen(new InspectorStackEntry(component.transform, GetFullTransfromPath(component.transform)),
+                        new InspectorStackEntry(component, component.GetType().FullName));
                 }
 
                 switch (component)
@@ -291,7 +278,7 @@ namespace CheatTools.ObjectTree
                                 _imagePreviewCache.Add(img, tex);
                             }
 
-                            if(tex != null)
+                            if (tex != null)
                                 GUILayout.Label(tex);
                             else
                                 GUILayout.Label("Can't display texture");
@@ -360,7 +347,7 @@ namespace CheatTools.ObjectTree
 
                 if (!(component is Transform))
                 {
-                    if (GUILayout.Button("Reset"))
+                    if (GUILayout.Button("R"))
                     {
                         var t = component.GetType();
                         var g = component.gameObject;
@@ -375,15 +362,11 @@ namespace CheatTools.ObjectTree
                         Object.FindObjectOfType<CheatTools>().StartCoroutine(RecreateCo());
                     }
 
-                    if (GUILayout.Button("Destroy"))
+                    if (GUILayout.Button("X"))
                     {
                         Object.Destroy(component);
                     }
                 }
-
-                if (GUILayout.Button("Inspect"))
-                    OnInspectorOpen(component,
-                        $"{GetFullTransfromPath(component.transform)} > {component.GetType().FullName}");
             }
             GUILayout.EndHorizontal();
         }
@@ -403,7 +386,7 @@ namespace CheatTools.ObjectTree
         private void DisplayObjectTree()
         {
             _treeScrollPosition = GUILayout.BeginScrollView(_treeScrollPosition, GUI.skin.box,
-                GUILayout.ExpandHeight(true), GUILayout.Width(_treeViewWidth));
+                GUILayout.Height(_windowRect.height / 2), GUILayout.ExpandWidth(true));
             {
                 foreach (var rootGameObject in
                     SceneManager.GetActiveScene().GetRootGameObjects()

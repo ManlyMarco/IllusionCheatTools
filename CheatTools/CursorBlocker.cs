@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using Harmony;
-using Manager;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;

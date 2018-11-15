@@ -7,7 +7,6 @@ using System.Runtime.CompilerServices;
 using BepInEx.Logging;
 using UnityEngine;
 using Logger = BepInEx.Logger;
-using Object = UnityEngine.Object;
 
 namespace CheatTools
 {
@@ -390,13 +389,13 @@ namespace CheatTools
 
         public void UpdateWindowSize(Rect screenRect)
         {
-            const int width = 800;
+            const int width = 850;
             //const int height = 600;
             //_inspectorWindowRect = new Rect(screenRect.width / 2 - width / 2, screenRect.height / 2 - height / 2, width, height);
 
-            int height = (int)(screenRect.height / 3) * 2;
+            float height = screenRect.height;//(int)(screenRect.height / 3) * 2;
 
-            _inspectorWindowRect = new Rect(screenRect.xMin + screenRect.width / 2 - width / 2 + 22, screenRect.yMin, width, height);
+            _inspectorWindowRect = new Rect(screenRect.xMin + screenRect.width / 2 - width / 2, screenRect.yMin, width, height);
         }
 
         public void InspectorUpdate()
