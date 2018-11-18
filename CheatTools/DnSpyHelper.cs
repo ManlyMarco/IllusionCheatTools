@@ -58,7 +58,7 @@ namespace CheatTools
             try
             {
                 var refString = GetDnspyArgs(entry);
-                Logger.Log(LogLevel.Info, "Opening member " + refString);
+                Logger.Log(LogLevel.Info, $"[Cheat Tools] Opening {DnSpyPath} {refString}");
                 Process.Start(DnSpyPath, refString);
             }
             catch (Exception e)
