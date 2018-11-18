@@ -19,3 +19,6 @@ Q: It doesn't work
 
 Q: I found a bug / can't make it work
 - A: Ask on the [Koikatsu! discord server](https://discord.gg/zS5vJYS) in the #help channel.
+
+-------
+You can support development of my plugins through my Patreon page: https://www.patreon.com/ManlyMarco
