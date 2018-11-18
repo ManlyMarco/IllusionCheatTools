@@ -24,7 +24,7 @@ namespace CheatTools
                     if (_dnSpyPath.EndsWith("dnspy.exe", StringComparison.OrdinalIgnoreCase))
                         IsAvailable = true;
                     else
-                        Logger.Log(LogLevel.Error | LogLevel.Message, "Invalid dnSpy path. The path has to point to 64bit dnSpy.exe");
+                        Logger.Log(LogLevel.Error | LogLevel.Message, "[Cheat Tools] Invalid dnSpy path. The path has to point to 64bit dnSpy.exe");
                 }
             }
         }
@@ -35,6 +35,7 @@ namespace CheatTools
         {
             string GetDnspyArgs(ICacheEntry centry)
             {
+                // TODO support for generic types
                 switch (centry)
                 {
                     case MethodCacheEntry m:
@@ -58,7 +59,7 @@ namespace CheatTools
             {
                 var refString = GetDnspyArgs(entry);
                 Logger.Log(LogLevel.Info, "Opening member " + refString);
-                Process.Start(@"D:\Applications\dnSpy\dnSpy\dnSpy.exe", refString);
+                Process.Start(DnSpyPath, refString);
             }
             catch (Exception e)
             {
