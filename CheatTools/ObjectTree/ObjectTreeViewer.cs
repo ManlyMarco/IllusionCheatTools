@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
 namespace CheatTools.ObjectTree
@@ -173,22 +174,48 @@ namespace CheatTools.ObjectTree
 
         private void DisplayControls()
         {
-            GUILayout.BeginHorizontal(GUI.skin.box);
+            GUILayout.BeginVertical();
             {
-                if (GUILayout.Button("Clear AssetBundle Cache"))
-                    foreach (var pair in AssetBundleManager.ManifestBundlePack)
-                        foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
-                            AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
+                GUILayout.BeginHorizontal(GUI.skin.box);
+                {
+                    if (_selectedTransform == null) GUI.enabled = false;
+                    if (GUILayout.Button("Dump", GUILayout.ExpandWidth(false)))
+                        SceneDumper.DumpObjects(_selectedTransform?.gameObject);
+                    GUI.enabled = true;
 
-                if (GUILayout.Button("Open log file", GUILayout.ExpandWidth(false)))
-                    Process.Start(Path.Combine(Application.dataPath, "output_log.txt"));
+                    if (GUILayout.Button("Clear AssetBundle Cache"))
+                        foreach (var pair in AssetBundleManager.ManifestBundlePack)
+                            foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
+                                AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
 
-                GUILayout.FlexibleSpace();
+                    if (GUILayout.Button("Open log", GUILayout.ExpandWidth(false)))
+                        Process.Start(Path.Combine(Application.dataPath, "output_log.txt"));
+                }
+                GUILayout.EndHorizontal();
 
-                if (GUILayout.Button("Close", GUILayout.ExpandWidth(false)))
-                    Enabled = false;
+                GUILayout.BeginHorizontal(GUI.skin.box);
+                {
+                    GUILayout.Label("Speed", GUILayout.ExpandWidth(false));
+
+                    if (GUILayout.Button(">", GUILayout.ExpandWidth(false)))
+                        Time.timeScale = 1;
+                    if (GUILayout.Button("||", GUILayout.ExpandWidth(false)))
+                        Time.timeScale = 0;
+
+                    if (float.TryParse(FixNumStr(GUILayout.TextField(Time.timeScale.ToString(CultureInfo.InvariantCulture), _drawVector3FieldWidth)), out var newVal))
+                        Time.timeScale = newVal;
+                }
+                GUILayout.EndHorizontal();
+
+                //GUILayout.FlexibleSpace();
+
+                GUILayout.BeginHorizontal(GUI.skin.box);
+                {
+                    GL.wireframe = GUILayout.Toggle(GL.wireframe, "Wireframe");
+                }
+                GUILayout.EndHorizontal();
             }
-            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
         }
 
         private void DisplayObjectProperties()
@@ -252,6 +279,15 @@ namespace CheatTools.ObjectTree
             GUILayout.EndVertical();
         }
 
+        string FixNumStr(string str)
+        {
+            if (str.EndsWith("."))
+                str = str + '0';
+            if (str.StartsWith("."))
+                str = '0' + str;
+            return str;
+        }
+
         private void DrawVector3(string name, Action<Vector3> set, Func<Vector3> get, float minVal, float maxVal)
         {
             var v3 = get();
@@ -259,14 +295,6 @@ namespace CheatTools.ObjectTree
 
             GUILayout.BeginHorizontal();
             {
-                string FixNumStr(string str)
-                {
-                    if (str.EndsWith("."))
-                        str = str + '0';
-                    if (str.StartsWith("."))
-                        str = '0' + str;
-                    return str;
-                }
                 GUILayout.Label(name, GUILayout.ExpandWidth(true), _drawVector3FieldHeight);
                 v3New.x = GUILayout.HorizontalSlider(v3.x, minVal, maxVal, _drawVector3SliderWidth, _drawVector3SliderHeight);
                 float.TryParse(FixNumStr(GUILayout.TextField(v3.x.ToString(CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight)), out v3New.x);
