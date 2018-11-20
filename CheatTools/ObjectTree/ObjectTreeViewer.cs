@@ -29,7 +29,7 @@ namespace CheatTools.ObjectTree
         private readonly GUILayoutOption _drawVector3FieldWidth = GUILayout.Width(38);
         private readonly GUILayoutOption _drawVector3FieldHeight = GUILayout.Height(19);
         private readonly GUILayoutOption _drawVector3SliderHeight = GUILayout.Height(10);
-        private readonly GUILayoutOption _drawVector3SliderWidth = GUILayout.Width(30);
+        private readonly GUILayoutOption _drawVector3SliderWidth = GUILayout.Width(33);
 
         public void SelectAndShowObject(Transform target)
         {
@@ -80,7 +80,7 @@ namespace CheatTools.ObjectTree
 
         public void UpdateWindowSize(Rect screenRect)
         {
-            const int width = 300;
+            const int width = 350;
             //const int padding = 3;
 
             var height = screenRect.height;
@@ -174,26 +174,30 @@ namespace CheatTools.ObjectTree
 
         private void DisplayControls()
         {
-            GUILayout.BeginVertical();
+            GUILayout.BeginHorizontal(GUI.skin.box);
             {
-                GUILayout.BeginHorizontal(GUI.skin.box);
+                if (_selectedTransform == null) GUI.enabled = false;
+                if (GUILayout.Button("Dump", GUILayout.ExpandWidth(false)))
+                    SceneDumper.DumpObjects(_selectedTransform?.gameObject);
+                GUI.enabled = true;
+
+                if (GUILayout.Button("Open log", GUILayout.ExpandWidth(false)))
+                    Process.Start(Path.Combine(Application.dataPath, "output_log.txt"));
+
+                if (GUILayout.Button("Clear AssetBundle Cache"))
                 {
-                    if (_selectedTransform == null) GUI.enabled = false;
-                    if (GUILayout.Button("Dump", GUILayout.ExpandWidth(false)))
-                        SceneDumper.DumpObjects(_selectedTransform?.gameObject);
-                    GUI.enabled = true;
-
-                    if (GUILayout.Button("Clear AssetBundle Cache"))
-                        foreach (var pair in AssetBundleManager.ManifestBundlePack)
-                            foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
-                                AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
-
-                    if (GUILayout.Button("Open log", GUILayout.ExpandWidth(false)))
-                        Process.Start(Path.Combine(Application.dataPath, "output_log.txt"));
+                    foreach (var pair in AssetBundleManager.ManifestBundlePack)
+                    {
+                        foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
+                            AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
+                    }
                 }
-                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndHorizontal();
 
-                GUILayout.BeginHorizontal(GUI.skin.box);
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.BeginHorizontal(GUI.skin.box, GUILayout.ExpandWidth(false));
                 {
                     GUILayout.Label("Speed", GUILayout.ExpandWidth(false));
 
@@ -202,20 +206,20 @@ namespace CheatTools.ObjectTree
                     if (GUILayout.Button("||", GUILayout.ExpandWidth(false)))
                         Time.timeScale = 0;
 
-                    if (float.TryParse(FixNumStr(GUILayout.TextField(Time.timeScale.ToString(CultureInfo.InvariantCulture), _drawVector3FieldWidth)), out var newVal))
+                    if (float.TryParse(GUILayout.TextField(Time.timeScale.ToString("F2", CultureInfo.InvariantCulture), _drawVector3FieldWidth), out var newVal))
                         Time.timeScale = newVal;
                 }
                 GUILayout.EndHorizontal();
 
-                //GUILayout.FlexibleSpace();
-
-                GUILayout.BeginHorizontal(GUI.skin.box);
+                GUILayout.BeginHorizontal(GUI.skin.box, GUILayout.ExpandWidth(false));
                 {
                     GL.wireframe = GUILayout.Toggle(GL.wireframe, "Wireframe");
                 }
                 GUILayout.EndHorizontal();
+
+                GUILayout.FlexibleSpace();
             }
-            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
         }
 
         private void DisplayObjectProperties()
@@ -279,15 +283,6 @@ namespace CheatTools.ObjectTree
             GUILayout.EndVertical();
         }
 
-        string FixNumStr(string str)
-        {
-            if (str.EndsWith("."))
-                str = str + '0';
-            if (str.StartsWith("."))
-                str = '0' + str;
-            return str;
-        }
-
         private void DrawVector3(string name, Action<Vector3> set, Func<Vector3> get, float minVal, float maxVal)
         {
             var v3 = get();
@@ -297,11 +292,11 @@ namespace CheatTools.ObjectTree
             {
                 GUILayout.Label(name, GUILayout.ExpandWidth(true), _drawVector3FieldHeight);
                 v3New.x = GUILayout.HorizontalSlider(v3.x, minVal, maxVal, _drawVector3SliderWidth, _drawVector3SliderHeight);
-                float.TryParse(FixNumStr(GUILayout.TextField(v3.x.ToString(CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight)), out v3New.x);
+                float.TryParse(GUILayout.TextField(v3New.x.ToString("F2", CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight), out v3New.x);
                 v3New.y = GUILayout.HorizontalSlider(v3.y, minVal, maxVal, _drawVector3SliderWidth, _drawVector3SliderHeight);
-                float.TryParse(FixNumStr(GUILayout.TextField(v3.y.ToString(CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight)), out v3New.y);
+                float.TryParse(GUILayout.TextField(v3New.y.ToString("F2", CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight), out v3New.y);
                 v3New.z = GUILayout.HorizontalSlider(v3.z, minVal, maxVal, _drawVector3SliderWidth, _drawVector3SliderHeight);
-                float.TryParse(FixNumStr(GUILayout.TextField(v3.z.ToString(CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight)), out v3New.z);
+                float.TryParse(GUILayout.TextField(v3New.z.ToString("F2", CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight), out v3New.z);
             }
             GUILayout.EndHorizontal();
 
