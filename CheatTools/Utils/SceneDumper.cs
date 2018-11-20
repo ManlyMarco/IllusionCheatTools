@@ -14,7 +14,7 @@ namespace CheatTools
     {
         public static void DumpObjects(params GameObject[] objects)
         {
-            var fname = Path.GetTempFileName();
+            var fname = Path.GetTempFileName() + ".txt";
             Logger.CurrentLogger.Log(LogLevel.Info, $"Dumping {objects.Length} GameObjects to {fname}");
             using (var f = File.OpenWrite(fname))
             using (var sw = new StreamWriter(f, Encoding.UTF8))
