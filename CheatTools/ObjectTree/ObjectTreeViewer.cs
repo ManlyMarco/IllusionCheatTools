@@ -267,7 +267,7 @@ namespace CheatTools.ObjectTree
                     GUILayout.FlexibleSpace();
 
                     if (GUILayout.Button("Inspect"))
-                        OnInspectorOpen(new InspectorStackEntry(_selectedTransform.gameObject, fullTransfromPath));
+                        OnInspectorOpen(new InspectorStackEntry(_selectedTransform.gameObject, _selectedTransform.gameObject.name));
 
                     if (GUILayout.Button("X"))
                         Object.Destroy(_selectedTransform.gameObject);
@@ -303,6 +303,24 @@ namespace CheatTools.ObjectTree
             if (v3 != v3New) set(v3New);
         }
 
+        private void DrawVector2(string name, Action<Vector2> set, Func<Vector2> get, float minVal, float maxVal)
+        {
+            var vector2 = get();
+            var vector2New = vector2;
+
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.Label(name, GUILayout.ExpandWidth(true), _drawVector3FieldHeight);
+                vector2New.x = GUILayout.HorizontalSlider(vector2.x, minVal, maxVal, _drawVector3SliderWidth, _drawVector3SliderHeight);
+                float.TryParse(GUILayout.TextField(vector2New.x.ToString("F2", CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight), out vector2New.x);
+                vector2New.y = GUILayout.HorizontalSlider(vector2.y, minVal, maxVal, _drawVector3SliderWidth, _drawVector3SliderHeight);
+                float.TryParse(GUILayout.TextField(vector2New.y.ToString("F2", CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight), out vector2New.y);
+            }
+            GUILayout.EndHorizontal();
+
+            if (vector2 != vector2New) set(vector2New);
+        }
+
         private void DrawSingleComponent(Component component)
         {
             GUILayout.BeginHorizontal(GUI.skin.box);
@@ -312,7 +330,7 @@ namespace CheatTools.ObjectTree
 
                 if (GUILayout.Button(component.GetType().Name, GUI.skin.label))
                 {
-                    OnInspectorOpen(new InspectorStackEntry(component.transform, GetFullTransfromPath(component.transform)),
+                    OnInspectorOpen(new InspectorStackEntry(component.transform, component.transform.name),
                         new InspectorStackEntry(component, component.GetType().FullName));
                 }
 
@@ -402,11 +420,15 @@ namespace CheatTools.ObjectTree
                             break;
                         }
                     case RectTransform rt:
-                        GUILayout.Label("anchorMin " + rt.anchorMin);
-                        GUILayout.Label("anchorMax " + rt.anchorMax);
-                        GUILayout.Label("offsetMin " + rt.offsetMin);
-                        GUILayout.Label("offsetMax " + rt.offsetMax);
-                        GUILayout.Label("rect " + rt.rect);
+                        GUILayout.BeginVertical();
+                        {
+                            DrawVector2(nameof(RectTransform.anchorMin), vector2 => rt.anchorMin = vector2, () => rt.anchorMin, 0, 1);
+                            DrawVector2(nameof(RectTransform.anchorMax), vector2 => rt.anchorMax = vector2, () => rt.anchorMax, 0, 1);
+                            DrawVector2(nameof(RectTransform.offsetMin), vector2 => rt.offsetMin = vector2, () => rt.offsetMin, -1000, 1000);
+                            DrawVector2(nameof(RectTransform.offsetMax), vector2 => rt.offsetMax = vector2, () => rt.offsetMax, -1000, 1000);
+                            GUILayout.Label("rect " + rt.rect);
+                        }
+                        GUILayout.EndVertical();
                         break;
                 }
 
