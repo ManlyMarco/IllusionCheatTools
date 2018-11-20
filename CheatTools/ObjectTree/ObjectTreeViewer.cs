@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using UnityEngine;
@@ -24,6 +25,10 @@ namespace CheatTools.ObjectTree
         private bool _enabled;
         private List<GameObject> _cachedRootGameObjects;
         private readonly Dictionary<Image, Texture2D> _imagePreviewCache = new Dictionary<Image, Texture2D>();
+        private readonly GUILayoutOption _drawVector3FieldWidth = GUILayout.Width(38);
+        private readonly GUILayoutOption _drawVector3FieldHeight = GUILayout.Height(19);
+        private readonly GUILayoutOption _drawVector3SliderHeight = GUILayout.Height(10);
+        private readonly GUILayoutOption _drawVector3SliderWidth = GUILayout.Width(30);
 
         public void SelectAndShowObject(Transform target)
         {
@@ -196,33 +201,7 @@ namespace CheatTools.ObjectTree
                 }
                 else
                 {
-                    GUILayout.BeginVertical(GUI.skin.box);
-                    {
-                        var fullTransfromPath = GetFullTransfromPath(_selectedTransform);
-
-                        GUILayout.TextArea(fullTransfromPath, GUI.skin.label);
-
-                        GUILayout.BeginHorizontal();
-                        {
-                            GUILayout.Label($"Layer {_selectedTransform.gameObject.layer} ({LayerMask.LayerToName(_selectedTransform.gameObject.layer)})");
-
-                            GUILayout.Space(8);
-
-                            GUILayout.Toggle(_selectedTransform.gameObject.isStatic, "isStatic");
-
-                            _selectedTransform.gameObject.SetActive(GUILayout.Toggle(_selectedTransform.gameObject.activeSelf, "Active", GUILayout.ExpandWidth(false)));
-
-                            GUILayout.FlexibleSpace();
-
-                            if (GUILayout.Button("Inspect"))
-                                OnInspectorOpen(new InspectorStackEntry(_selectedTransform.gameObject, fullTransfromPath));
-
-                            if (GUILayout.Button("X"))
-                                Object.Destroy(_selectedTransform.gameObject);
-                        }
-                        GUILayout.EndHorizontal();
-                    }
-                    GUILayout.EndVertical();
+                    DrawTransformControls();
 
                     foreach (var component in _selectedTransform.GetComponents<Component>())
                     {
@@ -236,6 +215,71 @@ namespace CheatTools.ObjectTree
             GUILayout.EndScrollView();
         }
 
+        private void DrawTransformControls()
+        {
+            GUILayout.BeginVertical(GUI.skin.box);
+            {
+                var fullTransfromPath = GetFullTransfromPath(_selectedTransform);
+
+                GUILayout.TextArea(fullTransfromPath, GUI.skin.label);
+
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label($"Layer {_selectedTransform.gameObject.layer} ({LayerMask.LayerToName(_selectedTransform.gameObject.layer)})");
+
+                    GUILayout.Space(8);
+
+                    GUILayout.Toggle(_selectedTransform.gameObject.isStatic, "isStatic");
+
+                    _selectedTransform.gameObject.SetActive(GUILayout.Toggle(_selectedTransform.gameObject.activeSelf, "Active", GUILayout.ExpandWidth(false)));
+
+                    GUILayout.FlexibleSpace();
+
+                    if (GUILayout.Button("Inspect"))
+                        OnInspectorOpen(new InspectorStackEntry(_selectedTransform.gameObject, fullTransfromPath));
+
+                    if (GUILayout.Button("X"))
+                        Object.Destroy(_selectedTransform.gameObject);
+                }
+                GUILayout.EndHorizontal();
+
+                DrawVector3(nameof(Transform.position), vector3 => _selectedTransform.position = vector3, () => _selectedTransform.position, -5, 5);
+                DrawVector3(nameof(Transform.localPosition), vector3 => _selectedTransform.localPosition = vector3, () => _selectedTransform.localPosition, -5, 5);
+                DrawVector3(nameof(Transform.localScale), vector3 => _selectedTransform.localScale = vector3, () => _selectedTransform.localScale, 0.00001f, 5);
+                DrawVector3(nameof(Transform.eulerAngles), vector3 => _selectedTransform.eulerAngles = vector3, () => _selectedTransform.eulerAngles, 0, 360);
+                DrawVector3("localEuler", vector3 => _selectedTransform.eulerAngles = vector3, () => _selectedTransform.localEulerAngles, 0, 360);
+            }
+            GUILayout.EndVertical();
+        }
+
+        private void DrawVector3(string name, Action<Vector3> set, Func<Vector3> get, float minVal, float maxVal)
+        {
+            var v3 = get();
+            var v3New = v3;
+
+            GUILayout.BeginHorizontal();
+            {
+                string FixNumStr(string str)
+                {
+                    if (str.EndsWith("."))
+                        str = str + '0';
+                    if (str.StartsWith("."))
+                        str = '0' + str;
+                    return str;
+                }
+                GUILayout.Label(name, GUILayout.ExpandWidth(true), _drawVector3FieldHeight);
+                v3New.x = GUILayout.HorizontalSlider(v3.x, minVal, maxVal, _drawVector3SliderWidth, _drawVector3SliderHeight);
+                float.TryParse(FixNumStr(GUILayout.TextField(v3.x.ToString(CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight)), out v3New.x);
+                v3New.y = GUILayout.HorizontalSlider(v3.y, minVal, maxVal, _drawVector3SliderWidth, _drawVector3SliderHeight);
+                float.TryParse(FixNumStr(GUILayout.TextField(v3.y.ToString(CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight)), out v3New.y);
+                v3New.z = GUILayout.HorizontalSlider(v3.z, minVal, maxVal, _drawVector3SliderWidth, _drawVector3SliderHeight);
+                float.TryParse(FixNumStr(GUILayout.TextField(v3.z.ToString(CultureInfo.InvariantCulture), _drawVector3FieldWidth, _drawVector3FieldHeight)), out v3New.z);
+            }
+            GUILayout.EndHorizontal();
+
+            if (v3 != v3New) set(v3New);
+        }
+
         private void DrawSingleComponent(Component component)
         {
             GUILayout.BeginHorizontal(GUI.skin.box);
@@ -243,7 +287,7 @@ namespace CheatTools.ObjectTree
                 if (component is Behaviour bh)
                     bh.enabled = GUILayout.Toggle(bh.enabled, "", GUILayout.ExpandWidth(false));
 
-                if(GUILayout.Button(component.GetType().Name, GUI.skin.label))
+                if (GUILayout.Button(component.GetType().Name, GUI.skin.label))
                 {
                     OnInspectorOpen(new InspectorStackEntry(component.transform, GetFullTransfromPath(component.transform)),
                         new InspectorStackEntry(component, component.GetType().FullName));
@@ -347,7 +391,7 @@ namespace CheatTools.ObjectTree
 
                 if (!(component is Transform))
                 {
-                    if (GUILayout.Button("R"))
+                    /*if (GUILayout.Button("R"))
                     {
                         var t = component.GetType();
                         var g = component.gameObject;
@@ -360,7 +404,7 @@ namespace CheatTools.ObjectTree
                         }
 
                         Object.FindObjectOfType<CheatTools>().StartCoroutine(RecreateCo());
-                    }
+                    }*/
 
                     if (GUILayout.Button("X"))
                     {
