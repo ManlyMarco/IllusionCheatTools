@@ -12,19 +12,20 @@ namespace CheatTools
 {
     public class Inspector
     {
+        private const int InspectorRecordHeight = 25;
         private readonly Action<Transform> _treelistShowCallback;
-        private readonly GUILayoutOption[] _inspectorTypeWidth = {GUILayout.Width(170), GUILayout.MaxWidth(170) };
+        private readonly GUILayoutOption[] _inspectorTypeWidth = { GUILayout.Width(170), GUILayout.MaxWidth(170) };
         private readonly GUILayoutOption[] _inspectorNameWidth = { GUILayout.Width(240), GUILayout.MaxWidth(240) };
-        private readonly GUILayoutOption _inspectorRecordHeight = GUILayout.Height(25);
+        private readonly GUILayoutOption _inspectorRecordHeight = GUILayout.Height(InspectorRecordHeight);
         private readonly GUILayoutOption _dnSpyButtonOptions = GUILayout.Width(19);
 
         private GUIStyle _alignedButtonStyle;
-        private GUILayoutOption _inspectorValueWidth;
 
         private Rect _inspectorWindowRect;
         private Vector2 _inspectorScrollPos;
         private Vector2 _inspectorStackScrollPos;
 
+        private int _currentVisibleCount;
         private object _currentlyEditingTag;
         private string _currentlyEditingText;
         private bool _userHasHitReturn;
@@ -311,51 +312,7 @@ namespace CheatTools
                         }
                         GUILayout.EndHorizontal();
 
-                        _inspectorScrollPos = GUILayout.BeginScrollView(_inspectorScrollPos);
-                        {
-                            GUILayout.BeginVertical();
-                            var widthCalculated = false;
-                            foreach (var entry in _fieldCache)
-                            {
-                                GUILayout.BeginHorizontal((_inspectorRecordHeight));
-                                {
-                                    GUILayout.Label(entry.TypeName(), (_inspectorTypeWidth));
-
-                                    var value = entry.GetValue();
-
-                                    if (entry.CanEnterValue() || value is Exception)
-                                        DrawVariableNameEnterButton(entry);
-                                    else
-                                        DrawVariableName(entry);
-
-                                    if (_fieldCache.Count < 200)
-                                    {
-                                        var widthParam = widthCalculated
-                                            ? _inspectorValueWidth
-                                            : GUILayout.ExpandWidth(true);
-
-                                        if (entry.CanSetValue() &&
-                                            CanCovert(Utilities.ExtractText(value), entry.Type()))
-                                            DrawEditableValue(entry, value, widthParam);
-                                        else
-                                            DrawValue(value, widthParam);
-
-                                        // Calculate width only once
-                                        if (!widthCalculated && Event.current.type == EventType.Repaint)
-                                        {
-                                            _inspectorValueWidth = GUILayout.Width((int)GUILayoutUtility.GetLastRect().width);
-                                            widthCalculated = true;
-                                        }
-                                    }
-
-                                    if (DnSpyHelper.IsAvailable && GUILayout.Button("^", _dnSpyButtonOptions))
-                                        DnSpyHelper.OpenTypeInDnSpy(entry);
-                                }
-                                GUILayout.EndHorizontal();
-                            }
-                            GUILayout.EndVertical();
-                        }
-                        GUILayout.EndScrollView();
+                        DrawContentScrollView();
                     }
                     GUILayout.EndVertical();
                 }
@@ -368,6 +325,68 @@ namespace CheatTools
             }
 
             GUI.DragWindow();
+        }
+
+        private void DrawContentScrollView()
+        {
+            _inspectorScrollPos = GUILayout.BeginScrollView(_inspectorScrollPos);
+            {
+                GUILayout.BeginVertical();
+                {
+                    var firstIndex = (int)(_inspectorScrollPos.y / InspectorRecordHeight);
+
+                    GUILayout.Space(firstIndex * InspectorRecordHeight);
+
+                    _currentVisibleCount = (int)(_inspectorWindowRect.height / InspectorRecordHeight) - 4;
+                    for (var index = firstIndex; index < Mathf.Min(_fieldCache.Count, firstIndex + _currentVisibleCount); index++)
+                    {
+                        var entry = _fieldCache[index];
+                        try
+                        {
+                            DrawSingleContentEntry(entry);
+                        }
+                        catch (ArgumentException)
+                        {
+                            // Needed to avoid GUILayout: Mismatched LayoutGroup.Repaint crashes on large lists
+                        }
+                    }
+                    try
+                    {
+                        GUILayout.Space(Mathf.Max(_inspectorWindowRect.height / 2, (_fieldCache.Count - firstIndex - _currentVisibleCount) * InspectorRecordHeight));
+                    }
+                    catch
+                    {
+                        // Needed to avoid GUILayout: Mismatched LayoutGroup.Repaint crashes on large lists
+                    }
+                }
+                GUILayout.EndVertical();
+            }
+            GUILayout.EndScrollView();
+        }
+
+        private void DrawSingleContentEntry(ICacheEntry entry)
+        {
+            GUILayout.BeginHorizontal((_inspectorRecordHeight));
+            {
+                GUILayout.Label(entry.TypeName(), (_inspectorTypeWidth));
+
+                var value = entry.GetValue();
+
+                if (entry.CanEnterValue() || value is Exception)
+                    DrawVariableNameEnterButton(entry);
+                else
+                    DrawVariableName(entry);
+
+                if (entry.CanSetValue() &&
+                    CanCovert(Utilities.ExtractText(value), entry.Type()))
+                    DrawEditableValue(entry, value, GUILayout.ExpandWidth(true));
+                else
+                    DrawValue(value, GUILayout.ExpandWidth(true));
+
+                if (DnSpyHelper.IsAvailable && GUILayout.Button("^", _dnSpyButtonOptions))
+                    DnSpyHelper.OpenTypeInDnSpy(entry);
+            }
+            GUILayout.EndHorizontal();
         }
 
         public void DisplayInspector()
