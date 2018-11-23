@@ -13,24 +13,27 @@ namespace CheatTools
     public class Inspector
     {
         private readonly Action<Transform> _treelistShowCallback;
-        private const int InspectorTypeWidth = 170;
-        private const int InspectorNameWidth = 240;
+        private readonly GUILayoutOption[] _inspectorTypeWidth = {GUILayout.Width(170), GUILayout.MaxWidth(170) };
+        private readonly GUILayoutOption[] _inspectorNameWidth = { GUILayout.Width(240), GUILayout.MaxWidth(240) };
+        private readonly GUILayoutOption _inspectorRecordHeight = GUILayout.Height(25);
+        private readonly GUILayoutOption _dnSpyButtonOptions = GUILayout.Width(19);
+
+        private GUIStyle _alignedButtonStyle;
+        private GUILayoutOption _inspectorValueWidth;
+
+        private Rect _inspectorWindowRect;
+        private Vector2 _inspectorScrollPos;
+        private Vector2 _inspectorStackScrollPos;
+
+        private object _currentlyEditingTag;
+        private string _currentlyEditingText;
+        private bool _userHasHitReturn;
 
         private readonly Dictionary<Type, bool> _canCovertCache = new Dictionary<Type, bool>();
         private readonly List<ICacheEntry> _fieldCache = new List<ICacheEntry>();
         private readonly Stack<InspectorStackEntry> _inspectorStack = new Stack<InspectorStackEntry>();
 
-        private GUIStyle _alignedButtonStyle;
-        private Rect _inspectorWindowRect;
-        private Vector2 _inspectorScrollPos;
-        private Vector2 _inspectorStackScrollPos;
-        private int _inspectorValueWidth;
-
         private InspectorStackEntry _nextToPush;
-
-        private object _currentlyEditingTag;
-        private string _currentlyEditingText;
-        private bool _userHasHitReturn;
 
         public Inspector(Action<Transform> treelistShowCallback)
         {
@@ -200,14 +203,12 @@ namespace CheatTools
 
         private void DrawVariableName(ICacheEntry field)
         {
-            GUILayout.TextArea(field.Name(), GUI.skin.label, GUILayout.Width(InspectorNameWidth),
-                GUILayout.MaxWidth(InspectorNameWidth));
+            GUILayout.TextArea(field.Name(), GUI.skin.label, _inspectorNameWidth);
         }
 
         private void DrawVariableNameEnterButton(ICacheEntry field)
         {
-            if (GUILayout.Button(field.Name(), _alignedButtonStyle, GUILayout.Width(InspectorNameWidth),
-                GUILayout.MaxWidth(InspectorNameWidth)))
+            if (GUILayout.Button(field.Name(), _alignedButtonStyle, _inspectorNameWidth))
             {
                 var val = field.EnterValue();
                 if (val != null)
@@ -301,8 +302,11 @@ namespace CheatTools
                     {
                         GUILayout.BeginHorizontal();
                         {
-                            GUILayout.Label("Value/return type", GUI.skin.box, GUILayout.Width(InspectorTypeWidth + 2));
-                            GUILayout.Label("Member name", GUI.skin.box, GUILayout.Width(InspectorNameWidth + 2));
+                            GUILayout.Space(1);
+                            GUILayout.Label("Value/return type", GUI.skin.box, _inspectorTypeWidth);
+                            GUILayout.Space(2);
+                            GUILayout.Label("Member name", GUI.skin.box, _inspectorNameWidth);
+                            GUILayout.Space(1);
                             GUILayout.Label("Value", GUI.skin.box, GUILayout.ExpandWidth(true));
                         }
                         GUILayout.EndHorizontal();
@@ -313,10 +317,9 @@ namespace CheatTools
                             var widthCalculated = false;
                             foreach (var entry in _fieldCache)
                             {
-                                GUILayout.BeginHorizontal();
+                                GUILayout.BeginHorizontal((_inspectorRecordHeight));
                                 {
-                                    GUILayout.Label(entry.TypeName(), GUILayout.Width(InspectorTypeWidth),
-                                        GUILayout.MaxWidth(InspectorTypeWidth));
+                                    GUILayout.Label(entry.TypeName(), (_inspectorTypeWidth));
 
                                     var value = entry.GetValue();
 
@@ -328,7 +331,7 @@ namespace CheatTools
                                     if (_fieldCache.Count < 200)
                                     {
                                         var widthParam = widthCalculated
-                                            ? GUILayout.Width(_inspectorValueWidth)
+                                            ? _inspectorValueWidth
                                             : GUILayout.ExpandWidth(true);
 
                                         if (entry.CanSetValue() &&
@@ -340,12 +343,12 @@ namespace CheatTools
                                         // Calculate width only once
                                         if (!widthCalculated && Event.current.type == EventType.Repaint)
                                         {
-                                            _inspectorValueWidth = (int)GUILayoutUtility.GetLastRect().width;
+                                            _inspectorValueWidth = GUILayout.Width((int)GUILayoutUtility.GetLastRect().width);
                                             widthCalculated = true;
                                         }
                                     }
 
-                                    if (DnSpyHelper.IsAvailable && GUILayout.Button("^", GUILayout.Width(19)))
+                                    if (DnSpyHelper.IsAvailable && GUILayout.Button("^", _dnSpyButtonOptions))
                                         DnSpyHelper.OpenTypeInDnSpy(entry);
                                 }
                                 GUILayout.EndHorizontal();
