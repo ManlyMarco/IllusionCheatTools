@@ -402,6 +402,12 @@ namespace CheatTools
 
             if (Event.current.keyCode == KeyCode.Return) _userHasHitReturn = true;
 
+            while (_inspectorStack.Count > 0 && _inspectorStack.Peek().Instance == null)
+            {
+                var se = _inspectorStack.Pop();
+                Logger.Log(LogLevel.Message, $"[Cheat Tools] Inspected object \"{se.Name}\" has been destroyed");
+            }
+
             if (_inspectorStack.Count != 0)
             {
                 Utilities.DrawSolidWindowBackground(_inspectorWindowRect);
