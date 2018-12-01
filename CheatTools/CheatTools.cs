@@ -4,9 +4,11 @@ using UnityEngine;
 
 namespace CheatTools
 {
-    [BepInPlugin("CheatTools", "Cheat Tools", "2.0")]
+    [BepInPlugin("CheatTools", "Cheat Tools", Version)]
     public class CheatTools : BaseUnityPlugin
     {
+        public const string Version = "2.1";
+
         [DisplayName("Path to dnSpy.exe")]
         [Description("Full path to dnSpy that will enable integration with Inspector.\n\n" +
                      "When correctly configured, you will see a new ^ buttons that will open the members in dnSpy.")]
