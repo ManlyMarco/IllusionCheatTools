@@ -96,7 +96,7 @@ namespace CheatTools
 
                     //Now can quit first time H scene
                     if (_hSprite != null)
-                        if (GUILayout.Button("Quit H scene (alpha)"))
+                        if (GUILayout.Button("Force quit H scene"))
                             _hSprite.btnEnd.onClick.Invoke();
 
                     GUILayout.BeginVertical(GUI.skin.box);
