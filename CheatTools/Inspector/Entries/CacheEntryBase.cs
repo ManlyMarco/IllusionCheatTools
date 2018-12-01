@@ -4,6 +4,9 @@ namespace CheatTools
 {
     internal abstract class CacheEntryBase : ICacheEntry
     {
+        // todo add gui option
+        public static bool CachingEnabled { get; set; } = false;
+
         protected CacheEntryBase(string name)
         {
             _name = name;
@@ -11,6 +14,8 @@ namespace CheatTools
 
         public virtual object EnterValue()
         {
+            if (!CachingEnabled) return GetValue();
+
             return _valueCache = (GetValueToCache() ?? GetValue());
         }
 
@@ -18,6 +23,8 @@ namespace CheatTools
         private object _valueCache;
         public virtual object GetValue()
         {
+            if (!CachingEnabled) return GetValueToCache();
+
             return _valueCache ?? (_valueCache = GetValueToCache());
         }
 
