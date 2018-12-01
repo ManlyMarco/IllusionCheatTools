@@ -477,11 +477,9 @@ namespace CheatTools.ObjectTree
             _treeScrollPosition = GUILayout.BeginScrollView(_treeScrollPosition, GUI.skin.box,
                 GUILayout.Height(_windowRect.height / 2), GUILayout.ExpandWidth(true));
             {
-                foreach (var rootGameObject in
-                    SceneManager.GetActiveScene().GetRootGameObjects()
-                    .Concat(_cachedRootGameObjects.Where(x => x != null))
-                    .Distinct()
-                    .OrderBy(x => x.name))
+                _cachedRootGameObjects.RemoveAll(o => o == null);
+                _cachedRootGameObjects.AddRange(SceneManager.GetActiveScene().GetRootGameObjects().Except(_cachedRootGameObjects));
+                foreach (var rootGameObject in _cachedRootGameObjects.OrderBy(x => x.name))
                 {
                     DisplayObjectTreeHelper(rootGameObject, 0);
                 }
