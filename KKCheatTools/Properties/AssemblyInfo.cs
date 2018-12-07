@@ -5,11 +5,13 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("CheatTools")]
-[assembly: AssemblyDescription("Koikatsu trainer")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("ManlyMarco")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("CheatTools")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
+[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
 // to COM components.  If you need to access a type in this assembly from
@@ -17,7 +19,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("a66a97b4-f32f-4748-8332-48f0876f0aac")]
+[assembly: Guid("4c489dbc-b8fc-4b0c-ba9c-023afcd2896a")]
 
 // Version information for an assembly consists of the following four values:
 //

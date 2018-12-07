@@ -4,8 +4,11 @@ using System.Linq;
 using System.Reflection;
 using ActionGame;
 using BepInEx.Logging;
-using CheatTools.ObjectTree;
 using Manager;
+using RuntimeUnityEditor.Inspector;
+using RuntimeUnityEditor.Inspector.Entries;
+using RuntimeUnityEditor.ObjectTree;
+using RuntimeUnityEditor.Utils;
 using UnityEngine;
 using Logger = BepInEx.Logger;
 using Object = UnityEngine.Object;
@@ -51,6 +54,9 @@ namespace CheatTools
                 foreach (var stackEntry in items)
                     _inspector.InspectorPush(stackEntry);
             });
+            
+            EditorUtilities.AddCustomObjectToString< SaveData.Heroine>(heroine => heroine.Name);
+            EditorUtilities.AddCustomObjectToString<SaveData.CharaData.Params.Data>(d => $"[{d.key} | {d.value}]");
         }
 
         public bool Show
@@ -125,9 +131,6 @@ namespace CheatTools
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        if (GUILayout.Button("Open Scene Object Browser"))
-                            _treeViewer.Enabled = !_treeViewer.Enabled;
-
                         GUILayout.Label("Open in inspector");
                         foreach (var obj in new[]
                         {
@@ -141,7 +144,7 @@ namespace CheatTools
                             new KeyValuePair<object, string>(_hFlag, "HFlag"),
                             new KeyValuePair<object, string>(_talkScene, "TalkScene"),
                             new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                            new KeyValuePair<object, string>(Utilities.GetRootGoScanner(), "Root Objects")
+                            new KeyValuePair<object, string>(EditorUtilities.GetRootGoScanner(), "Root Objects")
                         })
                         {
                             if (obj.Key == null) continue;
@@ -390,7 +393,7 @@ namespace CheatTools
         {
             if (!Show) return;
 
-            Utilities.DrawSolidWindowBackground(_cheatWindowRect);
+            EditorUtilities.DrawSolidWindowBackground(_cheatWindowRect);
             _cheatWindowRect = GUILayout.Window(591, _cheatWindowRect, CheatWindowContents, _mainWindowTitle);
 
             _inspector.DisplayInspector();
