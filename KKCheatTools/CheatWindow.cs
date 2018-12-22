@@ -7,7 +7,6 @@ using BepInEx.Logging;
 using Manager;
 using RuntimeUnityEditor.Inspector;
 using RuntimeUnityEditor.Inspector.Entries;
-using RuntimeUnityEditor.ObjectTree;
 using RuntimeUnityEditor.Utils;
 using UnityEngine;
 using Logger = BepInEx.Logger;
@@ -24,7 +23,6 @@ namespace CheatTools
         private readonly string[] _hExpNames = { "First time", "Inexperienced", "Experienced", "Perverted" };
 
         private readonly Inspector _inspector;
-        private readonly ObjectTreeViewer _treeViewer;
 
         private readonly string _mainWindowTitle;
         private string _typeNameToSearchBox = "Specify type name to search";
@@ -43,20 +41,14 @@ namespace CheatTools
         private Scene _sceneInstance;
         private Game _gameMgr;
 
-        public CheatWindow()
+        public CheatWindow(RuntimeUnityEditor.RuntimeUnityEditor editor)
         {
-            _mainWindowTitle = "Cheat Tools" + Assembly.GetExecutingAssembly().GetName().Version;
+            _inspector = editor.Inspector;
 
-            _inspector = new Inspector(transform => _treeViewer.SelectAndShowObject(transform));
-            _treeViewer = new ObjectTreeViewer(items =>
-            {
-                _inspector.InspectorClear();
-                foreach (var stackEntry in items)
-                    _inspector.InspectorPush(stackEntry);
-            });
-            
-            EditorUtilities.AddCustomObjectToString< SaveData.Heroine>(heroine => heroine.Name);
+            EditorUtilities.AddCustomObjectToString<SaveData.Heroine>(heroine => heroine.Name);
             EditorUtilities.AddCustomObjectToString<SaveData.CharaData.Params.Data>(d => $"[{d.key} | {d.value}]");
+
+            _mainWindowTitle = "Cheat Tools" + Assembly.GetExecutingAssembly().GetName().Version;
         }
 
         public bool Show
@@ -66,12 +58,7 @@ namespace CheatTools
             {
                 _show = value;
                 if (value)
-                {
                     SetWindowSizes();
-
-                    if (_treeViewer.Enabled)
-                        _treeViewer.UpdateCaches();
-                }
 
                 CursorBlocker.DisableCameraControls = _show;
 
@@ -178,6 +165,17 @@ namespace CheatTools
                                 _inspector.InspectorPush(new InspectorStackEntry(objects.AsEnumerable(), "Objects of type " + _typeNameToSearchBox));
                             }
                         }
+
+                        GUILayout.Space(8);
+                        
+                        if (GUILayout.Button("Clear AssetBundle Cache"))
+                        {
+                            foreach (var pair in AssetBundleManager.ManifestBundlePack)
+                            {
+                                foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
+                                    AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
+                            }
+                        }
                     }
                     GUILayout.EndVertical();
                 }
@@ -253,8 +251,8 @@ namespace CheatTools
                         SetGirlHExp(currentAdvGirl, 0f);
                     if (GUILayout.Button("50%"))
                         SetGirlHExp(currentAdvGirl, 50f);
-                    if (GUILayout.Button("99%"))
-                        SetGirlHExp(currentAdvGirl, 99f);
+                    if (GUILayout.Button("100%"))
+                        SetGirlHExp(currentAdvGirl, 100f);
                 }
                 GUILayout.EndHorizontal();
 
@@ -395,9 +393,6 @@ namespace CheatTools
 
             EditorUtilities.DrawSolidWindowBackground(_cheatWindowRect);
             _cheatWindowRect = GUILayout.Window(591, _cheatWindowRect, CheatWindowContents, _mainWindowTitle);
-
-            _inspector.DisplayInspector();
-            _treeViewer.DisplayViewer();
         }
 
         private void SetWindowSizes()
@@ -405,20 +400,7 @@ namespace CheatTools
             int w = Screen.width, h = Screen.height;
             _screenRect = new Rect(ScreenOffset, ScreenOffset, w - ScreenOffset * 2, h - ScreenOffset * 2);
 
-            UpdateWindowSize(_screenRect);
-        }
-
-        private void UpdateWindowSize(Rect screenRect)
-        {
-            _cheatWindowRect = new Rect(screenRect.xMin, screenRect.yMax - 380, 270, 380);
-
-            _inspector.UpdateWindowSize(_screenRect);
-            _treeViewer.UpdateWindowSize(_screenRect);
-        }
-
-        public void OnUpdate()
-        {
-            _inspector.InspectorUpdate();
+            _cheatWindowRect = new Rect(_screenRect.xMin, _screenRect.yMax - 380, 270, 380);
         }
     }
 }

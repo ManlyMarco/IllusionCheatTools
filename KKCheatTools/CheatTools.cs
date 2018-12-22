@@ -12,7 +12,7 @@ namespace CheatTools
 
         protected void Start()
         {
-            _cheatWindow = new CheatWindow();
+            _cheatWindow = new CheatWindow(GetComponent<RuntimeUnityEditor.RuntimeUnityEditor>());
         }
 
         protected void OnGUI()
@@ -22,8 +22,6 @@ namespace CheatTools
 
         protected void Update()
         {
-            _cheatWindow.OnUpdate();
-
             if (Input.GetKeyDown(KeyCode.F12))
             {
                 _cheatWindow.Show = !_cheatWindow.Show;
