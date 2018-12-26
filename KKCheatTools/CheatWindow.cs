@@ -138,7 +138,7 @@ namespace CheatTools
                             if (GUILayout.Button(obj.Value))
                             {
                                 _inspector.InspectorClear();
-                                _inspector.InspectorPush(new InspectorStackEntry(obj.Key, obj.Value));
+                                _inspector.InspectorPush(new InstanceStackEntry(obj.Key, obj.Value));
                             }
                         }
 
@@ -162,12 +162,35 @@ namespace CheatTools
                                     objects.AddRange(Object.FindObjectsOfType(matchedType) ?? Enumerable.Empty<Object>());
 
                                 _inspector.InspectorClear();
-                                _inspector.InspectorPush(new InspectorStackEntry(objects.AsEnumerable(), "Objects of type " + _typeNameToSearchBox));
+                                _inspector.InspectorPush(new InstanceStackEntry(objects.AsEnumerable(), "Objects of type " + _typeNameToSearchBox));
+                            }
+                        }
+
+                        if (GUILayout.Button("Open static type"))
+                        {
+                            if (string.IsNullOrEmpty(_typeNameToSearchBox))
+                            {
+                                _typeNameToSearchBox = "Specify type name to search";
+                            }
+                            else
+                            {
+                                var matchedTypes = AppDomain.CurrentDomain.GetAssemblies()
+                                    .SelectMany(x => x.GetTypes())
+                                    .Where(x => x.GetFriendlyName().Equals(_typeNameToSearchBox, StringComparison.OrdinalIgnoreCase));
+
+                                var stackEntries = matchedTypes.Select(t => new StaticStackEntry(t, t.FullName)).ToList();
+
+                                _inspector.InspectorClear();
+
+                                if (stackEntries.Count == 1)
+                                    _inspector.InspectorPush(stackEntries.Single());
+                                else
+                                    _inspector.InspectorPush(new InstanceStackEntry(stackEntries, "Static type search"));
                             }
                         }
 
                         GUILayout.Space(8);
-                        
+
                         if (GUILayout.Button("Clear AssetBundle Cache"))
                         {
                             foreach (var pair in AssetBundleManager.ManifestBundlePack)
@@ -277,7 +300,7 @@ namespace CheatTools
                 if (GUILayout.Button("Open current girl in inspector"))
                 {
                     _inspector.InspectorClear();
-                    _inspector.InspectorPush(new InspectorStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name));
+                    _inspector.InspectorPush(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name));
                 }
             }
             GUILayout.EndVertical();
@@ -351,7 +374,7 @@ namespace CheatTools
                 if (GUILayout.Button("Open player data in inspector"))
                 {
                     _inspector.InspectorClear();
-                    _inspector.InspectorPush(new InspectorStackEntry(_gameMgr.saveData.player, "Player data"));
+                    _inspector.InspectorPush(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"));
                 }
             }
             GUILayout.EndVertical();
