@@ -264,6 +264,12 @@ namespace CheatTools
                         currentAdvGirl.anger = (int)GUILayout.HorizontalSlider(currentAdvGirl.anger, 0, 100);
                     }
                     GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    {
+                        GUILayout.Label("Intimacy: " + currentAdvGirl.intimacy, GUILayout.Width(60));
+                        currentAdvGirl.intimacy = (int)GUILayout.HorizontalSlider(currentAdvGirl.intimacy, 0, 100);
+                    }
+                    GUILayout.EndHorizontal();
                 }
                 GUILayout.EndVertical();
 
