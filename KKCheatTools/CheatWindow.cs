@@ -79,7 +79,7 @@ namespace CheatTools
             {
                 _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
                 {
-                    if (_gameMgr != null && !_gameMgr.saveData.isOpening)
+                    if (_gameMgr != null)
                         DrawPlayerCheats();
                     else
                         GUILayout.Label("Start the game to see player cheats");
@@ -198,6 +198,39 @@ namespace CheatTools
                                 foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
                                     AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
                             }
+                        }
+
+                        GUILayout.Space(8);
+
+                        if (_gameMgr != null)
+                        {
+                            GUILayout.BeginVertical(GUI.skin.box);
+                            {
+                                GUILayout.Label("Global unlocks");
+
+                                if (GUILayout.Button("Unlock all wedding personalities"))
+                                {
+                                    foreach (var personalityId in Singleton<Voice>.Instance.voiceInfoList.Select(x => x.No).Where(x => x >= 0))
+                                        _gameMgr.weddingData.personality.Add(personalityId);
+                                }
+                                if (GUILayout.Button("Unlock all H positions"))
+                                {
+                                    // Safe enough to add up to 100, vanilla positions don't seem to go above 60
+                                    // 8 buckets might change in the future if game is updated with more h modes, check HSceneProc.lstAnimInfo for how many are needed
+                                    for (int i = 0; i < 8; i++)
+                                        _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 100));
+                                }
+                                /* Doesn't work, need a list of items to put into glSaveData.clubContents from somewhere 
+                                if (GUILayout.Button("Unlock all free H toys/extras"))
+                                {
+                                    var go = new GameObject("CheatTools Temp");
+                                    var handCtrl = go.AddComponent<HandCtrl>();
+                                    var dicItem = (Dictionary<int, HandCtrl.AibuItem>)Traverse.Create(typeof(HandCtrl)).Field("dicItem").GetValue(handCtrl);
+                                    _gameMgr.glSaveData.clubContents[0] = new HashSet<int>(dicItem.Select(x => x.Value.saveID).Where(x => x >= 0));
+                                    go.Destroy();
+                                }*/
+                            }
+                            GUILayout.EndVertical();
                         }
                     }
                     GUILayout.EndVertical();
@@ -325,62 +358,69 @@ namespace CheatTools
         {
             GUILayout.BeginVertical(GUI.skin.box);
             {
-                GUILayout.Label("Player stats");
-
-                GUILayout.BeginHorizontal();
+                if (_gameMgr.saveData.isOpening)
                 {
-                    GUILayout.Label("STR: " + _gameMgr.Player.physical, GUILayout.Width(60));
-                    _gameMgr.Player.physical = (int)GUILayout.HorizontalSlider(_gameMgr.Player.physical, 0, 100);
-                    GUILayout.EndHorizontal();
-                    GUILayout.BeginHorizontal();
-                    {
-                        GUILayout.Label("INT: " + _gameMgr.Player.intellect, GUILayout.Width(60));
-                        _gameMgr.Player.intellect = (int)GUILayout.HorizontalSlider(_gameMgr.Player.intellect, 0, 100);
-                    }
-                    GUILayout.EndHorizontal();
-                    GUILayout.BeginHorizontal();
-                    {
-                        GUILayout.Label("H: " + _gameMgr.Player.hentai, GUILayout.Width(60));
-                        _gameMgr.Player.hentai = (int)GUILayout.HorizontalSlider(_gameMgr.Player.hentai, 0, 100);
-                    }
-                    GUILayout.EndHorizontal();
+                    GUILayout.Label("Start the game to see player cheats");
+                }
+                else
+                {
+                    GUILayout.Label("Player stats");
 
-                    var cycle = Object.FindObjectsOfType<Cycle>().FirstOrDefault();
-                    if (cycle != null)
+                    GUILayout.BeginHorizontal();
                     {
-                        if (cycle.timerVisible)
+                        GUILayout.Label("STR: " + _gameMgr.Player.physical, GUILayout.Width(60));
+                        _gameMgr.Player.physical = (int)GUILayout.HorizontalSlider(_gameMgr.Player.physical, 0, 100);
+                        GUILayout.EndHorizontal();
+                        GUILayout.BeginHorizontal();
                         {
+                            GUILayout.Label("INT: " + _gameMgr.Player.intellect, GUILayout.Width(60));
+                            _gameMgr.Player.intellect = (int)GUILayout.HorizontalSlider(_gameMgr.Player.intellect, 0, 100);
+                        }
+                        GUILayout.EndHorizontal();
+                        GUILayout.BeginHorizontal();
+                        {
+                            GUILayout.Label("H: " + _gameMgr.Player.hentai, GUILayout.Width(60));
+                            _gameMgr.Player.hentai = (int)GUILayout.HorizontalSlider(_gameMgr.Player.hentai, 0, 100);
+                        }
+                        GUILayout.EndHorizontal();
+
+                        var cycle = Object.FindObjectsOfType<Cycle>().FirstOrDefault();
+                        if (cycle != null)
+                        {
+                            if (cycle.timerVisible)
+                            {
+                                GUILayout.BeginHorizontal();
+                                {
+                                    GUILayout.Label("Time: " + cycle.timer.ToString("N1"), GUILayout.Width(65));
+                                    var newVal = GUILayout.HorizontalSlider(cycle.timer, 0, Cycle.TIME_LIMIT);
+                                    if (Math.Abs(newVal - cycle.timer) > 0.09)
+                                    {
+                                        typeof(Cycle)
+                                            .GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)
+                                            ?.SetValue(cycle, newVal);
+                                    }
+                                }
+                                GUILayout.EndHorizontal();
+                            }
+
                             GUILayout.BeginHorizontal();
                             {
-                                GUILayout.Label("Time: " + cycle.timer.ToString("N1"), GUILayout.Width(65));
-                                var newVal = GUILayout.HorizontalSlider(cycle.timer, 0, Cycle.TIME_LIMIT);
-                                if (Math.Abs(newVal - cycle.timer) > 0.09)
-                                {
-                                    typeof(Cycle)
-                                        .GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)
-                                        ?.SetValue(cycle, newVal);
-                                }
+                                GUILayout.Label("Day of the week: " + cycle.nowWeek);
+                                if (GUILayout.Button("Next"))
+                                    cycle.Change(cycle.nowWeek.Next());
                             }
                             GUILayout.EndHorizontal();
                         }
-
-                        GUILayout.BeginHorizontal();
-                        {
-                            GUILayout.Label("Day of the week: " + cycle.nowWeek);
-                            if (GUILayout.Button("Next"))
-                                cycle.Change(cycle.nowWeek.Next());
-                        }
-                        GUILayout.EndHorizontal();
                     }
-                }
 
-                if (GUILayout.Button("Add 10000 club points (+1 level)"))
-                    _gameMgr.saveData.clubReport.comAdd += 10000;
+                    if (GUILayout.Button("Add 10000 club points (+1 level)"))
+                        _gameMgr.saveData.clubReport.comAdd += 10000;
 
-                if (GUILayout.Button("Open player data in inspector"))
-                {
-                    _inspector.InspectorClear();
-                    _inspector.InspectorPush(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"));
+                    if (GUILayout.Button("Open player data in inspector"))
+                    {
+                        _inspector.InspectorClear();
+                        _inspector.InspectorPush(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"));
+                    }
                 }
             }
             GUILayout.EndVertical();
