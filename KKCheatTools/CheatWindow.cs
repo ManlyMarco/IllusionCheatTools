@@ -76,18 +76,17 @@ namespace CheatTools
             {
                 _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
                 {
-                    if (_gameMgr != null)
+                    if (_studioInstance == null)
                         DrawPlayerCheats();
-                    else
-                        GUILayout.Label("Start the game to see player cheats");
 
                     if (_hFlag != null)
                         DrawHSceneCheats(_hFlag);
 
-                    //Now can quit first time H scene
                     if (_hSprite != null)
+                    {
                         if (GUILayout.Button("Force quit H scene"))
                             _hSprite.btnEnd.onClick.Invoke();
+                    }
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
@@ -360,7 +359,7 @@ namespace CheatTools
         {
             GUILayout.BeginVertical(GUI.skin.box);
             {
-                if (_gameMgr.saveData.isOpening)
+                if (_gameMgr == null || _gameMgr.saveData.isOpening)
                 {
                     GUILayout.Label("Start the game to see player cheats");
                 }
@@ -414,6 +413,21 @@ namespace CheatTools
                             GUILayout.EndHorizontal();
                         }
                     }
+
+                    GUILayout.BeginHorizontal();
+                    {
+                        GUILayout.Label("Academy Name:", GUILayout.ExpandWidth(false));
+                        _gameMgr.saveData.accademyName = GUILayout.TextField(_gameMgr.saveData.accademyName, GUILayout.ExpandWidth(true));
+                    }
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    {
+                        GUILayout.Label("Player Name:", GUILayout.ExpandWidth(false));
+                        _gameMgr.Player.parameter.lastname = GUILayout.TextField(_gameMgr.Player.parameter.lastname);
+                        _gameMgr.Player.parameter.firstname = GUILayout.TextField(_gameMgr.Player.parameter.firstname);
+                    }
+                    GUILayout.EndHorizontal();
 
                     if (GUILayout.Button("Add 10000 club points (+1 level)"))
                         _gameMgr.saveData.clubReport.comAdd += 10000;
