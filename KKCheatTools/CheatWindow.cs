@@ -317,6 +317,12 @@ namespace CheatTools
                 }
                 GUILayout.EndHorizontal();
 
+                // 危険日 is risky, 安全日 is safe. Only change when user clicks to avoid messing with the value unnecessarily
+                GUI.changed = false;
+                var isDangerousDay = GUILayout.Toggle(HFlag.GetMenstruation(currentAdvGirl.MenstruationDay) == HFlag.MenstruationType.危険日, "Is on a risky day");
+                if (GUI.changed)
+                    HFlag.SetMenstruation(currentAdvGirl, isDangerousDay ? HFlag.MenstruationType.危険日 : HFlag.MenstruationType.安全日);
+
                 if (GUILayout.Button("Reset conversation time"))
                     currentAdvGirl.talkTime = currentAdvGirl.talkTimeMax;
 
@@ -328,12 +334,10 @@ namespace CheatTools
                 currentAdvGirl.isGirlfriend = GUILayout.Toggle(currentAdvGirl.isGirlfriend, "isGirlfriend");
 
                 currentAdvGirl.denial.kiss = GUILayout.Toggle(currentAdvGirl.denial.kiss, "Won't refuse kiss");
-                currentAdvGirl.denial.massage =
-                    GUILayout.Toggle(currentAdvGirl.denial.massage, "Won't refuse strong massage");
+                currentAdvGirl.denial.massage = GUILayout.Toggle(currentAdvGirl.denial.massage, "Won't refuse strong massage");
                 currentAdvGirl.denial.anal = GUILayout.Toggle(currentAdvGirl.denial.anal, "Won't refuse anal");
                 currentAdvGirl.denial.aibu = GUILayout.Toggle(currentAdvGirl.denial.aibu, "Won't refuse vibrator");
-                currentAdvGirl.denial.notCondom =
-                    GUILayout.Toggle(currentAdvGirl.denial.notCondom, "Insert w/o condom OK");
+                currentAdvGirl.denial.notCondom = GUILayout.Toggle(currentAdvGirl.denial.notCondom, "Insert w/o condom OK");
 
                 if (GUILayout.Button("Open current girl in inspector"))
                 {
