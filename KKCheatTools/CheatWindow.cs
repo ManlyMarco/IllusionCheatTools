@@ -443,6 +443,12 @@ namespace CheatTools
                     if (GUILayout.Button("Add 10000 club points (+1 level)"))
                         _gameMgr.saveData.clubReport.comAdd += 10000;
 
+                    if (GUILayout.Button("Stop shame reactions in bathrooms"))
+                    {
+                        foreach (var param in Object.FindObjectsOfType<MapInfo>().SelectMany(x => x.param))
+                            param.isWarning = false;
+                    }
+
                     if (GUILayout.Button("Open player data in inspector"))
                     {
                         _inspector.InspectorClear();
