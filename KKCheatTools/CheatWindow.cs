@@ -16,9 +16,6 @@ namespace CheatTools
 {
     public class CheatWindow
     {
-        private readonly FieldInfo _advSceneTargetHeroineProp = typeof(ADV.ADVScene).GetField("m_TargetHeroine",
-            BindingFlags.Instance | BindingFlags.NonPublic);
-
         private const int ScreenOffset = 20;
         private readonly string[] _hExpNames = { "First time", "Inexperienced", "Experienced", "Perverted" };
 
@@ -439,17 +436,14 @@ namespace CheatTools
 
         private SaveData.Heroine GetCurrentAdvHeroine()
         {
-            try
+            if (_gameMgr != null &&
+                _gameMgr.actScene != null &&
+                _gameMgr.actScene.AdvScene != null &&
+                _gameMgr.actScene.AdvScene.nowScene is TalkScene s)
             {
-                var nowScene = _gameMgr?.actScene?.AdvScene?.nowScene;
-                if (!nowScene) return null;
-
-                return _advSceneTargetHeroineProp.GetValue(nowScene) as SaveData.Heroine;
+                return s.targetHeroine;
             }
-            catch
-            {
-                return null;
-            }
+            return null;
         }
 
         private static SaveData.Heroine GetCurrentHflagHeroine(HFlag hFlag)
