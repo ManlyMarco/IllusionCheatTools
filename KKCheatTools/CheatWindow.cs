@@ -446,7 +446,10 @@ namespace CheatTools
                     if (GUILayout.Button("Stop shame reactions in bathrooms"))
                     {
                         foreach (var param in Object.FindObjectsOfType<MapInfo>().SelectMany(x => x.param))
+                        {
                             param.isWarning = false;
+                            Logger.Log(LogLevel.Message, "Disabling shame reactions on map " + param.MapName);
+                        }
                     }
 
                     if (GUILayout.Button("Open player data in inspector"))
