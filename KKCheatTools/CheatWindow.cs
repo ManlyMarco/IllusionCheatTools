@@ -96,8 +96,7 @@ namespace CheatTools
                     {
                         GUILayout.Label("Current girl stats");
 
-                        _currentVisibleGirl = GetCurrentTalkSceneHeroine(_talkScene) ?? GetCurrentHflagHeroine(_hFlag) ??
-                            GetCurrentAdvHeroine() ?? _currentVisibleGirl;
+                        _currentVisibleGirl = GetCurrentVisibleGirl();
 
                         if (_currentVisibleGirl != null)
                             DrawCurrentHeroineCheats(_currentVisibleGirl);
@@ -424,6 +423,12 @@ namespace CheatTools
                 }
             }
             GUILayout.EndVertical();
+        }
+
+        private SaveData.Heroine GetCurrentVisibleGirl()
+        {
+            return GetCurrentTalkSceneHeroine(_talkScene) ?? GetCurrentHflagHeroine(_hFlag) ??
+                   GetCurrentAdvHeroine() ?? _currentVisibleGirl;
         }
 
         private SaveData.Heroine GetCurrentAdvHeroine()
