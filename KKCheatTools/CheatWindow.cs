@@ -324,6 +324,17 @@ namespace CheatTools
 
                 currentAdvGirl.isVirgin = GUILayout.Toggle(currentAdvGirl.isVirgin, "isVirgin");
                 currentAdvGirl.isAnalVirgin = GUILayout.Toggle(currentAdvGirl.isAnalVirgin, "isAnalVirgin");
+
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label("Sex count: ", GUILayout.ExpandWidth(false));
+                    GUI.changed = false;
+                    var newCount = GUILayout.TextField(currentAdvGirl.hCount.ToString(), GUILayout.ExpandWidth(true));
+                    if (GUI.changed && int.TryParse(newCount, out var newCountInt))
+                        currentAdvGirl.hCount = Mathf.Max(newCountInt, 0);
+                }
+                GUILayout.EndHorizontal();
+
                 currentAdvGirl.isAnger = GUILayout.Toggle(currentAdvGirl.isAnger, "Is angry");
                 currentAdvGirl.isDate = GUILayout.Toggle(currentAdvGirl.isDate, "Date promised");
                 //currentAdvGirl.isFirstGirlfriend = GUILayout.Toggle(currentAdvGirl.isFirstGirlfriend, "isFirstGirlfriend");
@@ -416,14 +427,14 @@ namespace CheatTools
 
                     GUILayout.BeginHorizontal();
                     {
-                        GUILayout.Label("Academy Name:", GUILayout.ExpandWidth(false));
+                        GUILayout.Label("Academy Name: ", GUILayout.ExpandWidth(false));
                         _gameMgr.saveData.accademyName = GUILayout.TextField(_gameMgr.saveData.accademyName, GUILayout.ExpandWidth(true));
                     }
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     {
-                        GUILayout.Label("Player Name:", GUILayout.ExpandWidth(false));
+                        GUILayout.Label("Player Name: ", GUILayout.ExpandWidth(false));
                         _gameMgr.Player.parameter.lastname = GUILayout.TextField(_gameMgr.Player.parameter.lastname);
                         _gameMgr.Player.parameter.firstname = GUILayout.TextField(_gameMgr.Player.parameter.firstname);
                     }
