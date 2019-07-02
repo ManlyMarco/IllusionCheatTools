@@ -347,6 +347,8 @@ namespace CheatTools
         private static void SetGirlHExp(SaveData.Heroine girl, float amount)
         {
             girl.houshiExp = amount;
+            girl.countKokanH = amount;
+            girl.countAnalH = amount;
             for (var i = 0; i < girl.hAreaExps.Length; i++)
                 girl.hAreaExps[i] = amount;
             for (var i = 0; i < girl.massageExps.Length; i++)
