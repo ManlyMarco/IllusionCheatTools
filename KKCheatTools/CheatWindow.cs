@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using ActionGame;
-using BepInEx.Logging;
 using Manager;
-using RuntimeUnityEditor.Inspector;
-using RuntimeUnityEditor.Inspector.Entries;
-using RuntimeUnityEditor.Utils;
+using RuntimeUnityEditor.Core;
+using RuntimeUnityEditor.Core.Inspector;
+using RuntimeUnityEditor.Core.Inspector.Entries;
+using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
 using Logger = BepInEx.Logger;
+using LogLevel = BepInEx.Logging.LogLevel;
 using Object = UnityEngine.Object;
 
 namespace CheatTools
@@ -19,7 +20,8 @@ namespace CheatTools
         private const int ScreenOffset = 20;
         private readonly string[] _hExpNames = { "First time", "Inexperienced", "Experienced", "Perverted" };
 
-        private readonly Inspector _inspector;
+        private readonly RuntimeUnityEditorCore _editor;
+        private Inspector Inspector => _editor?.Inspector;
 
         private readonly string _mainWindowTitle;
         private string _typeNameToSearchBox = "Specify type name to search";
@@ -38,9 +40,11 @@ namespace CheatTools
         private Scene _sceneInstance;
         private Game _gameMgr;
 
-        public CheatWindow(RuntimeUnityEditor.RuntimeUnityEditor editor)
+        public CheatWindow(RuntimeUnityEditorCore editor)
         {
-            _inspector = editor.Inspector;
+            _editor = editor;
+            // Disable the default hotkey since we'll be controlling the show state manually
+            editor.ShowHotkey = KeyCode.None;
 
             EditorUtilities.AddCustomObjectToString<SaveData.Heroine>(heroine => heroine.Name);
             EditorUtilities.AddCustomObjectToString<SaveData.CharaData.Params.Data>(d => $"[{d.key} | {d.value}]");
@@ -54,6 +58,8 @@ namespace CheatTools
             set
             {
                 _show = value;
+                _editor.Show = value;
+
                 if (value)
                     SetWindowSizes();
 
@@ -132,8 +138,8 @@ namespace CheatTools
                             if (obj.Key == null) continue;
                             if (GUILayout.Button(obj.Value))
                             {
-                                _inspector.InspectorClear();
-                                _inspector.InspectorPush(new InstanceStackEntry(obj.Key, obj.Value));
+                                Inspector.InspectorClear();
+                                Inspector.InspectorPush(new InstanceStackEntry(obj.Key, obj.Value));
                             }
                         }
 
@@ -150,14 +156,14 @@ namespace CheatTools
                             {
                                 var matchedTypes = AppDomain.CurrentDomain.GetAssemblies()
                                     .SelectMany(x => x.GetTypes())
-                                    .Where(x => x.GetFriendlyName().Equals(_typeNameToSearchBox, StringComparison.OrdinalIgnoreCase));
+                                    .Where(x => x.GetSourceCodeRepresentation().Contains(_typeNameToSearchBox, StringComparison.OrdinalIgnoreCase));
 
                                 var objects = new List<Object>();
                                 foreach (var matchedType in matchedTypes)
                                     objects.AddRange(Object.FindObjectsOfType(matchedType) ?? Enumerable.Empty<Object>());
 
-                                _inspector.InspectorClear();
-                                _inspector.InspectorPush(new InstanceStackEntry(objects.AsEnumerable(), "Objects of type " + _typeNameToSearchBox));
+                                Inspector.InspectorClear();
+                                Inspector.InspectorPush(new InstanceStackEntry(objects.AsEnumerable(), "Objects of type " + _typeNameToSearchBox));
                             }
                         }
 
@@ -171,16 +177,16 @@ namespace CheatTools
                             {
                                 var matchedTypes = AppDomain.CurrentDomain.GetAssemblies()
                                     .SelectMany(x => x.GetTypes())
-                                    .Where(x => x.GetFriendlyName().Equals(_typeNameToSearchBox, StringComparison.OrdinalIgnoreCase));
+                                    .Where(x => x.GetSourceCodeRepresentation().Contains(_typeNameToSearchBox, StringComparison.OrdinalIgnoreCase));
 
                                 var stackEntries = matchedTypes.Select(t => new StaticStackEntry(t, t.FullName)).ToList();
 
-                                _inspector.InspectorClear();
+                                Inspector.InspectorClear();
 
                                 if (stackEntries.Count == 1)
-                                    _inspector.InspectorPush(stackEntries.Single());
+                                    Inspector.InspectorPush(stackEntries.Single());
                                 else
-                                    _inspector.InspectorPush(new InstanceStackEntry(stackEntries, "Static type search"));
+                                    Inspector.InspectorPush(new InstanceStackEntry(stackEntries, "Static type search"));
                             }
                         }
 
@@ -348,8 +354,8 @@ namespace CheatTools
 
                 if (GUILayout.Button("Open current girl in inspector"))
                 {
-                    _inspector.InspectorClear();
-                    _inspector.InspectorPush(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name));
+                    Inspector.InspectorClear();
+                    Inspector.InspectorPush(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name));
                 }
             }
             GUILayout.EndVertical();
@@ -454,8 +460,8 @@ namespace CheatTools
 
                     if (GUILayout.Button("Open player data in inspector"))
                     {
-                        _inspector.InspectorClear();
-                        _inspector.InspectorPush(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"));
+                        Inspector.InspectorClear();
+                        Inspector.InspectorPush(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"));
                     }
                 }
             }
