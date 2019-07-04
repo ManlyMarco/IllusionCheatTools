@@ -5,7 +5,6 @@ using System.Reflection;
 using ActionGame;
 using Manager;
 using RuntimeUnityEditor.Core;
-using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
@@ -21,7 +20,6 @@ namespace CheatTools
         private readonly string[] _hExpNames = { "First time", "Inexperienced", "Experienced", "Perverted" };
 
         private readonly RuntimeUnityEditorCore _editor;
-        private Inspector Inspector => _editor?.Inspector;
 
         private readonly string _mainWindowTitle;
         private string _typeNameToSearchBox = "Specify type name to search";
@@ -42,7 +40,10 @@ namespace CheatTools
 
         public CheatWindow(RuntimeUnityEditorCore editor)
         {
+            if (editor == null) throw new ArgumentNullException(nameof(editor));
+
             _editor = editor;
+
             // Disable the default hotkey since we'll be controlling the show state manually
             editor.ShowHotkey = KeyCode.None;
 
@@ -138,8 +139,8 @@ namespace CheatTools
                             if (obj.Key == null) continue;
                             if (GUILayout.Button(obj.Value))
                             {
-                                Inspector.InspectorClear();
-                                Inspector.InspectorPush(new InstanceStackEntry(obj.Key, obj.Value));
+                                _editor.Inspector.InspectorClear();
+                                _editor.Inspector.InspectorPush(new InstanceStackEntry(obj.Key, obj.Value));
                             }
                         }
 
@@ -162,8 +163,8 @@ namespace CheatTools
                                 foreach (var matchedType in matchedTypes)
                                     objects.AddRange(Object.FindObjectsOfType(matchedType) ?? Enumerable.Empty<Object>());
 
-                                Inspector.InspectorClear();
-                                Inspector.InspectorPush(new InstanceStackEntry(objects.AsEnumerable(), "Objects of type " + _typeNameToSearchBox));
+                                _editor.Inspector.InspectorClear();
+                                _editor.Inspector.InspectorPush(new InstanceStackEntry(objects.AsEnumerable(), "Objects of type " + _typeNameToSearchBox));
                             }
                         }
 
@@ -181,12 +182,12 @@ namespace CheatTools
 
                                 var stackEntries = matchedTypes.Select(t => new StaticStackEntry(t, t.FullName)).ToList();
 
-                                Inspector.InspectorClear();
+                                _editor.Inspector.InspectorClear();
 
                                 if (stackEntries.Count == 1)
-                                    Inspector.InspectorPush(stackEntries.Single());
+                                    _editor.Inspector.InspectorPush(stackEntries.Single());
                                 else
-                                    Inspector.InspectorPush(new InstanceStackEntry(stackEntries, "Static type search"));
+                                    _editor.Inspector.InspectorPush(new InstanceStackEntry(stackEntries, "Static type search"));
                             }
                         }
 
@@ -352,10 +353,18 @@ namespace CheatTools
                 currentAdvGirl.denial.aibu = GUILayout.Toggle(currentAdvGirl.denial.aibu, "Won't refuse vibrator");
                 currentAdvGirl.denial.notCondom = GUILayout.Toggle(currentAdvGirl.denial.notCondom, "Insert w/o condom OK");
 
-                if (GUILayout.Button("Open current girl in inspector"))
+                if (GUILayout.Button("Navigate to heroine's GameObject"))
                 {
-                    Inspector.InspectorClear();
-                    Inspector.InspectorPush(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name));
+                    if (currentAdvGirl.transform != null)
+                        _editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
+                    else
+                        Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
+                }
+
+                if (GUILayout.Button("Open Heroine in inspector"))
+                {
+                    _editor.Inspector.InspectorClear();
+                    _editor.Inspector.InspectorPush(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name));
                 }
             }
             GUILayout.EndVertical();
@@ -460,8 +469,8 @@ namespace CheatTools
 
                     if (GUILayout.Button("Open player data in inspector"))
                     {
-                        Inspector.InspectorClear();
-                        Inspector.InspectorPush(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"));
+                        _editor.Inspector.InspectorClear();
+                        _editor.Inspector.InspectorPush(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"));
                     }
                 }
             }
