@@ -44,9 +44,6 @@ namespace CheatTools
 
             _editor = editor;
 
-            // Disable the default hotkey since we'll be controlling the show state manually
-            editor.ShowHotkey = KeyCode.None;
-
             EditorUtilities.AddCustomObjectToString<SaveData.Heroine>(heroine => heroine.Name);
             EditorUtilities.AddCustomObjectToString<SaveData.CharaData.Params.Data>(d => $"[{d.key} | {d.value}]");
 

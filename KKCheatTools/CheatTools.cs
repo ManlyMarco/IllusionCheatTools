@@ -21,6 +21,12 @@ namespace CheatTools
             ShowCheatWindow = new SavedKeyboardShortcut(nameof(ShowCheatWindow), this, new KeyboardShortcut(KeyCode.Pause));
         }
 
+        private void Start()
+        {
+            // Disable the default hotkey since we'll be controlling the show state manually
+            RuntimeUnityEditor4.Instance.ShowHotkey = KeyCode.None;
+        }
+
         protected void OnGUI()
         {
             _cheatWindow?.DisplayCheatWindow();
