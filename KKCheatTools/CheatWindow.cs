@@ -143,53 +143,6 @@ namespace CheatTools
 
 						GUILayout.Space(8);
 
-						_typeNameToSearchBox = GUILayout.TextField(_typeNameToSearchBox, GUILayout.ExpandWidth(true));
-						if (GUILayout.Button("Find objects of this type"))
-						{
-							if (string.IsNullOrEmpty(_typeNameToSearchBox))
-							{
-								_typeNameToSearchBox = "Specify type name to search";
-							}
-							else
-							{
-								var matchedTypes = AppDomain.CurrentDomain.GetAssemblies()
-									.SelectMany(x => x.GetTypes())
-									.Where(x => x.GetSourceCodeRepresentation().Contains(_typeNameToSearchBox, StringComparison.OrdinalIgnoreCase));
-
-								var objects = new List<Object>();
-								foreach (var matchedType in matchedTypes)
-									objects.AddRange(Object.FindObjectsOfType(matchedType) ?? Enumerable.Empty<Object>());
-
-								_editor.Inspector.InspectorClear();
-								_editor.Inspector.InspectorPush(new InstanceStackEntry(objects.AsEnumerable(), "Objects of type " + _typeNameToSearchBox));
-							}
-						}
-
-						if (GUILayout.Button("Open static type"))
-						{
-							if (string.IsNullOrEmpty(_typeNameToSearchBox))
-							{
-								_typeNameToSearchBox = "Specify type name to search";
-							}
-							else
-							{
-								var matchedTypes = AppDomain.CurrentDomain.GetAssemblies()
-									.SelectMany(x => x.GetTypes())
-									.Where(x => x.GetSourceCodeRepresentation().Contains(_typeNameToSearchBox, StringComparison.OrdinalIgnoreCase));
-
-								var stackEntries = matchedTypes.Select(t => new StaticStackEntry(t, t.FullName)).ToList();
-
-								_editor.Inspector.InspectorClear();
-
-								if (stackEntries.Count == 1)
-									_editor.Inspector.InspectorPush(stackEntries.Single());
-								else
-									_editor.Inspector.InspectorPush(new InstanceStackEntry(stackEntries, "Static type search"));
-							}
-						}
-
-						GUILayout.Space(8);
-
 						if (GUILayout.Button("Clear AssetBundle Cache"))
 						{
 							foreach (var pair in AssetBundleManager.ManifestBundlePack)
