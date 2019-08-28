@@ -465,34 +465,28 @@ namespace CheatTools
 			GUILayout.EndVertical();
 		}
 
-		private SaveData.Heroine GetCurrentVisibleGirl()
-		{
-			return GetCurrentTalkSceneHeroine(_talkScene) ?? GetCurrentHflagHeroine(_hFlag) ??
-				   GetCurrentAdvHeroine() ?? _currentVisibleGirl;
-		}
+	    private SaveData.Heroine GetCurrentVisibleGirl()
+	    {
+	        var result = _talkScene?.targetHeroine;
+	        if (result != null) return result;
 
-		private SaveData.Heroine GetCurrentAdvHeroine()
-		{
-			if (_gameMgr != null &&
-				_gameMgr.actScene != null &&
-				_gameMgr.actScene.AdvScene != null &&
-				_gameMgr.actScene.AdvScene.nowScene is TalkScene s)
-			{
-				return s.targetHeroine;
-			}
-			return null;
-		}
+            result = _hFlag?.lstHeroine?.FirstOrDefault();
+	        if (result != null) return result;
 
-		private static SaveData.Heroine GetCurrentHflagHeroine(HFlag hFlag)
-		{
-			return hFlag?.lstHeroine?.FirstOrDefault();
-		}
+	        if (Game.IsInstance() && 
+                Game.Instance.actScene != null && 
+                Game.Instance.actScene.AdvScene != null)
+	        {
+	            var advScene = Game.Instance.actScene.AdvScene;
+	            if (advScene.Scenario?.currentHeroine != null)
+	                return advScene.Scenario.currentHeroine;
+	            if (advScene.nowScene is TalkScene s && s.targetHeroine != null)
+	                return s.targetHeroine;
+	        }
 
-		private static SaveData.Heroine GetCurrentTalkSceneHeroine(TalkScene talkScene)
-		{
-			return talkScene?.targetHeroine;
-		}
-
+	        return _currentVisibleGirl;
+	    }
+        
 		private string GetHExpText(SaveData.Heroine currentAdvGirl)
 		{
 			return _hExpNames[(int)currentAdvGirl.HExperience];
