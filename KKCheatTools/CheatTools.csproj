@@ -71,7 +71,6 @@
   <ItemGroup>
     <Compile Include="CheatTools.cs" />
     <Compile Include="CheatWindow.cs" />
-    <Compile Include="CursorBlocker.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

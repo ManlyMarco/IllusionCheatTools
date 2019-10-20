@@ -64,8 +64,6 @@ namespace CheatTools
                 if (value)
                     SetWindowSizes();
 
-                CursorBlocker.DisableCameraControls = _show;
-
                 _hFlag = Object.FindObjectOfType<HFlag>();
                 _talkScene = Object.FindObjectOfType<TalkScene>();
                 _hSprite = Object.FindObjectOfType<HSprite>();
