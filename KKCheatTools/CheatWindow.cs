@@ -30,7 +30,7 @@ namespace CheatTools
         private bool _show;
 
         private SaveData.Heroine _currentVisibleGirl;
-        private bool _showSelectHeroineDialog;
+        private bool _showSelectHeroineList;
 
         private HFlag _hFlag;
         private TalkScene _talkScene;
@@ -93,52 +93,7 @@ namespace CheatTools
                             _hSprite.btnEnd.onClick.Invoke();
                     }
 
-                    GUILayout.BeginVertical(GUI.skin.box);
-                    {
-                        GUILayout.Label("Girl stats");
-
-                        if (_showSelectHeroineDialog)
-                        {
-                            if (_gameMgr.HeroineList == null || _gameMgr.HeroineList.Count == 0)
-                            {
-                                _showSelectHeroineDialog = false;
-                            }
-                            else
-                            {
-                                for (var index = 0; index < _gameMgr.HeroineList.Count; index++)
-                                {
-                                    var heroine = _gameMgr.HeroineList[index];
-                                    if (GUILayout.Button($"Select #{index} - {heroine.Name}"))
-                                    {
-                                        _currentVisibleGirl = heroine;
-                                        _showSelectHeroineDialog = false;
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            var girls = GetCurrentVisibleGirls();
-
-                            foreach (var girl in girls)
-                            {
-                                if (GUILayout.Button("Select current - " + girl.Name))
-                                    _currentVisibleGirl = girl;
-                            }
-
-                            if (_gameMgr.HeroineList != null && _gameMgr.HeroineList.Count > 0)
-                            {
-                                if (GUILayout.Button("Select from heroine list"))
-                                    _showSelectHeroineDialog = true;
-                            }
-
-                            if (_currentVisibleGirl != null)
-                                DrawCurrentHeroineCheats(_currentVisibleGirl);
-                            else
-                                GUILayout.Label("Select a girl to access her stats");
-                        }
-                    }
-                    GUILayout.EndVertical();
+                    DrawGirlCheatMenu();
 
                     GUILayout.BeginHorizontal(GUI.skin.box);
                     {
@@ -256,11 +211,69 @@ namespace CheatTools
             GUILayout.EndVertical();
         }
 
-        private void DrawCurrentHeroineCheats(SaveData.Heroine currentAdvGirl)
+        private void DrawGirlCheatMenu()
+        {
+            GUILayout.BeginVertical(GUI.skin.box);
+            {
+                GUILayout.Label("Girl stats");
+
+                if (!_showSelectHeroineList)
+                {
+                    var girls = GetCurrentVisibleGirls();
+
+                    for (var index = 0; index < girls.Length; index++)
+                    {
+                        var girl = girls[index];
+                        if (GUILayout.Button($"Select current #{index} - {girl.Name}"))
+                            _currentVisibleGirl = girl;
+                    }
+
+                    if (_gameMgr.HeroineList != null && _gameMgr.HeroineList.Count > 0)
+                    {
+                        if (GUILayout.Button("Select from heroine list"))
+                            _showSelectHeroineList = true;
+                    }
+
+                    if (_currentVisibleGirl != null)
+                    {
+                        GUILayout.Space(6);
+                        DrawHeroineCheats(_currentVisibleGirl);
+                    }
+                    else
+                    {
+                        GUILayout.Label("Select a girl to access her stats");
+                    }
+                }
+                else
+                {
+                    if (_gameMgr.HeroineList == null || _gameMgr.HeroineList.Count == 0)
+                    {
+                        _showSelectHeroineList = false;
+                    }
+                    else
+                    {
+                        GUILayout.Label("Select one of the heroines to continue");
+
+                        for (var index = 0; index < _gameMgr.HeroineList.Count; index++)
+                        {
+                            var heroine = _gameMgr.HeroineList[index];
+                            if (GUILayout.Button($"Select #{index} - {heroine.Name}"))
+                            {
+                                _currentVisibleGirl = heroine;
+                                _showSelectHeroineList = false;
+                            }
+                        }
+                    }
+                }
+            }
+            GUILayout.EndVertical();
+        }
+
+        private void DrawHeroineCheats(SaveData.Heroine currentAdvGirl)
         {
             GUILayout.BeginVertical();
             {
-                GUILayout.Label("Name: " + currentAdvGirl.Name);
+                GUILayout.Label("Selected girl name: " + currentAdvGirl.Name);
 
                 GUILayout.BeginVertical();
                 {
