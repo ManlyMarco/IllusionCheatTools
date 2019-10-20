@@ -45,11 +45,6 @@
       <HintPath>..\Libs\BepInEx.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="ConfigurationManager, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\lib\ConfigurationManager.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="RuntimeUnityEditor.Bepin4">
       <HintPath>..\..\..\Universal\RuntimeUnityEditor\bin\RuntimeUnityEditor.Bepin4.dll</HintPath>
     </Reference>

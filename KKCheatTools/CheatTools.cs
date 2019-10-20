@@ -1,5 +1,6 @@
-﻿using System.ComponentModel;
-using BepInEx;
+﻿using BepInEx;
+using BepInEx.Configuration;
+using BepInEx.Logging;
 using RuntimeUnityEditor.Bepin4;
 using UnityEngine;
 
@@ -13,12 +14,15 @@ namespace CheatTools
 
         private CheatWindow _cheatWindow;
 
-        [DisplayName("Show trainer and debug windows")]
-        public SavedKeyboardShortcut ShowCheatWindow { get; }
+        public ConfigEntry<KeyboardShortcut> ShowCheatWindow { get; }
+
+        internal static new ManualLogSource Logger;
 
         public CheatTools()
         {
-            ShowCheatWindow = new SavedKeyboardShortcut(nameof(ShowCheatWindow), this, new KeyboardShortcut(KeyCode.Pause));
+            Logger = base.Logger;
+
+            ShowCheatWindow = Config.AddSetting("", "Show trainer window", new KeyboardShortcut(KeyCode.Pause));
         }
 
         private void Start()
@@ -34,7 +38,7 @@ namespace CheatTools
 
         protected void Update()
         {
-            if (ShowCheatWindow.IsDown())
+            if (ShowCheatWindow.Value.IsDown())
             {
                 if (_cheatWindow == null)
                     _cheatWindow = new CheatWindow(RuntimeUnityEditor4.Instance);

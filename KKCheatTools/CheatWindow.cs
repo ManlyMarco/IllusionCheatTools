@@ -10,7 +10,6 @@ using RuntimeUnityEditor.Core.Inspector.Entries;
 using RuntimeUnityEditor.Core.UI;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
-using Logger = BepInEx.Logger;
 using LogLevel = BepInEx.Logging.LogLevel;
 using Object = UnityEngine.Object;
 
@@ -181,7 +180,7 @@ namespace CheatTools
             }
             catch (Exception ex)
             {
-                Logger.Log(LogLevel.Error, "[CheatTools] CheatWindow crash: " + ex.Message);
+                CheatTools.Logger.Log(LogLevel.Error, "CheatWindow crash: " + ex.Message);
             }
 
             GUI.DragWindow();
@@ -394,7 +393,7 @@ namespace CheatTools
                     if (currentAdvGirl.transform != null)
                         _editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
                     else
-                        Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
+                        CheatTools.Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
                 }
 
                 if (GUILayout.Button("Open Heroine in inspector"))
@@ -499,7 +498,7 @@ namespace CheatTools
                         foreach (var param in Object.FindObjectsOfType<MapInfo>().SelectMany(x => x.param))
                         {
                             param.isWarning = false;
-                            Logger.Log(LogLevel.Message, "Disabling shame reactions on map " + param.MapName);
+                            CheatTools.Logger.Log(LogLevel.Message, "Disabling shame reactions on map " + param.MapName);
                         }
                     }
 
