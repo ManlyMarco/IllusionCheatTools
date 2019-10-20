@@ -7,6 +7,7 @@ using Manager;
 using RuntimeUnityEditor.Core;
 using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
+using RuntimeUnityEditor.Core.UI;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
 using Logger = BepInEx.Logger;
@@ -29,6 +30,8 @@ namespace CheatTools
         private bool _show;
 
         private SaveData.Heroine _currentVisibleGirl;
+        private bool _showSelectHeroineDialog;
+
         private HFlag _hFlag;
         private TalkScene _talkScene;
         private HSprite _hSprite;
@@ -94,14 +97,48 @@ namespace CheatTools
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        GUILayout.Label("Current girl stats");
+                        GUILayout.Label("Girl stats");
 
-                        _currentVisibleGirl = GetCurrentVisibleGirl();
-
-                        if (_currentVisibleGirl != null)
-                            DrawCurrentHeroineCheats(_currentVisibleGirl);
+                        if (_showSelectHeroineDialog)
+                        {
+                            if (_gameMgr.HeroineList == null || _gameMgr.HeroineList.Count == 0)
+                            {
+                                _showSelectHeroineDialog = false;
+                            }
+                            else
+                            {
+                                for (var index = 0; index < _gameMgr.HeroineList.Count; index++)
+                                {
+                                    var heroine = _gameMgr.HeroineList[index];
+                                    if (GUILayout.Button($"Select #{index} - {heroine.Name}"))
+                                    {
+                                        _currentVisibleGirl = heroine;
+                                        _showSelectHeroineDialog = false;
+                                    }
+                                }
+                            }
+                        }
                         else
-                            GUILayout.Label("Talk to a girl to access her stats");
+                        {
+                            var girls = GetCurrentVisibleGirls();
+
+                            foreach (var girl in girls)
+                            {
+                                if (GUILayout.Button("Select current - " + girl.Name))
+                                    _currentVisibleGirl = girl;
+                            }
+
+                            if (_gameMgr.HeroineList != null && _gameMgr.HeroineList.Count > 0)
+                            {
+                                if (GUILayout.Button("Select from heroine list"))
+                                    _showSelectHeroineDialog = true;
+                            }
+
+                            if (_currentVisibleGirl != null)
+                                DrawCurrentHeroineCheats(_currentVisibleGirl);
+                            else
+                                GUILayout.Label("Select a girl to access her stats");
+                        }
                     }
                     GUILayout.EndVertical();
 
@@ -465,13 +502,13 @@ namespace CheatTools
             GUILayout.EndVertical();
         }
 
-        private SaveData.Heroine GetCurrentVisibleGirl()
+        private SaveData.Heroine[] GetCurrentVisibleGirls()
         {
             var result = _talkScene?.targetHeroine;
-            if (result != null) return result;
+            if (result != null) return new[] { result };
 
-            result = _hFlag?.lstHeroine?.FirstOrDefault();
-            if (result != null) return result;
+            var hHeroines = _hFlag?.lstHeroine;
+            if (hHeroines != null && hHeroines.Count > 0) return hHeroines.ToArray();
 
             if (Game.IsInstance() &&
                 Game.Instance.actScene != null &&
@@ -479,12 +516,12 @@ namespace CheatTools
             {
                 var advScene = Game.Instance.actScene.AdvScene;
                 if (advScene.Scenario?.currentHeroine != null)
-                    return advScene.Scenario.currentHeroine;
+                    return new[] { advScene.Scenario.currentHeroine };
                 if (advScene.nowScene is TalkScene s && s.targetHeroine != null)
-                    return s.targetHeroine;
+                    return new[] { s.targetHeroine };
             }
 
-            return _currentVisibleGirl;
+            return new SaveData.Heroine[0];
         }
 
         private string GetHExpText(SaveData.Heroine currentAdvGirl)
@@ -496,8 +533,13 @@ namespace CheatTools
         {
             if (!Show) return;
 
-            //todo .DrawSolidWindowBackground(_cheatWindowRect);
+            var skinBack = GUI.skin;
+            GUI.skin = InterfaceMaker.CustomSkin;
+
             _cheatWindowRect = GUILayout.Window(591, _cheatWindowRect, CheatWindowContents, _mainWindowTitle);
+
+            InterfaceMaker.EatInputInRect(_cheatWindowRect);
+            GUI.skin = skinBack;
         }
 
         private void SetWindowSizes()
