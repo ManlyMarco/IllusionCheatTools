@@ -43,9 +43,7 @@ namespace CheatTools
 
         public CheatWindow(RuntimeUnityEditorCore editor)
         {
-            if (editor == null) throw new ArgumentNullException(nameof(editor));
-
-            _editor = editor;
+            _editor = editor ?? throw new ArgumentNullException(nameof(editor));
 
             ToStringConverter.AddConverter<SaveData.Heroine>(heroine => !string.IsNullOrEmpty(heroine.Name) ? heroine.Name : heroine.nickname);
             ToStringConverter.AddConverter<SaveData.CharaData.Params.Data>(d => $"[{d.key} | {d.value}]");
@@ -77,39 +75,38 @@ namespace CheatTools
 
         private void CheatWindowContents(int id)
         {
-            try
+            _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
             {
-                _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
+                if (_studioInstance == null)
+                    DrawPlayerCheats();
+
+                if (_hFlag != null)
+                    DrawHSceneCheats(_hFlag);
+
+                if (_hSprite != null)
                 {
-                    if (_studioInstance == null)
-                        DrawPlayerCheats();
+                    if (GUILayout.Button("Force quit H scene"))
+                        _hSprite.btnEnd.onClick.Invoke();
+                }
 
-                    if (_hFlag != null)
-                        DrawHSceneCheats(_hFlag);
-
-                    if (_hSprite != null)
-                    {
-                        if (GUILayout.Button("Force quit H scene"))
-                            _hSprite.btnEnd.onClick.Invoke();
-                    }
-
+                if (_gameMgr != null)
                     DrawGirlCheatMenu();
 
-                    GUILayout.BeginHorizontal(GUI.skin.box);
-                    {
-                        GUILayout.Label("Speed", GUILayout.ExpandWidth(false));
-                        GUILayout.Label((int)Math.Round(Time.timeScale * 100) + "%", GUILayout.Width(35));
-                        Time.timeScale = GUILayout.HorizontalSlider(Time.timeScale, 0, 5, GUILayout.ExpandWidth(true));
-                        if (GUILayout.Button("Reset", GUILayout.ExpandWidth(false)))
-                            Time.timeScale = 1;
-                    }
-                    GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal(GUI.skin.box);
+                {
+                    GUILayout.Label("Speed", GUILayout.ExpandWidth(false));
+                    GUILayout.Label((int)Math.Round(Time.timeScale * 100) + "%", GUILayout.Width(35));
+                    Time.timeScale = GUILayout.HorizontalSlider(Time.timeScale, 0, 5, GUILayout.ExpandWidth(true));
+                    if (GUILayout.Button("Reset", GUILayout.ExpandWidth(false)))
+                        Time.timeScale = 1;
+                }
+                GUILayout.EndHorizontal();
 
-                    GUILayout.BeginVertical(GUI.skin.box);
+                GUILayout.BeginVertical(GUI.skin.box);
+                {
+                    GUILayout.Label("Open in inspector");
+                    foreach (var obj in new[]
                     {
-                        GUILayout.Label("Open in inspector");
-                        foreach (var obj in new[]
-                        {
                             new KeyValuePair<object, string>(
                                 _gameMgr?.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x)),
                                 "Heroine list"),
@@ -122,67 +119,62 @@ namespace CheatTools
                             new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
                             new KeyValuePair<object, string>(EditorUtilities.GetRootGoScanner(), "Root Objects")
                         })
+                    {
+                        if (obj.Key == null) continue;
+                        if (GUILayout.Button(obj.Value))
                         {
-                            if (obj.Key == null) continue;
-                            if (GUILayout.Button(obj.Value))
-                            {
-                                _editor.Inspector.InspectorClear();
-                                _editor.Inspector.InspectorPush(new InstanceStackEntry(obj.Key, obj.Value));
-                            }
-                        }
-
-                        GUILayout.Space(8);
-
-                        if (GUILayout.Button("Clear AssetBundle Cache"))
-                        {
-                            foreach (var pair in AssetBundleManager.ManifestBundlePack)
-                            {
-                                foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
-                                    AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
-                            }
-                        }
-
-                        GUILayout.Space(8);
-
-                        if (_gameMgr != null)
-                        {
-                            GUILayout.BeginVertical(GUI.skin.box);
-                            {
-                                GUILayout.Label("Global unlocks");
-
-                                if (GUILayout.Button("Unlock all wedding personalities"))
-                                {
-                                    foreach (var personalityId in Singleton<Voice>.Instance.voiceInfoList.Select(x => x.No).Where(x => x >= 0))
-                                        _gameMgr.weddingData.personality.Add(personalityId);
-                                }
-                                if (GUILayout.Button("Unlock all H positions"))
-                                {
-                                    // Safe enough to add up to 100, vanilla positions don't seem to go above 60
-                                    // 8 buckets might change in the future if game is updated with more h modes, check HSceneProc.lstAnimInfo for how many are needed
-                                    for (int i = 0; i < 8; i++)
-                                        _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 100));
-                                }
-                                /* Doesn't work, need a list of items to put into glSaveData.clubContents from somewhere 
-                                if (GUILayout.Button("Unlock all free H toys/extras"))
-                                {
-                                    var go = new GameObject("CheatTools Temp");
-                                    var handCtrl = go.AddComponent<HandCtrl>();
-                                    var dicItem = (Dictionary<int, HandCtrl.AibuItem>)Traverse.Create(typeof(HandCtrl)).Field("dicItem").GetValue(handCtrl);
-                                    _gameMgr.glSaveData.clubContents[0] = new HashSet<int>(dicItem.Select(x => x.Value.saveID).Where(x => x >= 0));
-                                    go.Destroy();
-                                }*/
-                            }
-                            GUILayout.EndVertical();
+                            _editor.Inspector.InspectorClear();
+                            _editor.Inspector.InspectorPush(new InstanceStackEntry(obj.Key, obj.Value));
                         }
                     }
-                    GUILayout.EndVertical();
+
+                    GUILayout.Space(8);
+
+                    if (GUILayout.Button("Clear AssetBundle Cache"))
+                    {
+                        foreach (var pair in AssetBundleManager.ManifestBundlePack)
+                        {
+                            foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
+                                AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
+                        }
+                    }
+
+                    GUILayout.Space(8);
+
+                    if (_gameMgr != null)
+                    {
+                        GUILayout.BeginVertical(GUI.skin.box);
+                        {
+                            GUILayout.Label("Global unlocks");
+
+                            if (GUILayout.Button("Unlock all wedding personalities"))
+                            {
+                                foreach (var personalityId in Singleton<Voice>.Instance.voiceInfoList.Select(x => x.No).Where(x => x >= 0))
+                                    _gameMgr.weddingData.personality.Add(personalityId);
+                            }
+                            if (GUILayout.Button("Unlock all H positions"))
+                            {
+                                // Safe enough to add up to 100, vanilla positions don't seem to go above 60
+                                // 8 buckets might change in the future if game is updated with more h modes, check HSceneProc.lstAnimInfo for how many are needed
+                                for (int i = 0; i < 8; i++)
+                                    _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 100));
+                            }
+                            /* Doesn't work, need a list of items to put into glSaveData.clubContents from somewhere 
+                            if (GUILayout.Button("Unlock all free H toys/extras"))
+                            {
+                                var go = new GameObject("CheatTools Temp");
+                                var handCtrl = go.AddComponent<HandCtrl>();
+                                var dicItem = (Dictionary<int, HandCtrl.AibuItem>)Traverse.Create(typeof(HandCtrl)).Field("dicItem").GetValue(handCtrl);
+                                _gameMgr.glSaveData.clubContents[0] = new HashSet<int>(dicItem.Select(x => x.Value.saveID).Where(x => x >= 0));
+                                go.Destroy();
+                            }*/
+                        }
+                        GUILayout.EndVertical();
+                    }
                 }
-                GUILayout.EndScrollView();
+                GUILayout.EndVertical();
             }
-            catch (Exception ex)
-            {
-                Logger.Log(LogLevel.Error, "[CheatTools] CheatWindow crash: " + ex.Message);
-            }
+            GUILayout.EndScrollView();
 
             GUI.DragWindow();
         }
