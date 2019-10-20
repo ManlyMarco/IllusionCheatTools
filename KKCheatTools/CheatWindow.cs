@@ -50,7 +50,7 @@ namespace CheatTools
             ToStringConverter.AddConverter<SaveData.Heroine>(heroine => !string.IsNullOrEmpty(heroine.Name) ? heroine.Name : heroine.nickname);
             ToStringConverter.AddConverter<SaveData.CharaData.Params.Data>(d => $"[{d.key} | {d.value}]");
 
-            _mainWindowTitle = "Cheat Tools" + Assembly.GetExecutingAssembly().GetName().Version;
+            _mainWindowTitle = "Cheat Tools " + Assembly.GetExecutingAssembly().GetName().Version;
         }
 
         public bool Show
