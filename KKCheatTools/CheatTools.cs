@@ -9,7 +9,7 @@ namespace CheatTools
     [BepInDependency(RuntimeUnityEditor.Core.RuntimeUnityEditorCore.GUID)]
     public class CheatTools : BaseUnityPlugin
     {
-        public const string Version = "2.5";
+        public const string Version = "2.6";
 
         private CheatWindow _cheatWindow;
 
