@@ -50,9 +50,6 @@
       <HintPath>..\..\lib\ConfigurationManager.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="RuntimeUnityEditor.Bepin4">
-      <HintPath>..\..\..\Universal\RuntimeUnityEditor\bin\RuntimeUnityEditor.Bepin4.dll</HintPath>
-    </Reference>
     <Reference Include="RuntimeUnityEditor.Core">
       <HintPath>..\..\..\Universal\RuntimeUnityEditor\bin\RuntimeUnityEditor.Core.dll</HintPath>
       <Private>True</Private>
