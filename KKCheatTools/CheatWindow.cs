@@ -127,52 +127,48 @@ namespace CheatTools
                             _editor.Inspector.InspectorPush(new InstanceStackEntry(obj.Key, obj.Value));
                         }
                     }
-
-                    GUILayout.Space(8);
-
-                    if (GUILayout.Button("Clear AssetBundle Cache"))
-                    {
-                        foreach (var pair in AssetBundleManager.ManifestBundlePack)
-                        {
-                            foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
-                                AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
-                        }
-                    }
-
-                    GUILayout.Space(8);
-
-                    if (_gameMgr != null)
-                    {
-                        GUILayout.BeginVertical(GUI.skin.box);
-                        {
-                            GUILayout.Label("Global unlocks");
-
-                            if (GUILayout.Button("Unlock all wedding personalities"))
-                            {
-                                foreach (var personalityId in Singleton<Voice>.Instance.voiceInfoList.Select(x => x.No).Where(x => x >= 0))
-                                    _gameMgr.weddingData.personality.Add(personalityId);
-                            }
-                            if (GUILayout.Button("Unlock all H positions"))
-                            {
-                                // Safe enough to add up to 100, vanilla positions don't seem to go above 60
-                                // 8 buckets might change in the future if game is updated with more h modes, check HSceneProc.lstAnimInfo for how many are needed
-                                for (int i = 0; i < 8; i++)
-                                    _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 100));
-                            }
-                            /* Doesn't work, need a list of items to put into glSaveData.clubContents from somewhere 
-                            if (GUILayout.Button("Unlock all free H toys/extras"))
-                            {
-                                var go = new GameObject("CheatTools Temp");
-                                var handCtrl = go.AddComponent<HandCtrl>();
-                                var dicItem = (Dictionary<int, HandCtrl.AibuItem>)Traverse.Create(typeof(HandCtrl)).Field("dicItem").GetValue(handCtrl);
-                                _gameMgr.glSaveData.clubContents[0] = new HashSet<int>(dicItem.Select(x => x.Value.saveID).Where(x => x >= 0));
-                                go.Destroy();
-                            }*/
-                        }
-                        GUILayout.EndVertical();
-                    }
                 }
                 GUILayout.EndVertical();
+
+                if (GUILayout.Button("Clear AssetBundle Cache"))
+                {
+                    foreach (var pair in AssetBundleManager.ManifestBundlePack)
+                    {
+                        foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
+                            AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
+                    }
+                }
+
+                if (_gameMgr != null)
+                {
+                    GUILayout.BeginVertical(GUI.skin.box);
+                    {
+                        GUILayout.Label("Global unlocks");
+
+                        if (GUILayout.Button("Unlock all wedding personalities"))
+                        {
+                            foreach (var personalityId in Singleton<Voice>.Instance.voiceInfoList.Select(x => x.No).Where(x => x >= 0))
+                                _gameMgr.weddingData.personality.Add(personalityId);
+                        }
+                        if (GUILayout.Button("Unlock all H positions"))
+                        {
+                            // Safe enough to add up to 100, vanilla positions don't seem to go above 60
+                            // 8 buckets might change in the future if game is updated with more h modes, check HSceneProc.lstAnimInfo for how many are needed
+                            for (int i = 0; i < 8; i++)
+                                _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 100));
+                        }
+                        /* Doesn't work, need a list of items to put into glSaveData.clubContents from somewhere 
+                        if (GUILayout.Button("Unlock all free H toys/extras"))
+                        {
+                            var go = new GameObject("CheatTools Temp");
+                            var handCtrl = go.AddComponent<HandCtrl>();
+                            var dicItem = (Dictionary<int, HandCtrl.AibuItem>)Traverse.Create(typeof(HandCtrl)).Field("dicItem").GetValue(handCtrl);
+                            _gameMgr.glSaveData.clubContents[0] = new HashSet<int>(dicItem.Select(x => x.Value.saveID).Where(x => x >= 0));
+                            go.Destroy();
+                        }*/
+                    }
+                    GUILayout.EndVertical();
+                }
             }
             GUILayout.EndScrollView();
 
