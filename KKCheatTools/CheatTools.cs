@@ -57,6 +57,9 @@ namespace CheatTools
 
                 _cheatWindow.Show = !_cheatWindow.Show;
             }
+
+            if (_cheatWindow == null) return;
+            _cheatWindow.Update();
         }
     }
 }

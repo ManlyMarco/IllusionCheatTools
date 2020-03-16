@@ -24,13 +24,14 @@
     <CodeAnalysisRuleSet />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+    <DebugType>embedded</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\..\..\..\Games\Koikatsu\BepInEx\</OutputPath>
+    <OutputPath>..\..\..\..\Games\Koikatsu\BepInEx\plugins\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet />
+    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -47,6 +48,7 @@
     </Reference>
     <Reference Include="RuntimeUnityEditor.Core">
       <HintPath>..\..\..\Universal\RuntimeUnityEditor\bin\BepInEx\plugins\RuntimeUnityEditor\RuntimeUnityEditor.Core.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
