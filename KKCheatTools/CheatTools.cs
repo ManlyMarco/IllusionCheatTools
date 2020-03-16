@@ -10,10 +10,10 @@ using LogLevel = BepInEx.Logging.LogLevel;
 namespace CheatTools
 {
     [BepInPlugin("CheatTools", "Cheat Tools", Version)]
-    [BepInDependency(RuntimeUnityEditorCore.GUID)]
+    [BepInDependency(RuntimeUnityEditorCore.GUID, "2.0")]
     public class CheatTools : BaseUnityPlugin
     {
-        public const string Version = "2.6";
+        public const string Version = "2.7";
 
         private CheatWindow _cheatWindow;
         private RuntimeUnityEditorCore _runtimeUnityEditorCore;

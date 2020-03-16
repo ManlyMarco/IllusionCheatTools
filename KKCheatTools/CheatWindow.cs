@@ -10,7 +10,6 @@ using RuntimeUnityEditor.Core.Inspector.Entries;
 using RuntimeUnityEditor.Core.UI;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
-using UnityEngine.AI;
 using LogLevel = BepInEx.Logging.LogLevel;
 using Object = UnityEngine.Object;
 
