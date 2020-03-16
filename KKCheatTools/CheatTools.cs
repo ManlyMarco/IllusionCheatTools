@@ -2,6 +2,7 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using RuntimeUnityEditor.Bepin5;
 using RuntimeUnityEditor.Core;
 using UnityEngine;
 using UnityEngine.AI;
@@ -49,9 +50,8 @@ namespace CheatTools
 
             // Wait for runtime editor to init
             yield return null;
-
-            _runtimeUnityEditorCore = (RuntimeUnityEditorCore)typeof(RuntimeUnityEditorCore).GetProperty("Instance",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static).GetValue(null, null);
+            
+            _runtimeUnityEditorCore = RuntimeUnityEditor5.Instance;
 
             if (_runtimeUnityEditorCore == null)
             {
