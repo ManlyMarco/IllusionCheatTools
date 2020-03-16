@@ -10,7 +10,6 @@ using RuntimeUnityEditor.Core.Inspector.Entries;
 using RuntimeUnityEditor.Core.UI;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
-using Logger = BepInEx.Logger;
 using LogLevel = BepInEx.Logging.LogLevel;
 using Object = UnityEngine.Object;
 
@@ -123,8 +122,7 @@ namespace CheatTools
                         if (obj.Key == null) continue;
                         if (GUILayout.Button(obj.Value))
                         {
-                            _editor.Inspector.InspectorClear();
-                            _editor.Inspector.InspectorPush(new InstanceStackEntry(obj.Key, obj.Value));
+                            _editor.Inspector.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
                         }
                     }
                 }
@@ -382,13 +380,12 @@ namespace CheatTools
                     if (currentAdvGirl.transform != null)
                         _editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
                     else
-                        Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
+                        CheatTools.Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
                 }
 
                 if (GUILayout.Button("Open Heroine in inspector"))
                 {
-                    _editor.Inspector.InspectorClear();
-                    _editor.Inspector.InspectorPush(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name));
+                    _editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name), true);
                 }
             }
             GUILayout.EndVertical();
@@ -492,7 +489,7 @@ namespace CheatTools
                                 if (param.isWarning)
                                 {
                                     param.isWarning = false;
-                                    Logger.Log(LogLevel.Message, "Disabling shame reactions on map: " + param.MapName);
+                                    CheatTools.Logger.Log(LogLevel.Message, "Disabling shame reactions on map: " + param.MapName);
                                 }
                             }
                         }
@@ -500,8 +497,7 @@ namespace CheatTools
 
                     if (GUILayout.Button("Open player data in inspector"))
                     {
-                        _editor.Inspector.InspectorClear();
-                        _editor.Inspector.InspectorPush(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"));
+                        _editor.Inspector.Push(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"), true);
                     }
                 }
             }

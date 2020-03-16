@@ -1,10 +1,9 @@
 ﻿using System.Collections;
-using System.ComponentModel;
 using BepInEx;
-using Harmony;
+using BepInEx.Configuration;
+using BepInEx.Logging;
 using RuntimeUnityEditor.Core;
 using UnityEngine;
-using Logger = BepInEx.Logger;
 using LogLevel = BepInEx.Logging.LogLevel;
 
 namespace CheatTools
@@ -18,24 +17,24 @@ namespace CheatTools
         private CheatWindow _cheatWindow;
         private RuntimeUnityEditorCore _runtimeUnityEditorCore;
 
-        [DisplayName("Show trainer and debug windows")]
-        public SavedKeyboardShortcut ShowCheatWindow { get; }
+        private ConfigEntry<KeyboardShortcut> _showCheatWindow;
 
-        public CheatTools()
-        {
-            ShowCheatWindow = new SavedKeyboardShortcut(nameof(ShowCheatWindow), this, new KeyboardShortcut(KeyCode.Pause));
-        }
+        internal static new ManualLogSource Logger;
 
         private IEnumerator Start()
         {
+            Logger = base.Logger;
+            _showCheatWindow = Config.Bind("General", "Open cheat window", new KeyboardShortcut(KeyCode.Pause));
+
             // Wait for runtime editor to init
             yield return null;
 
-            _runtimeUnityEditorCore = (RuntimeUnityEditorCore)AccessTools.Property(typeof(RuntimeUnityEditorCore), "Instance").GetValue(null, null);
+            _runtimeUnityEditorCore = (RuntimeUnityEditorCore)typeof(RuntimeUnityEditorCore).GetProperty("Instance",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static).GetValue(null, null);
 
             if (_runtimeUnityEditorCore == null)
             {
-                Logger.Log(LogLevel.Error, "[CheatTools] Could not get the instance of RuntimeUnityEditorCore, aborting");
+                Logger.Log(LogLevel.Error, "Could not get the instance of RuntimeUnityEditorCore, aborting");
                 enabled = false;
                 yield break;
             }
@@ -51,7 +50,7 @@ namespace CheatTools
 
         protected void Update()
         {
-            if (ShowCheatWindow.IsDown())
+            if (_showCheatWindow.Value.IsDown())
             {
                 if (_cheatWindow == null)
                     _cheatWindow = new CheatWindow(_runtimeUnityEditorCore);
