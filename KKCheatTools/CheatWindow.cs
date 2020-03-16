@@ -41,8 +41,6 @@ namespace CheatTools
         private Scene _sceneInstance;
         private Game _gameMgr;
 
-        private bool _noclipMode;
-
         public CheatWindow(RuntimeUnityEditorCore editor)
         {
             _editor = editor ?? throw new ArgumentNullException(nameof(editor));
@@ -498,13 +496,7 @@ namespace CheatTools
                         }
                     }
 
-                    GUI.changed = false;
-                    _noclipMode = GUILayout.Toggle(_noclipMode, "Enable player noclip");
-                    if (GUI.changed)
-                    {
-                        var tr = _gameMgr.Player.transform;
-                        tr.GetComponent<NavMeshAgent>().enabled = !_noclipMode;
-                    }
+                    CheatTools.NoclipMode = GUILayout.Toggle(CheatTools.NoclipMode, "Enable player noclip");
 
                     if (GUILayout.Button("Open player data in inspector"))
                     {
@@ -562,31 +554,6 @@ namespace CheatTools
 
             const int cheatWindowHeight = 410;
             _cheatWindowRect = new Rect(_screenRect.xMin, _screenRect.yMax - cheatWindowHeight, 270, cheatWindowHeight);
-        }
-
-        internal void Update()
-        {
-            if (_noclipMode)
-            {
-                if (_gameMgr == null || _gameMgr.Player == null || _gameMgr.Player.transform == null ||
-                    _gameMgr.Player.transform.GetComponent<NavMeshAgent>()?.enabled != false)
-                {
-                    _noclipMode = false;
-                    return;
-                }
-
-                if (Input.GetAxisRaw("Horizontal") != 0 || Input.GetAxisRaw("Vertical") != 0)
-                {
-                    float moveSpeed = Input.GetKey(KeyCode.LeftShift) ? 0.5f : 0.2f;
-                    _gameMgr.Player.transform.Translate(moveSpeed * new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")), Camera.main.transform);
-                }
-
-                if (Input.GetAxis("Mouse ScrollWheel") != 0)
-                {
-                    float scrollSpeed = Input.GetKey(KeyCode.LeftShift) ? 12f : 4f;
-                    _gameMgr.Player.transform.position += scrollSpeed * new Vector3(0, -Input.GetAxis("Mouse ScrollWheel"), 0);
-                }
-            }
         }
     }
 }
