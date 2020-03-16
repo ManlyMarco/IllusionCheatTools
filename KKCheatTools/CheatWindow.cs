@@ -206,11 +206,11 @@ namespace CheatTools
 
                 if (!_showSelectHeroineList)
                 {
-                    var girls = GetCurrentVisibleGirls();
+                    var visibleGirls = GetCurrentVisibleGirls();
 
-                    for (var index = 0; index < girls.Length; index++)
+                    for (var index = 0; index < visibleGirls.Length; index++)
                     {
-                        var girl = girls[index];
+                        var girl = visibleGirls[index];
                         if (GUILayout.Button($"Select current #{index} - {girl.Name}"))
                             _currentVisibleGirl = girl;
                     }
@@ -230,6 +230,54 @@ namespace CheatTools
                     {
                         GUILayout.Label("Select a girl to access her stats");
                     }
+
+                    GUILayout.BeginVertical(GUI.skin.box);
+                    {
+                        GUILayout.Label("These affect ALL heroines");
+                        if (GUILayout.Button("Make everyone friendly"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                            {
+                                h.favor = 100;
+                                h.anger = 0;
+                                h.isAnger = false;
+                            }
+                        }
+                        if (GUILayout.Button("Make everyone lovers"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                            {
+                                h.anger = 0;
+                                h.isAnger = false;
+                                h.favor = 100;
+                                h.lewdness = 100;
+                                h.intimacy = 100;
+                                h.isGirlfriend = true;
+                                h.confessed = true;
+                            }
+                        }
+                        if (GUILayout.Button("Make everyone virgins"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                                MakeVirgin(h);
+                        }
+                        if (GUILayout.Button("Make everyone inexperienced"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                                MakeInexperienced(h);
+                        }
+                        if (GUILayout.Button("Make everyone experienced"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                                MakeExperienced(h);
+                        }
+                        if (GUILayout.Button("Make everyone perverted"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                                MakeHorny(h);
+                        }
+                    }
+                    GUILayout.EndVertical();
                 }
                 else
                 {
@@ -298,32 +346,13 @@ namespace CheatTools
                 GUILayout.BeginHorizontal();
                 {
                     if (GUILayout.Button("Virgin"))
-                    {
-                        currentAdvGirl.hCount = 0;
-                        currentAdvGirl.isVirgin = true;
-                        SetGirlHExp(currentAdvGirl, 0);
-                    }
+                        MakeVirgin(currentAdvGirl);
                     if (GUILayout.Button("Inexp"))
-                    {
-                        currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
-                        currentAdvGirl.isVirgin = false;
-                        currentAdvGirl.countKokanH = 50;
-                        SetGirlHExp(currentAdvGirl, 0);
-                    }
+                        MakeInexperienced(currentAdvGirl);
                     if (GUILayout.Button("Exp"))
-                    {
-                        currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
-                        currentAdvGirl.isVirgin = false;
-                        SetGirlHExp(currentAdvGirl, 100f);
-                        currentAdvGirl.lewdness = Mathf.Min(99, currentAdvGirl.lewdness);
-                    }
+                        MakeExperienced(currentAdvGirl);
                     if (GUILayout.Button("Horny"))
-                    {
-                        currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
-                        currentAdvGirl.isVirgin = false;
-                        SetGirlHExp(currentAdvGirl, 100f);
-                        currentAdvGirl.lewdness = 100;
-                    }
+                        MakeHorny(currentAdvGirl);
                 }
                 GUILayout.EndHorizontal();
 
@@ -390,6 +419,37 @@ namespace CheatTools
                 }
             }
             GUILayout.EndVertical();
+        }
+
+        private static void MakeHorny(SaveData.Heroine currentAdvGirl)
+        {
+            currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
+            currentAdvGirl.isVirgin = false;
+            SetGirlHExp(currentAdvGirl, 100f);
+            currentAdvGirl.lewdness = 100;
+        }
+
+        private static void MakeExperienced(SaveData.Heroine currentAdvGirl)
+        {
+            currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
+            currentAdvGirl.isVirgin = false;
+            SetGirlHExp(currentAdvGirl, 100f);
+            currentAdvGirl.lewdness = Mathf.Min(99, currentAdvGirl.lewdness);
+        }
+
+        private static void MakeInexperienced(SaveData.Heroine currentAdvGirl)
+        {
+            currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
+            currentAdvGirl.isVirgin = false;
+            currentAdvGirl.countKokanH = 50;
+            SetGirlHExp(currentAdvGirl, 0);
+        }
+
+        private static void MakeVirgin(SaveData.Heroine currentAdvGirl)
+        {
+            currentAdvGirl.hCount = 0;
+            currentAdvGirl.isVirgin = true;
+            SetGirlHExp(currentAdvGirl, 0);
         }
 
         private static void SetGirlHExp(SaveData.Heroine girl, float amount)
