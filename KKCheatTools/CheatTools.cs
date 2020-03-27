@@ -2,6 +2,7 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using Manager;
 using RuntimeUnityEditor.Bepin5;
 using RuntimeUnityEditor.Core;
 using UnityEngine;
@@ -24,24 +25,6 @@ namespace CheatTools
 
         internal static new ManualLogSource Logger;
 
-        private static bool _noclipMode;
-        internal static bool NoclipMode
-        {
-            get => _noclipMode;
-            set
-            {
-                if (!Manager.Game.IsInstance())
-                {
-                    _noclipMode = false;
-                }
-                else if (_noclipMode != value)
-                {
-                    Manager.Game.Instance.Player.transform.GetComponent<NavMeshAgent>().enabled = !value;
-                    _noclipMode = value;
-                }
-            }
-        }
-
         private IEnumerator Start()
         {
             Logger = base.Logger;
@@ -50,7 +33,7 @@ namespace CheatTools
 
             // Wait for runtime editor to init
             yield return null;
-            
+
             _runtimeUnityEditorCore = RuntimeUnityEditor5.Instance;
 
             if (_runtimeUnityEditorCore == null)
@@ -85,37 +68,68 @@ namespace CheatTools
 
             if (NoclipMode)
             {
-                if (!Manager.Game.IsInstance())
+                if (Game.IsInstance())
                 {
-                    NoclipMode = false;
-                    return;
+                    var player = Game.Instance.Player;
+                    if (player != null)
+                    {
+                        var playerTransform = player.transform;
+                        if (playerTransform != null && playerTransform.GetComponent<NavMeshAgent>()?.enabled == false)
+                        {
+                            RunNoclip(playerTransform);
+                            return;
+                        }
+                    }
                 }
 
-                var _gameMgr = Manager.Game.Instance;
-                if (_gameMgr.Player == null || _gameMgr.Player.transform == null ||
-                _gameMgr.Player.transform.GetComponent<NavMeshAgent>()?.enabled != false)
-                {
-                    NoclipMode = false;
-                    return;
-                }
-
-                if (Input.GetAxisRaw("Horizontal") != 0 || Input.GetAxisRaw("Vertical") != 0)
-                {
-                    float moveSpeed = Input.GetKey(KeyCode.LeftShift) ? 0.5f : 0.05f;
-                    _gameMgr.Player.transform.Translate(moveSpeed * new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")), Camera.main.transform);
-                }
-
-                if (Input.GetAxis("Mouse ScrollWheel") != 0)
-                {
-                    float scrollSpeed = Input.GetKey(KeyCode.LeftShift) ? 10f : 1f;
-                    _gameMgr.Player.transform.position += scrollSpeed * new Vector3(0, -Input.GetAxis("Mouse ScrollWheel"), 0);
-                }
-
-
-                Vector3 eulerAngles = _gameMgr.Player.transform.rotation.eulerAngles;
-                eulerAngles.y = Camera.main.transform.rotation.eulerAngles.y;
-                _gameMgr.Player.transform.rotation = Quaternion.Euler(eulerAngles);
+                NoclipMode = false;
             }
+        }
+
+        private static bool _noclipMode;
+        internal static bool NoclipMode
+        {
+            get => _noclipMode;
+            set
+            {
+                if (_noclipMode != value)
+                {
+                    if (Game.IsInstance() && Game.Instance.Player != null && Game.Instance.Player.transform != null)
+                    {
+                        var navMeshAgent = Game.Instance.Player.transform.GetComponent<NavMeshAgent>();
+                        if (navMeshAgent != null)
+                        {
+                            navMeshAgent.enabled = !value;
+                            _noclipMode = value;
+                            return;
+                        }
+                    }
+
+                    _noclipMode = false;
+                }
+            }
+        }
+
+        private static void RunNoclip(Transform playerTransform)
+        {
+            if (Input.GetAxisRaw("Horizontal") != 0 || Input.GetAxisRaw("Vertical") != 0)
+            {
+                var moveSpeed = Input.GetKey(KeyCode.LeftShift) ? 0.5f : 0.05f;
+                playerTransform.Translate(
+                    moveSpeed * new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")),
+                    Camera.main.transform);
+            }
+
+            if (Input.GetAxis("Mouse ScrollWheel") != 0)
+            {
+                var scrollSpeed = Input.GetKey(KeyCode.LeftShift) ? 10f : 1f;
+                playerTransform.position += scrollSpeed * new Vector3(0, -Input.GetAxis("Mouse ScrollWheel"), 0);
+            }
+
+
+            var eulerAngles = playerTransform.rotation.eulerAngles;
+            eulerAngles.y = Camera.main.transform.rotation.eulerAngles.y;
+            playerTransform.rotation = Quaternion.Euler(eulerAngles);
         }
     }
 }
