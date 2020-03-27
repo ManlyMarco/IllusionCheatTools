@@ -47,11 +47,11 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="RuntimeUnityEditor.Bepin5">
-      <HintPath>..\..\..\Universal\RuntimeUnityEditor\bin\BepInEx\plugins\RuntimeUnityEditor\RuntimeUnityEditor.Bepin5.dll</HintPath>
+      <HintPath>..\..\RuntimeUnityEditor\bin\BepInEx\plugins\RuntimeUnityEditor\RuntimeUnityEditor.Bepin5.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="RuntimeUnityEditor.Core">
-      <HintPath>..\..\..\Universal\RuntimeUnityEditor\bin\BepInEx\plugins\RuntimeUnityEditor\RuntimeUnityEditor.Core.dll</HintPath>
+      <HintPath>..\..\RuntimeUnityEditor\bin\BepInEx\plugins\RuntimeUnityEditor\RuntimeUnityEditor.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -74,5 +74,6 @@
     <None Include="CheatTools.ruleset" />
     <None Include="packages.config" />
   </ItemGroup>
+  <Import Project="..\Shared\Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
