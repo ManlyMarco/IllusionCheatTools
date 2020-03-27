@@ -5,19 +5,20 @@ using BepInEx.Logging;
 using Manager;
 using RuntimeUnityEditor.Bepin5;
 using RuntimeUnityEditor.Core;
+using Shared;
 using UnityEngine;
 using UnityEngine.AI;
 using LogLevel = BepInEx.Logging.LogLevel;
 
 namespace CheatTools
 {
-    [BepInPlugin("CheatTools", "Cheat Tools", Version)]
+    [BepInPlugin(Metadata.GUID, "Cheat Tools", Version)]
     [BepInDependency(RuntimeUnityEditorCore.GUID, "2.0")]
-    public class CheatTools : BaseUnityPlugin
+    public class CheatToolsPlugin : BaseUnityPlugin
     {
-        public const string Version = "2.7";
+        public const string Version = Metadata.Version;
 
-        private CheatWindow _cheatWindow;
+        private CheatToolsWindow _cheatWindow;
         private RuntimeUnityEditorCore _runtimeUnityEditorCore;
 
         private ConfigEntry<KeyboardShortcut> _showCheatWindow;
@@ -57,7 +58,7 @@ namespace CheatTools
             if (_showCheatWindow.Value.IsDown())
             {
                 if (_cheatWindow == null)
-                    _cheatWindow = new CheatWindow(_runtimeUnityEditorCore);
+                    _cheatWindow = new CheatToolsWindow(_runtimeUnityEditorCore);
 
                 _cheatWindow.Show = !_cheatWindow.Show;
             }

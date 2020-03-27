@@ -15,7 +15,7 @@ using Object = UnityEngine.Object;
 
 namespace CheatTools
 {
-    public class CheatWindow
+    public class CheatToolsWindow
     {
         private const int ScreenOffset = 20;
         private readonly string[] _hExpNames = { "First time", "Inexperienced", "Experienced", "Perverted" };
@@ -40,7 +40,7 @@ namespace CheatTools
         private Scene _sceneInstance;
         private Game _gameMgr;
 
-        public CheatWindow(RuntimeUnityEditorCore editor)
+        public CheatToolsWindow(RuntimeUnityEditorCore editor)
         {
             _editor = editor ?? throw new ArgumentNullException(nameof(editor));
 
@@ -409,7 +409,7 @@ namespace CheatTools
                     if (currentAdvGirl.transform != null)
                         _editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
                     else
-                        CheatTools.Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
+                        CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
                 }
 
                 if (GUILayout.Button("Open Heroine in inspector"))
@@ -549,13 +549,13 @@ namespace CheatTools
                                 if (param.isWarning)
                                 {
                                     param.isWarning = false;
-                                    CheatTools.Logger.Log(LogLevel.Message, "Disabling shame reactions on map: " + param.MapName);
+                                    CheatToolsPlugin.Logger.Log(LogLevel.Message, "Disabling shame reactions on map: " + param.MapName);
                                 }
                             }
                         }
                     }
 
-                    CheatTools.NoclipMode = GUILayout.Toggle(CheatTools.NoclipMode, "Enable player noclip");
+                    CheatToolsPlugin.NoclipMode = GUILayout.Toggle(CheatToolsPlugin.NoclipMode, "Enable player noclip");
 
                     if (GUILayout.Button("Open player data in inspector"))
                     {

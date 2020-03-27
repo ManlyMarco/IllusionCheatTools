@@ -66,8 +66,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CheatTools.cs" />
-    <Compile Include="CheatWindow.cs" />
+    <Compile Include="CheatToolsPlugin.cs" />
+    <Compile Include="CheatToolsWindow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
