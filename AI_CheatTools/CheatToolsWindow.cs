@@ -304,7 +304,6 @@ namespace CheatTools
                             var newTimeText = GUILayout.TextField(timeText, GUILayout.ExpandWidth(true));
                             if (timeText != newTimeText)
                             {
-                                _gameTimeText = newTimeText;
                                 try
                                 {
                                     var parts = newTimeText.Split(':');
@@ -313,7 +312,8 @@ namespace CheatTools
                                 }
                                 catch
                                 {
-
+                                    // Let user keep editing if the parsing fails
+                                    _gameTimeText = newTimeText;
                                 }
                             }
                         }
