@@ -6,7 +6,7 @@ using Shared;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("https://github.com/ManlyMarco/KoikatuCheatTools")]
+[assembly: AssemblyCompany("https://github.com/ManlyMarco/IllusionCheatTools")]
 [assembly: AssemblyCopyright("Copyright ©  2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
