@@ -300,7 +300,7 @@ namespace CheatTools
                             var gameTime = weatherSim.EnviroSky.GameTime;
                             var dt = DateTime.MinValue.AddHours(gameTime.Hours).AddMinutes(gameTime.Minutes).AddSeconds(gameTime.Seconds);
                             GUILayout.Label("Game time:", GUILayout.Width(120));
-                            var timeText = _gameTimeText ?? $"{gameTime.Hours}:{gameTime.Minutes}:{gameTime.Seconds}";
+                            var timeText = _gameTimeText ?? $"{gameTime.Hours:00}:{gameTime.Minutes:00}:{gameTime.Seconds:00}";
                             var newTimeText = GUILayout.TextField(timeText, GUILayout.ExpandWidth(true));
                             if (timeText != newTimeText)
                             {
