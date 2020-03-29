@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Shared
+﻿namespace Shared
 {
     internal static class Metadata
     {
