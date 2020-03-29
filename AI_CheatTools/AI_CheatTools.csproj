@@ -100,6 +100,8 @@
   <ItemGroup>
     <Compile Include="CheatToolsPlugin.cs" />
     <Compile Include="CheatToolsWindow.cs" />
+    <Compile Include="Hooks\BuildAnywhereHooks.cs" />
+    <Compile Include="Hooks\BuildOverlapHooks.cs" />
     <Compile Include="Hooks\FishingHackHooks.cs" />
     <Compile Include="Hooks\UnlockCraftingHooks.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

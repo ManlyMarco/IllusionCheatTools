@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using AIChara;
@@ -19,7 +20,7 @@ using Resources = Manager.Resources;
 
 namespace CheatTools
 {
-    public partial class CheatToolsWindow
+    public class CheatToolsWindow
     {
         private const int ScreenOffset = 20;
 
@@ -40,6 +41,7 @@ namespace CheatTools
         private Resources _resources;
         private Map _map;
         private HSceneFlagCtrl _hScene;
+        private string _gameTimeText;
 
         public CheatToolsWindow(RuntimeUnityEditorCore editor)
         {
@@ -71,6 +73,8 @@ namespace CheatTools
                 _resources = Resources.Instance;
                 _map = Map.IsInstance() ? Map.Instance : null;
                 _hScene = HSceneFlagCtrl.IsInstance() ? HSceneFlagCtrl.Instance : null;
+
+                _gameTimeText = null;
             }
         }
 
@@ -102,25 +106,11 @@ namespace CheatTools
             {
                 DrawPlayerCheats();
 
+                DrawEnviroControls();
+
                 DrawHSceneCheats();
-                
-                //if (_hSprite != null)
-                //{
-                //    if (GUILayout.Button("Force quit H scene"))
-                //        _hSprite.btnEnd.onClick.Invoke();
-                //}
 
                 DrawGirlCheatMenu();
-
-                GUILayout.BeginHorizontal(GUI.skin.box);
-                {
-                    GUILayout.Label("Speed", GUILayout.ExpandWidth(false));
-                    GUILayout.Label((int)Math.Round(Time.timeScale * 100) + "%", GUILayout.Width(35));
-                    Time.timeScale = GUILayout.HorizontalSlider(Time.timeScale, 0, 5, GUILayout.ExpandWidth(true));
-                    if (GUILayout.Button("Reset", GUILayout.ExpandWidth(false)))
-                        Time.timeScale = 1;
-                }
-                GUILayout.EndHorizontal();
 
                 GUILayout.BeginVertical(GUI.skin.box);
                 {
@@ -128,8 +118,13 @@ namespace CheatTools
                     foreach (var obj in new[]
                     {
                             new KeyValuePair<object, string>(_map?.AgentTable.Count > 0 ? _map.AgentTable.Values.Select(x => new ReadonlyCacheEntry(x.CharaName, x)) : null, "Heroine list"),
+                            new KeyValuePair<object, string>(Manager.ADV.IsInstance() ? Manager.ADV.Instance : null, "Manager.ADV.Instance"),
+                            new KeyValuePair<object, string>(Manager.AnimalManager.IsInstance() ? Manager.AnimalManager.Instance : null, "Manager.AnimalManager.Instance"),
                             new KeyValuePair<object, string>(_map, "Manager.Map.Instance"),
+                            new KeyValuePair<object, string>(Manager.Character.IsInstance() ? Manager.Character.Instance : null, "Manager.Character.Instance"),
+                            new KeyValuePair<object, string>(Manager.Config.IsInstance() ? Manager.Config.Instance : null, "Manager.Config.Instance"),
                             new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
+                            new KeyValuePair<object, string>(Manager.Housing.IsInstance() ? Manager.Housing.Instance : null, "Manager.Housing.Instance"),
                             new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
                             new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
                             new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
@@ -138,9 +133,7 @@ namespace CheatTools
                     {
                         if (obj.Key == null) continue;
                         if (GUILayout.Button(obj.Value))
-                        {
                             _editor.Inspector.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
-                        }
                     }
                 }
                 GUILayout.EndVertical();
@@ -167,7 +160,7 @@ namespace CheatTools
 
             GUILayout.BeginVertical(GUI.skin.box);
             {
-                GUILayout.Label("Player stats");
+                GUILayout.Label("General / Player");
 
                 GUILayout.BeginHorizontal();
                 {
@@ -190,46 +183,67 @@ namespace CheatTools
                     GUILayout.EndHorizontal();
                 }
 
-                GUILayout.Space(6);
-
-                var dp = _resources?.DefinePack;
-                if (dp != null)
-                {
-                    if (dp.MapDefines.ItemSlotMax >= 99999 && playerData.InventorySlotMax >= 99999)
-                        GUI.enabled = false;
-                    if (GUILayout.Button("Unlimited inventory slots"))
-                    {
-                        var tr = Traverse.Create(dp.MapDefines);
-                        tr.Field("_itemSlotMax").SetValue(99999);
-                        tr.Field("_itemStackUpperLimit").SetValue(99999);
-                        playerData.InventorySlotMax = 99999;
-                    }
-                    GUI.enabled = true;
-
-                    if (playerData.ItemList.Count > 0 && GUILayout.Button("Clear player inventory"))
-                    {
-                        playerData.ItemList.Clear();
-                        //MapUIContainer.AddNotify();
-                        CheatToolsPlugin.Logger.LogMessage("Your inventory has been cleared.");
-                    }
-
-                    if (GUILayout.Button("Get all items (clears old)") && _resources?.GameInfo != null)
-                    {
-                        playerData.ItemList.Clear();
-
-                        foreach (var category in _resources.GameInfo.GetItemCategories())
-                            foreach (var stuffItemInfo in _resources.GameInfo.GetItemTable(category).Values)
-                                playerData.ItemList.Add(new StuffItem(stuffItemInfo.CategoryID, stuffItemInfo.ID, 999));
-
-                        CheatToolsPlugin.Logger.LogMessage("999 of all items have been added to your inventory");
-                    }
-                }
-
                 FishingHackHooks.Enabled = GUILayout.Toggle(FishingHackHooks.Enabled, "Enable instant fishing");
                 UnlockCraftingHooks.Enabled = GUILayout.Toggle(UnlockCraftingHooks.Enabled, "Enable free crafting");
                 CheatToolsPlugin.NoclipMode = GUILayout.Toggle(CheatToolsPlugin.NoclipMode, "Enable player noclip");
 
-                GUILayout.Space(6);
+                CheatToolsPlugin.BuildAnywhere.Value = GUILayout.Toggle(CheatToolsPlugin.BuildAnywhere.Value, "Allow building anywhere");
+                CheatToolsPlugin.BuildOverlap.Value = GUILayout.Toggle(CheatToolsPlugin.BuildOverlap.Value, "Allow building items to overlap");
+
+                GUILayout.BeginVertical(GUI.skin.box);
+                {
+                    GUILayout.Label("Warning: These can't be turned off!");
+                    var dp = _resources?.DefinePack;
+                    if (dp != null)
+                    {
+                        if (dp.MapDefines.ItemSlotMax >= 99999 && playerData.InventorySlotMax >= 99999)
+                            GUI.enabled = false;
+                        if (GUILayout.Button("Unlimited inventory slots"))
+                        {
+                            var tr = Traverse.Create(dp.MapDefines);
+                            tr.Field("_itemSlotMax").SetValue(99999);
+                            tr.Field("_itemStackUpperLimit").SetValue(99999);
+                            playerData.InventorySlotMax = 99999;
+                        }
+                        GUI.enabled = true;
+
+                        if (playerData.ItemList.Count == 0)
+                            GUI.enabled = false;
+                        if (GUILayout.Button("Clear player inventory"))
+                        {
+                            playerData.ItemList.Clear();
+                            //MapUIContainer.AddNotify();
+                            CheatToolsPlugin.Logger.LogMessage("Your inventory has been cleared.");
+                        }
+                        GUI.enabled = true;
+
+                        GUILayout.BeginHorizontal();
+                        {
+                            var add1 = GUILayout.Button("Get +1 of all items");
+                            var add99 = GUILayout.Button("+99");
+                            if (add1 || add99)
+                            {
+                                if (_resources?.GameInfo != null)
+                                {
+                                    var addAmount = add1 ? 1 : 99;
+                                    foreach (var category in _resources.GameInfo.GetItemCategories())
+                                    {
+                                        foreach (var stuffItemInfo in _resources.GameInfo.GetItemTable(category).Values)
+                                        {
+                                            var it = playerData.ItemList.Find(item => item.CategoryID == stuffItemInfo.CategoryID && item.ID == stuffItemInfo.ID);
+                                            if (it != null) it.Count += addAmount;
+                                            else playerData.ItemList.Add(new StuffItem(stuffItemInfo.CategoryID, stuffItemInfo.ID, addAmount));
+                                        }
+                                    }
+
+                                    CheatToolsPlugin.Logger.LogMessage(addAmount + " of all items have been added to your inventory");
+                                }
+                            }
+                        }
+                        GUILayout.EndHorizontal();
+                    }
+                }
+                GUILayout.EndVertical();
 
                 if (GUILayout.Button("Navigate to Player's GameObject"))
                 {
@@ -248,6 +262,80 @@ namespace CheatTools
             GUILayout.Space(6);
         }
 
+        private void DrawEnviroControls()
+        {
+            GUILayout.BeginVertical(GUI.skin.box);
+            {
+                var weatherSim = _map?.Simulator;
+                if (weatherSim != null)
+                {
+                    GUILayout.BeginHorizontal();
+                    {
+                        GUILayout.Label("Weather: " + weatherSim.Weather, GUILayout.Width(120));
+
+                        if (weatherSim.Weather == Weather.Clear) GUI.enabled = false;
+                        if (GUILayout.Button("Clear")) weatherSim.RefreshWeather(Weather.Clear, true);
+                        GUI.enabled = true;
+
+                        if (GUILayout.Button("Next")) weatherSim.RefreshWeather(weatherSim.Weather.Next(), true);
+                    }
+                    GUILayout.EndHorizontal();
+
+                    if (weatherSim.EnvironmentProfile != null)
+                    {
+                        GUILayout.BeginHorizontal();
+                        {
+                            GUILayout.Label($"Temperature: {weatherSim.TemperatureValue:F0}C", GUILayout.Width(120));
+                            weatherSim.TemperatureValue = GUILayout.HorizontalSlider(weatherSim.TemperatureValue,
+                                weatherSim.EnvironmentProfile.TemperatureBorder.MinDegree,
+                                weatherSim.EnvironmentProfile.TemperatureBorder.MaxDegree);
+                        }
+                        GUILayout.EndHorizontal();
+                    }
+
+                    if (weatherSim.EnviroSky != null && weatherSim.EnviroSky.GameTime != null)
+                    {
+                        GUILayout.BeginHorizontal();
+                        {
+                            var gameTime = weatherSim.EnviroSky.GameTime;
+                            var dt = DateTime.MinValue.AddHours(gameTime.Hours).AddMinutes(gameTime.Minutes).AddSeconds(gameTime.Seconds);
+                            GUILayout.Label("Game time:", GUILayout.Width(120));
+                            var timeText = _gameTimeText ?? $"{gameTime.Hours}:{gameTime.Minutes}:{gameTime.Seconds}";
+                            var newTimeText = GUILayout.TextField(timeText, GUILayout.ExpandWidth(true));
+                            if (timeText != newTimeText)
+                            {
+                                _gameTimeText = newTimeText;
+                                try
+                                {
+                                    var parts = newTimeText.Split(':');
+                                    weatherSim.EnviroSky.SetTime(gameTime.Years, gameTime.Days, int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]));
+                                    _gameTimeText = null;
+                                }
+                                catch
+                                {
+
+                                }
+                            }
+                        }
+                        GUILayout.EndHorizontal();
+                    }
+                }
+
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label("Speed", GUILayout.ExpandWidth(false));
+                    GUILayout.Label((int)Math.Round(Time.timeScale * 100) + "%", GUILayout.Width(35));
+                    Time.timeScale = GUILayout.HorizontalSlider(Time.timeScale, 0, 5, GUILayout.ExpandWidth(true));
+                    if (GUILayout.Button("Reset", GUILayout.ExpandWidth(false)))
+                        Time.timeScale = 1;
+                }
+                GUILayout.EndHorizontal();
+            }
+            GUILayout.EndVertical();
+
+            GUILayout.Space(6);
+        }
+
         private void DrawHSceneCheats()
         {
             if (_hScene == null) return;
@@ -255,14 +343,14 @@ namespace CheatTools
             GUILayout.BeginVertical(GUI.skin.box);
             {
                 GUILayout.Label("H scene controls");
-        
+
                 GUILayout.BeginHorizontal();
                 {
                     GUILayout.Label("Male Gauge: " + _hScene.feel_m.ToString("F2"), GUILayout.Width(150));
                     _hScene.feel_m = GUILayout.HorizontalSlider(_hScene.feel_m, 0, 1);
                 }
                 GUILayout.EndHorizontal();
-        
+
                 GUILayout.BeginHorizontal();
                 {
                     GUILayout.Label("Female Gauge: " + _hScene.feel_f.ToString("F2"), GUILayout.Width(150));
@@ -284,7 +372,7 @@ namespace CheatTools
 
             GUILayout.BeginVertical(GUI.skin.box);
             {
-                GUILayout.Label("Girl stats");
+                GUILayout.Label("Heroines");
 
                 var visibleGirls = _map.AgentTable.Values;
 
@@ -299,7 +387,7 @@ namespace CheatTools
                 if (_currentVisibleGirl != null)
                     DrawSingleGirlCheats(_currentVisibleGirl);
                 else
-                    GUILayout.Label("Select a girl to access her stats");
+                    GUILayout.Label("Select a heroine to access her stats");
             }
             GUILayout.EndVertical();
 
@@ -310,7 +398,7 @@ namespace CheatTools
         {
             GUILayout.BeginVertical(GUI.skin.box);
             {
-                GUILayout.Label("Selected girl name: " + (currentAdvGirl.CharaName ?? currentAdvGirl.name));
+                GUILayout.Label("Selected heroine name: " + (currentAdvGirl.CharaName ?? currentAdvGirl.name));
                 GUILayout.Space(6);
 
                 if (currentAdvGirl.ChaControl != null && currentAdvGirl.ChaControl.fileGameInfo != null)
@@ -362,9 +450,9 @@ namespace CheatTools
                         {
                             GUILayout.BeginHorizontal();
                             {
-                                var flavorSkill = currentAdvGirl.GetFlavorSkill(typeValue);
-                                GUILayout.Label(typeValue + ": " + flavorSkill, GUILayout.Width(120));
+                                GUILayout.Label(typeValue + ": ", GUILayout.Width(120));
                                 GUI.changed = false;
+                                var flavorSkill = currentAdvGirl.GetFlavorSkill(typeValue);
                                 var textField = GUILayout.TextField(flavorSkill.ToString());
                                 if (GUI.changed && int.TryParse(textField, out var newSkill) && newSkill != flavorSkill)
                                     currentAdvGirl.SetFlavorSkill(typeValue, newSkill);
@@ -376,11 +464,14 @@ namespace CheatTools
                     GUILayout.Space(6);
                 }
 
+                if (currentAdvGirl.AgentData.TalkMotivation >= currentAdvGirl.AgentData.StatsTable[5])
+                    GUI.enabled = false;
                 if (GUILayout.Button("Reset talk time"))
                 {
                     currentAdvGirl.AgentData.TalkMotivation = currentAdvGirl.AgentData.StatsTable[5];
                     currentAdvGirl.AgentData.WeaknessMotivation = 0;
                 }
+                GUI.enabled = true;
 
                 GUILayout.Space(6);
 

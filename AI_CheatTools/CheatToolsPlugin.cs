@@ -23,6 +23,8 @@ namespace CheatTools
 
         private ConfigEntry<KeyboardShortcut> _showCheatWindow;
         private ConfigEntry<KeyboardShortcut> _noclip;
+        internal static ConfigEntry<bool> BuildAnywhere;
+        internal static ConfigEntry<bool> BuildOverlap;
 
         internal static new ManualLogSource Logger;
 
@@ -31,6 +33,14 @@ namespace CheatTools
             Logger = base.Logger;
             _showCheatWindow = Config.Bind("Hotkeys", "Toggle cheat window", new KeyboardShortcut(KeyCode.Pause));
             _noclip = Config.Bind("Hotkeys", "Toggle player noclip", KeyboardShortcut.Empty);
+
+            BuildAnywhere = Config.Bind("Cheats", "Allow building anywhere", false);
+            BuildAnywhere.SettingChanged += (sender, args) => BuildAnywhereHooks.Enabled = BuildAnywhere.Value;
+            BuildAnywhereHooks.Enabled = BuildAnywhere.Value;
+
+            BuildOverlap = Config.Bind("Cheats", "Allow building overlap", false);
+            BuildOverlap.SettingChanged += (sender, args) => BuildOverlapHooks.Enabled = BuildOverlap.Value;
+            BuildOverlapHooks.Enabled = BuildOverlap.Value;
 
             // Wait for runtime editor to init
             yield return null;
