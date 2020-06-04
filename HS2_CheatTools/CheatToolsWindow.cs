@@ -118,11 +118,24 @@ namespace CheatTools
 
                 //_gameMgr.saveData.achievementAchieve
 
-
-                if (GUILayout.Button("Get all achievements (permanent!)", GUILayout.ExpandWidth(false)))
+                if (_studioInstance == null && _gameMgr?.saveData != null)
                 {
-                    foreach (var achievementKey in _gameMgr.saveData.achievement.Keys)
-                        SaveData.SetAchievementAchieve(achievementKey);
+                    GUILayout.BeginVertical(GUI.skin.box);
+                    {
+                        GUILayout.Label("Danger zone! These cheats are permanent and can't be undone without resetting the save.");
+
+                        if (GUILayout.Button("Get all achievements", GUILayout.ExpandWidth(true)))
+                        {
+                            foreach (var achievementKey in _gameMgr.saveData.achievement.Keys.ToList())
+                                SaveData.SetAchievementAchieve(achievementKey);
+                        }
+                        if (GUILayout.Button("Unlock all perks", GUILayout.ExpandWidth(true)))
+                        {
+                            foreach (var achievementKey in _gameMgr.saveData.achievementExchange.Keys.ToList())
+                                SaveData.SetAchievementExchangeRelease(achievementKey);
+                        }
+                    }
+                    GUILayout.EndVertical();
                 }
 
                 GUILayout.BeginVertical(GUI.skin.box);
