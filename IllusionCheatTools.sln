@@ -9,9 +9,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AI_CheatTools", "AI_CheatTo
 EndProject
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared", "Shared\Shared.shproj", "{BD455182-D44B-4647-AA8A-566444962E3F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HS2_CheatTools", "HS2_CheatTools\HS2_CheatTools.csproj", "{A87BB074-865D-44B4-BAE7-D7719327E405}"
+EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Shared\Shared.projitems*{4c489dbc-b8fc-4b0c-ba9c-023afcd2896a}*SharedItemsImports = 4
+		Shared\Shared.projitems*{a87bb074-865d-44b4-bae7-d7719327e405}*SharedItemsImports = 4
 		Shared\Shared.projitems*{bd455182-d44b-4647-aa8a-566444962e3f}*SharedItemsImports = 13
 		Shared\Shared.projitems*{c9020a15-e2d1-47d6-ac74-fbf397ccbd67}*SharedItemsImports = 4
 	EndGlobalSection
@@ -28,6 +31,10 @@ Global
 		{C9020A15-E2D1-47D6-AC74-FBF397CCBD67}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C9020A15-E2D1-47D6-AC74-FBF397CCBD67}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C9020A15-E2D1-47D6-AC74-FBF397CCBD67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A87BB074-865D-44B4-BAE7-D7719327E405}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A87BB074-865D-44B4-BAE7-D7719327E405}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A87BB074-865D-44B4-BAE7-D7719327E405}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A87BB074-865D-44B4-BAE7-D7719327E405}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
