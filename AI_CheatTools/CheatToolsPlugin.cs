@@ -49,7 +49,7 @@ namespace CheatTools
 
             if (_runtimeUnityEditorCore == null)
             {
-                Logger.Log(BepInEx.Logging.LogLevel.Error, "Could not get the instance of RuntimeUnityEditorCore, aborting");
+                Logger.Log(BepInEx.Logging.LogLevel.Error | BepInEx.Logging.LogLevel.Message, "Failed to get RuntimeUnityEditor! Make sure you don't have multiple versions of it installed!");
                 enabled = false;
                 yield break;
             }
