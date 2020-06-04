@@ -167,15 +167,6 @@ namespace CheatTools
                     }
                 }
                 GUILayout.EndVertical();
-
-                if (GUILayout.Button("Clear AssetBundle Cache"))
-                {
-                    foreach (var pair in AssetBundleManager.ManifestBundlePack)
-                    {
-                        foreach (var bundle in new Dictionary<string, LoadedAssetBundle>(pair.Value.LoadedAssetBundles))
-                            AssetBundleManager.UnloadAssetBundle(bundle.Key, true, pair.Key);
-                    }
-                }
             }
             GUILayout.EndScrollView();
 
