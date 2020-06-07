@@ -114,9 +114,6 @@ namespace CheatTools
 
                 DrawHSceneCheats();
 
-                DrawGirlCheatMenu();
-
-                //_gameMgr.saveData.achievementAchieve
 
                 if (_studioInstance == null && _gameMgr?.saveData != null)
                 {
@@ -175,7 +172,12 @@ namespace CheatTools
 
         private void DrawHSceneCheats()
         {
-            if (_hScene == null) return;
+            if (_hScene == null)
+            {
+                GUILayout.Label("Start an H Scene to be able to edit status of characters");
+                GUILayout.Space(6);
+                return;
+            }
 
             GUILayout.BeginVertical(GUI.skin.box);
             {
@@ -206,6 +208,11 @@ namespace CheatTools
                     _editor.Inspector.Push(new InstanceStackEntry(_hScene, "HSceneFlagCtrl"), true);
             }
             GUILayout.EndVertical();
+
+            GUILayout.Space(6);
+
+            // Needs to be in h scene to save properly, in other places the data is lost since card doesn't save
+            DrawGirlCheatMenu();
 
             GUILayout.Space(6);
         }
