@@ -223,7 +223,7 @@ namespace CheatTools
 
             GUILayout.BeginVertical(GUI.skin.box);
             {
-                GUILayout.Label("Heroines");
+                GUILayout.Label("Character status editor");
 
                 var visibleGirls = _gameMgr.heroineList;
 
@@ -239,7 +239,7 @@ namespace CheatTools
                 if (_currentVisibleGirl != null)
                     DrawSingleGirlCheats(_currentVisibleGirl);
                 else
-                    GUILayout.Label("Select a heroine to access her stats");
+                    GUILayout.Label("Select a character to edit their stats");
             }
             GUILayout.EndVertical();
 
