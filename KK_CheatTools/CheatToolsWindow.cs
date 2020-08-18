@@ -141,10 +141,10 @@ namespace CheatTools
                         }
                         if (GUILayout.Button("Unlock all H positions"))
                         {
-                            // Safe enough to add up to 100, vanilla positions don't seem to go above 60
+                            // Vanilla positions don't seem to go above 60, modded positions are above 1000 usually
                             // 8 buckets might change in the future if game is updated with more h modes, check HSceneProc.lstAnimInfo for how many are needed
-                            for (int i = 0; i < 8; i++)
-                                _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 100));
+                            for (int i = 0; i < 10; i++)
+                                _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 9999));
                         }
                         /* Doesn't work, need a list of items to put into glSaveData.clubContents from somewhere 
                         if (GUILayout.Button("Unlock all free H toys/extras"))
