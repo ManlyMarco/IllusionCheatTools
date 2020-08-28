@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using ActionGame;
+using Illusion.Game;
 using Manager;
 using RuntimeUnityEditor.Core;
 using RuntimeUnityEditor.Core.Inspector;
@@ -85,7 +86,12 @@ namespace CheatTools
                 if (_hSprite != null)
                 {
                     if (GUILayout.Button("Force quit H scene"))
-                        _hSprite.btnEnd.onClick.Invoke();
+                    {
+                        Utils.Sound.Play(SystemSE.cancel);
+                        _hSprite.flags.click = HFlag.ClickKind.end;
+                        _hSprite.flags.isHSceneEnd = true;
+                        _hSprite.flags.numEnd = 0;
+                    }
                 }
 
                 if (_gameMgr != null)
