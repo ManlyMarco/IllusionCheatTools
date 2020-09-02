@@ -87,7 +87,6 @@
     <Compile Include="Hooks\BuildOverlapHooks.cs" />
     <Compile Include="Hooks\FishingHackHooks.cs" />
     <Compile Include="Hooks\UnlockCraftingHooks.cs" />
-    <Compile Include="Metadata.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
