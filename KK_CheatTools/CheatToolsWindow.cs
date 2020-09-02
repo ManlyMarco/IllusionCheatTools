@@ -211,7 +211,8 @@ namespace CheatTools
                             _currentVisibleGirl = girl;
                     }
 
-                    if (_gameMgr.HeroineList != null && _gameMgr.HeroineList.Count > 0)
+                    var anyHeroines = _gameMgr.HeroineList != null && _gameMgr.HeroineList.Count > 0;
+                    if (anyHeroines)
                     {
                         if (GUILayout.Button("Select from heroine list"))
                             _showSelectHeroineList = true;
@@ -227,53 +228,77 @@ namespace CheatTools
                         GUILayout.Label("Select a girl to access her stats");
                     }
 
-                    GUILayout.BeginVertical(GUI.skin.box);
+                    if (anyHeroines)
                     {
-                        GUILayout.Label("These affect ALL heroines");
-                        if (GUILayout.Button("Make everyone friendly"))
+                        GUILayout.BeginVertical(GUI.skin.box);
                         {
-                            foreach (var h in Game.Instance.HeroineList)
+                            GUILayout.Label("These affect ALL heroines");
+                            if (GUILayout.Button("Make everyone friendly"))
                             {
-                                h.favor = 100;
-                                h.anger = 0;
-                                h.isAnger = false;
+                                foreach (var h in Game.Instance.HeroineList)
+                                {
+                                    h.favor = 100;
+                                    h.anger = 0;
+                                    h.isAnger = false;
+                                }
+                            }
+                            if (GUILayout.Button("Make everyone lovers"))
+                            {
+                                foreach (var h in Game.Instance.HeroineList)
+                                {
+                                    h.anger = 0;
+                                    h.isAnger = false;
+                                    h.favor = 100;
+                                    h.lewdness = 100;
+                                    h.intimacy = 100;
+                                    h.isGirlfriend = true;
+                                    h.confessed = true;
+                                }
+                            }
+                            if (GUILayout.Button("Make everyone virgins"))
+                            {
+                                foreach (var h in Game.Instance.HeroineList)
+                                    MakeVirgin(h);
+                            }
+                            if (GUILayout.Button("Make everyone inexperienced"))
+                            {
+                                foreach (var h in Game.Instance.HeroineList)
+                                    MakeInexperienced(h);
+                            }
+                            if (GUILayout.Button("Make everyone experienced"))
+                            {
+                                foreach (var h in Game.Instance.HeroineList)
+                                    MakeExperienced(h);
+                            }
+                            if (GUILayout.Button("Make everyone perverted"))
+                            {
+                                foreach (var h in Game.Instance.HeroineList)
+                                    MakeHorny(h);
+                            }
+                            if (GUILayout.Button("Clear everyone's desires"))
+                            {
+                                foreach (var h in Game.Instance.HeroineList)
+                                {
+                                    for (int i = 0; i < 31; i++)
+                                        Game.Instance.actScene.actCtrl.SetDesire(i, h, 0);
+                                }
+                            }
+                            if (GUILayout.Button("Everyone desires masturbation"))
+                            {
+                                foreach (var h in Game.Instance.HeroineList)
+                                    Game.Instance.actScene.actCtrl.SetDesire(4, h, 100);
+                            }
+                            if (GUILayout.Button("Everyone desires lesbian"))
+                            {
+                                foreach (var h in Game.Instance.HeroineList)
+                                {
+                                    Game.Instance.actScene.actCtrl.SetDesire(26, h, 100);
+                                    Game.Instance.actScene.actCtrl.SetDesire(27, h, 100);
+                                }
                             }
                         }
-                        if (GUILayout.Button("Make everyone lovers"))
-                        {
-                            foreach (var h in Game.Instance.HeroineList)
-                            {
-                                h.anger = 0;
-                                h.isAnger = false;
-                                h.favor = 100;
-                                h.lewdness = 100;
-                                h.intimacy = 100;
-                                h.isGirlfriend = true;
-                                h.confessed = true;
-                            }
-                        }
-                        if (GUILayout.Button("Make everyone virgins"))
-                        {
-                            foreach (var h in Game.Instance.HeroineList)
-                                MakeVirgin(h);
-                        }
-                        if (GUILayout.Button("Make everyone inexperienced"))
-                        {
-                            foreach (var h in Game.Instance.HeroineList)
-                                MakeInexperienced(h);
-                        }
-                        if (GUILayout.Button("Make everyone experienced"))
-                        {
-                            foreach (var h in Game.Instance.HeroineList)
-                                MakeExperienced(h);
-                        }
-                        if (GUILayout.Button("Make everyone perverted"))
-                        {
-                            foreach (var h in Game.Instance.HeroineList)
-                                MakeHorny(h);
-                        }
+                        GUILayout.EndVertical();
                     }
-                    GUILayout.EndVertical();
                 }
                 else
                 {
@@ -368,14 +393,54 @@ namespace CheatTools
 
                 GUILayout.Space(4);
 
+                if (GUILayout.Button("Reset conversation time"))
+                    currentAdvGirl.talkTime = currentAdvGirl.talkTimeMax;
+
+                if (_gameMgr.actScene != null && _gameMgr.actScene.actCtrl != null)
+                {
+                    var desires = Enumerable.Range(0, 31).Select(i => new { i, desire = _gameMgr.actScene.actCtrl.GetDesire(i, currentAdvGirl) });
+                    var sorted = desires.Where(x => x.desire > 10).OrderByDescending(x => x.desire).Select(x => x.i.ToString()).Take(8).ToArray();
+                    var desireText = sorted.Length == 0 ? "Has no desires" : "Desires: " + string.Join(", ", sorted);
+                    GUILayout.Label(desireText);
+
+                    if (GUILayout.Button("Clear all desires"))
+                    {
+                        for (int i = 0; i < 31; i++) Game.Instance.actScene.actCtrl.SetDesire(i, currentAdvGirl, 0);
+                    }
+
+                    var wantsMast = _gameMgr.actScene.actCtrl.GetDesire(4, currentAdvGirl) > 80;
+                    if (wantsMast)
+                    {
+                        GUILayout.Label("Desires to masturbate");
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("Make desire to masturbate"))
+                            Game.Instance.actScene.actCtrl.SetDesire(4, currentAdvGirl, 100);
+                    }
+                    var wantsLes = _gameMgr.actScene.actCtrl.GetDesire(26, currentAdvGirl) > 80;
+                    if (wantsLes)
+                    {
+                        GUILayout.Label("Desires to lesbian");
+                    }
+                    else
+                    {
+                        if (GUILayout.Button("Make desire to lesbian"))
+                        {
+                            Game.Instance.actScene.actCtrl.SetDesire(26, currentAdvGirl, 100);
+                            Game.Instance.actScene.actCtrl.SetDesire(27, currentAdvGirl, 100);
+                        }
+                    }
+                    GUILayout.Label("Clear desires first to prioritize");
+                }
+
+                GUILayout.Space(4);
+
                 // 危険日 is risky, 安全日 is safe. Only change when user clicks to avoid messing with the value unnecessarily
                 GUI.changed = false;
                 var isDangerousDay = GUILayout.Toggle(HFlag.GetMenstruation(currentAdvGirl.MenstruationDay) == HFlag.MenstruationType.危険日, "Is on a risky day");
                 if (GUI.changed)
                     HFlag.SetMenstruation(currentAdvGirl, isDangerousDay ? HFlag.MenstruationType.危険日 : HFlag.MenstruationType.安全日);
-
-                if (GUILayout.Button("Reset conversation time"))
-                    currentAdvGirl.talkTime = currentAdvGirl.talkTimeMax;
 
                 currentAdvGirl.isVirgin = GUILayout.Toggle(currentAdvGirl.isVirgin, "isVirgin");
                 currentAdvGirl.isAnalVirgin = GUILayout.Toggle(currentAdvGirl.isAnalVirgin, "isAnalVirgin");

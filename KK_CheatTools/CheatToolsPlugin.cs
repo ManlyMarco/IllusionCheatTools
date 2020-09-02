@@ -14,6 +14,7 @@ namespace CheatTools
 {
     [BepInPlugin(Metadata.GUID, "Cheat Tools", Version)]
     [BepInDependency(RuntimeUnityEditorCore.GUID, "2.0")]
+    [HelpURL("https://github.com/ManlyMarco/IllusionCheatTools")]
     public class CheatToolsPlugin : BaseUnityPlugin
     {
         public const string Version = Metadata.Version;
