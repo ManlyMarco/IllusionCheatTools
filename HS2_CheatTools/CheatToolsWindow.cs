@@ -36,6 +36,9 @@ namespace CheatTools
         private BaseMap _baseMap;
         private HSceneFlagCtrl _hScene;
 
+        private readonly Func<object> _funcGetHeroines;
+        private readonly Func<object> _funcGetRootGos;
+
         public CheatToolsWindow(RuntimeUnityEditorCore editor)
         {
             _editor = editor ?? throw new ArgumentNullException(nameof(editor));
@@ -45,6 +48,9 @@ namespace CheatTools
             ToStringConverter.AddConverter<ChaControl>(d => $"{d} - {d.chaFile?.parameter?.fullname ?? d.chaFile?.charaFileName ?? "Unknown"}");
 
             _mainWindowTitle = "Cheat Tools " + Assembly.GetExecutingAssembly().GetName().Version;
+
+            _funcGetHeroines = () => _gameMgr.heroineList.Select(x => new ReadonlyCacheEntry(GetHeroineName(x), x));
+            _funcGetRootGos = EditorUtilities.GetRootGoScanner;
         }
 
         private static string GetHeroineName(Heroine heroine)
@@ -115,7 +121,7 @@ namespace CheatTools
                 DrawHSceneCheats();
 
 
-                if (_studioInstance == null && _gameMgr?.saveData != null)
+                if (_studioInstance == null && _gameMgr != null && _gameMgr.saveData != null)
                 {
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
@@ -140,7 +146,7 @@ namespace CheatTools
                     GUILayout.Label("Open in inspector");
                     foreach (var obj in new[]
                     {
-                            new KeyValuePair<object, string>(_gameMgr?.heroineList.Count > 0 ? _gameMgr.heroineList.Select(x => new ReadonlyCacheEntry(GetHeroineName(x), x)) : null, "Heroine list"),
+                            new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.heroineList.Count > 0 ? _funcGetHeroines : null, "Heroine list"),
                             new KeyValuePair<object, string>(ADVManager.IsInstance() ? ADVManager.Instance : null, "Manager.ADVManager.Instance"),
                             new KeyValuePair<object, string>(_baseMap, "Manager.BaseMap.instance"),
                             new KeyValuePair<object, string>(Character.IsInstance() ? Character.Instance : null, "Manager.Character.Instance"),
@@ -150,7 +156,7 @@ namespace CheatTools
                             new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.instance"),
                             new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.instance"),
                             new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                            new KeyValuePair<object, string>(EditorUtilities.GetRootGoScanner(), "Root Objects")
+                            new KeyValuePair<object, string>(_funcGetRootGos, "Root Objects")
                         })
                     {
                         if (obj.Key == null) continue;
@@ -158,6 +164,8 @@ namespace CheatTools
                         {
                             if (obj.Key is Type t)
                                 _editor.Inspector.Push(new StaticStackEntry(t, obj.Value), true);
+                            else if (obj.Key is Func<object> f)
+                                _editor.Inspector.Push(new InstanceStackEntry(f(), obj.Value), true);
                             else
                                 _editor.Inspector.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
                         }

@@ -41,6 +41,9 @@ namespace CheatTools
         private Scene _sceneInstance;
         private Game _gameMgr;
 
+        private readonly Func<object> _funcGetHeroines;
+        private readonly Func<object> _funcGetRootGos;
+
         public CheatToolsWindow(RuntimeUnityEditorCore editor)
         {
             _editor = editor ?? throw new ArgumentNullException(nameof(editor));
@@ -49,6 +52,9 @@ namespace CheatTools
             ToStringConverter.AddConverter<SaveData.CharaData.Params.Data>(d => $"[{d.key} | {d.value}]");
 
             _mainWindowTitle = "Cheat Tools " + Assembly.GetExecutingAssembly().GetName().Version;
+
+            _funcGetHeroines = () => _gameMgr.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x));
+            _funcGetRootGos = EditorUtilities.GetRootGoScanner;
         }
 
         public bool Show
@@ -112,9 +118,7 @@ namespace CheatTools
                     GUILayout.Label("Open in inspector");
                     foreach (var obj in new[]
                     {
-                            new KeyValuePair<object, string>(
-                                _gameMgr?.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x)),
-                                "Heroine list"),
+                            new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.HeroineList.Count > 0 ? _funcGetHeroines : null, "Heroine list"),
                             new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
                             new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
                             new KeyValuePair<object, string>(_communicationInstance, "Manager.Communication.Instance"),
@@ -122,13 +126,18 @@ namespace CheatTools
                             new KeyValuePair<object, string>(_hFlag, "HFlag"),
                             new KeyValuePair<object, string>(_talkScene, "TalkScene"),
                             new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                            new KeyValuePair<object, string>(EditorUtilities.GetRootGoScanner(), "Root Objects")
+                            new KeyValuePair<object, string>(_funcGetRootGos, "Root Objects")
                         })
                     {
                         if (obj.Key == null) continue;
                         if (GUILayout.Button(obj.Value))
                         {
-                            _editor.Inspector.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
+                            if (obj.Key is Type t)
+                                _editor.Inspector.Push(new StaticStackEntry(t, obj.Value), true);
+                            else if (obj.Key is Func<object> f)
+                                _editor.Inspector.Push(new InstanceStackEntry(f(), obj.Value), true);
+                            else
+                                _editor.Inspector.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
                         }
                     }
                 }
@@ -630,18 +639,24 @@ namespace CheatTools
 
         private SaveData.Heroine[] GetCurrentVisibleGirls()
         {
-            var result = _talkScene?.targetHeroine;
-            if (result != null) return new[] { result };
+            if (_talkScene != null)
+            {
+                var result = _talkScene.targetHeroine;
+                if (result != null) return new[] { result };
+            }
 
-            var hHeroines = _hFlag?.lstHeroine;
-            if (hHeroines != null && hHeroines.Count > 0) return hHeroines.ToArray();
+            if (_hFlag != null)
+            {
+                var hHeroines = _hFlag.lstHeroine;
+                if (hHeroines != null && hHeroines.Count > 0) return hHeroines.ToArray();
+            }
 
             if (Game.IsInstance() &&
                 Game.Instance.actScene != null &&
                 Game.Instance.actScene.AdvScene != null)
             {
                 var advScene = Game.Instance.actScene.AdvScene;
-                if (advScene.Scenario?.currentHeroine != null)
+                if (advScene.Scenario != null && advScene.Scenario.currentHeroine != null)
                     return new[] { advScene.Scenario.currentHeroine };
                 if (advScene.nowScene is TalkScene s && s.targetHeroine != null)
                     return new[] { s.targetHeroine };

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using AIChara;
@@ -43,6 +42,9 @@ namespace CheatTools
         private HSceneFlagCtrl _hScene;
         private string _gameTimeText;
 
+        private readonly Func<object> _funcGetHeroines;
+        private readonly Func<object> _funcGetRootGos;
+
         public CheatToolsWindow(RuntimeUnityEditorCore editor)
         {
             _editor = editor ?? throw new ArgumentNullException(nameof(editor));
@@ -53,6 +55,9 @@ namespace CheatTools
             ToStringConverter.AddConverter<ChaControl>(d => $"{d} - {d.chaFile?.parameter?.fullname ?? d.chaFile?.charaFileName ?? "Unknown"}");
 
             _mainWindowTitle = "Cheat Tools " + Assembly.GetExecutingAssembly().GetName().Version;
+
+            _funcGetHeroines = () => _map.AgentTable.Values.Select(x => new ReadonlyCacheEntry(x.CharaName, x));
+            _funcGetRootGos = EditorUtilities.GetRootGoScanner;
         }
 
         public bool Show
@@ -117,23 +122,30 @@ namespace CheatTools
                     GUILayout.Label("Open in inspector");
                     foreach (var obj in new[]
                     {
-                            new KeyValuePair<object, string>(_map?.AgentTable.Count > 0 ? _map.AgentTable.Values.Select(x => new ReadonlyCacheEntry(x.CharaName, x)) : null, "Heroine list"),
+                            new KeyValuePair<object, string>(_map != null && _map.AgentTable.Count > 0 ? _funcGetHeroines : null, "Heroine list"),
                             new KeyValuePair<object, string>(Manager.ADV.IsInstance() ? Manager.ADV.Instance : null, "Manager.ADV.Instance"),
-                            new KeyValuePair<object, string>(Manager.AnimalManager.IsInstance() ? Manager.AnimalManager.Instance : null, "Manager.AnimalManager.Instance"),
+                            new KeyValuePair<object, string>(AnimalManager.IsInstance() ? AnimalManager.Instance : null, "Manager.AnimalManager.Instance"),
                             new KeyValuePair<object, string>(_map, "Manager.Map.Instance"),
-                            new KeyValuePair<object, string>(Manager.Character.IsInstance() ? Manager.Character.Instance : null, "Manager.Character.Instance"),
-                            new KeyValuePair<object, string>(Manager.Config.IsInstance() ? Manager.Config.Instance : null, "Manager.Config.Instance"),
+                            new KeyValuePair<object, string>(Character.IsInstance() ? Character.Instance : null, "Manager.Character.Instance"),
+                            new KeyValuePair<object, string>(Config.IsInstance() ? Config.Instance : null, "Manager.Config.Instance"),
                             new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
                             new KeyValuePair<object, string>(Manager.Housing.IsInstance() ? Manager.Housing.Instance : null, "Manager.Housing.Instance"),
                             new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
                             new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
                             new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                            new KeyValuePair<object, string>(EditorUtilities.GetRootGoScanner(), "Root Objects")
-                        })
+                            new KeyValuePair<object, string>(_funcGetRootGos, "Root Objects")
+                    })
                     {
                         if (obj.Key == null) continue;
                         if (GUILayout.Button(obj.Value))
-                            _editor.Inspector.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
+                        {
+                            if (obj.Key is Type t)
+                                _editor.Inspector.Push(new StaticStackEntry(t, obj.Value), true);
+                            else if (obj.Key is Func<object> f)
+                                _editor.Inspector.Push(new InstanceStackEntry(f(), obj.Value), true);
+                            else
+                                _editor.Inspector.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
+                        }
                     }
                 }
                 GUILayout.EndVertical();
@@ -145,7 +157,7 @@ namespace CheatTools
 
         private void DrawPlayerCheats()
         {
-            if (_map?.Player == null) return;
+            if (_map != null && _map.Player == null) return;
             var playerData = _map.Player.PlayerData;
             if (playerData == null) return;
 
@@ -160,18 +172,21 @@ namespace CheatTools
                 }
                 GUILayout.EndHorizontal();
 
-                var mp = _resources?.MerchantProfile;
-                if (mp != null)
+                if (_resources != null)
                 {
-                    GUILayout.BeginHorizontal();
+                    var mp = _resources.MerchantProfile;
+                    if (mp != null)
                     {
-                        var shanLvl = mp.SpendMoneyBorder.Count(x => playerData.SpendMoney >= x) + 1;
-                        GUILayout.Label("Shan heart lvl: " + shanLvl, GUILayout.Width(150));
-                        if (GUILayout.Button("1")) playerData.SpendMoney = 0;
-                        if (GUILayout.Button("2")) playerData.SpendMoney = mp.SpendMoneyBorder[0];
-                        if (GUILayout.Button("3")) playerData.SpendMoney = mp.SpendMoneyBorder[1];
+                        GUILayout.BeginHorizontal();
+                        {
+                            var shanLvl = mp.SpendMoneyBorder.Count(x => playerData.SpendMoney >= x) + 1;
+                            GUILayout.Label("Shan heart lvl: " + shanLvl, GUILayout.Width(150));
+                            if (GUILayout.Button("1")) playerData.SpendMoney = 0;
+                            if (GUILayout.Button("2")) playerData.SpendMoney = mp.SpendMoneyBorder[0];
+                            if (GUILayout.Button("3")) playerData.SpendMoney = mp.SpendMoneyBorder[1];
+                        }
+                        GUILayout.EndHorizontal();
                     }
-                    GUILayout.EndHorizontal();
                 }
 
                 FishingHackHooks.Enabled = GUILayout.Toggle(FishingHackHooks.Enabled, "Enable instant fishing");
@@ -181,60 +196,63 @@ namespace CheatTools
                 CheatToolsPlugin.BuildAnywhere.Value = GUILayout.Toggle(CheatToolsPlugin.BuildAnywhere.Value, "Allow building anywhere");
                 CheatToolsPlugin.BuildOverlap.Value = GUILayout.Toggle(CheatToolsPlugin.BuildOverlap.Value, "Allow building items to overlap");
 
-                GUILayout.BeginVertical(GUI.skin.box);
+                if (_resources != null)
                 {
-                    GUILayout.Label("Warning: These can't be turned off!");
-                    var dp = _resources?.DefinePack;
+                    var dp = _resources.DefinePack;
                     if (dp != null)
                     {
-                        if (dp.MapDefines.ItemSlotMax >= 99999 && playerData.InventorySlotMax >= 99999)
-                            GUI.enabled = false;
-                        if (GUILayout.Button("Unlimited inventory slots"))
+                        GUILayout.BeginVertical(GUI.skin.box);
                         {
-                            var tr = Traverse.Create(dp.MapDefines);
-                            tr.Field("_itemSlotMax").SetValue(99999);
-                            tr.Field("_itemStackUpperLimit").SetValue(99999);
-                            playerData.InventorySlotMax = 99999;
-                        }
-                        GUI.enabled = true;
-
-                        if (playerData.ItemList.Count == 0)
-                            GUI.enabled = false;
-                        if (GUILayout.Button("Clear player inventory"))
-                        {
-                            playerData.ItemList.Clear();
-                            //MapUIContainer.AddNotify();
-                            CheatToolsPlugin.Logger.LogMessage("Your inventory has been cleared.");
-                        }
-                        GUI.enabled = true;
-
-                        GUILayout.BeginHorizontal();
-                        {
-                            var add1 = GUILayout.Button("Get +1 of all items");
-                            var add99 = GUILayout.Button("+99");
-                            if (add1 || add99)
+                            GUILayout.Label("Warning: These can't be turned off!");
+                            if (dp.MapDefines.ItemSlotMax >= 99999 && playerData.InventorySlotMax >= 99999)
+                                GUI.enabled = false;
+                            if (GUILayout.Button("Unlimited inventory slots"))
                             {
-                                if (_resources?.GameInfo != null)
-                                {
-                                    var addAmount = add1 ? 1 : 99;
-                                    foreach (var category in _resources.GameInfo.GetItemCategories())
-                                    {
-                                        foreach (var stuffItemInfo in _resources.GameInfo.GetItemTable(category).Values)
-                                        {
-                                            var it = playerData.ItemList.Find(item => item.CategoryID == stuffItemInfo.CategoryID && item.ID == stuffItemInfo.ID);
-                                            if (it != null) it.Count += addAmount;
-                                            else playerData.ItemList.Add(new StuffItem(stuffItemInfo.CategoryID, stuffItemInfo.ID, addAmount));
-                                        }
-                                    }
+                                var tr = Traverse.Create(dp.MapDefines);
+                                tr.Field("_itemSlotMax").SetValue(99999);
+                                tr.Field("_itemStackUpperLimit").SetValue(99999);
+                                playerData.InventorySlotMax = 99999;
+                            }
+                            GUI.enabled = true;
 
-                                    CheatToolsPlugin.Logger.LogMessage(addAmount + " of all items have been added to your inventory");
+                            if (playerData.ItemList.Count == 0)
+                                GUI.enabled = false;
+                            if (GUILayout.Button("Clear player inventory"))
+                            {
+                                playerData.ItemList.Clear();
+                                //MapUIContainer.AddNotify();
+                                CheatToolsPlugin.Logger.LogMessage("Your inventory has been cleared.");
+                            }
+                            GUI.enabled = true;
+
+                            GUILayout.BeginHorizontal();
+                            {
+                                var add1 = GUILayout.Button("Get +1 of all items");
+                                var add99 = GUILayout.Button("+99");
+                                if (add1 || add99)
+                                {
+                                    if (_resources.GameInfo != null)
+                                    {
+                                        var addAmount = add1 ? 1 : 99;
+                                        foreach (var category in _resources.GameInfo.GetItemCategories())
+                                        {
+                                            foreach (var stuffItemInfo in _resources.GameInfo.GetItemTable(category).Values)
+                                            {
+                                                var it = playerData.ItemList.Find(item => item.CategoryID == stuffItemInfo.CategoryID && item.ID == stuffItemInfo.ID);
+                                                if (it != null) it.Count += addAmount;
+                                                else playerData.ItemList.Add(new StuffItem(stuffItemInfo.CategoryID, stuffItemInfo.ID, addAmount));
+                                            }
+                                        }
+
+                                        CheatToolsPlugin.Logger.LogMessage(addAmount + " of all items have been added to your inventory");
+                                    }
                                 }
                             }
+                            GUILayout.EndHorizontal();
                         }
-                        GUILayout.EndHorizontal();
+                        GUILayout.EndVertical();
                     }
                 }
-                GUILayout.EndVertical();
 
                 if (GUILayout.Button("Navigate to Player's GameObject"))
                 {
@@ -257,58 +275,61 @@ namespace CheatTools
         {
             GUILayout.BeginVertical(GUI.skin.box);
             {
-                var weatherSim = _map?.Simulator;
-                if (weatherSim != null)
+                if (_map != null)
                 {
-                    GUILayout.BeginHorizontal();
-                    {
-                        GUILayout.Label("Weather: " + weatherSim.Weather, GUILayout.Width(120));
-
-                        if (weatherSim.Weather == Weather.Clear) GUI.enabled = false;
-                        if (GUILayout.Button("Clear")) weatherSim.RefreshWeather(Weather.Clear, true);
-                        GUI.enabled = true;
-
-                        if (GUILayout.Button("Next")) weatherSim.RefreshWeather(weatherSim.Weather.Next(), true);
-                    }
-                    GUILayout.EndHorizontal();
-
-                    if (weatherSim.EnvironmentProfile != null)
+                    var weatherSim = _map.Simulator;
+                    if (weatherSim != null)
                     {
                         GUILayout.BeginHorizontal();
                         {
-                            GUILayout.Label($"Temperature: {weatherSim.TemperatureValue:F0}C", GUILayout.Width(120));
-                            weatherSim.TemperatureValue = GUILayout.HorizontalSlider(weatherSim.TemperatureValue,
-                                weatherSim.EnvironmentProfile.TemperatureBorder.MinDegree,
-                                weatherSim.EnvironmentProfile.TemperatureBorder.MaxDegree);
+                            GUILayout.Label("Weather: " + weatherSim.Weather, GUILayout.Width(120));
+
+                            if (weatherSim.Weather == Weather.Clear) GUI.enabled = false;
+                            if (GUILayout.Button("Clear")) weatherSim.RefreshWeather(Weather.Clear, true);
+                            GUI.enabled = true;
+
+                            if (GUILayout.Button("Next")) weatherSim.RefreshWeather(weatherSim.Weather.Next(), true);
                         }
                         GUILayout.EndHorizontal();
-                    }
 
-                    if (weatherSim.EnviroSky != null && weatherSim.EnviroSky.GameTime != null)
-                    {
-                        GUILayout.BeginHorizontal();
+                        if (weatherSim.EnvironmentProfile != null)
                         {
-                            var gameTime = weatherSim.EnviroSky.GameTime;
-                            var dt = DateTime.MinValue.AddHours(gameTime.Hours).AddMinutes(gameTime.Minutes).AddSeconds(gameTime.Seconds);
-                            GUILayout.Label("Game time:", GUILayout.Width(120));
-                            var timeText = _gameTimeText ?? $"{gameTime.Hours:00}:{gameTime.Minutes:00}:{gameTime.Seconds:00}";
-                            var newTimeText = GUILayout.TextField(timeText, GUILayout.ExpandWidth(true));
-                            if (timeText != newTimeText)
+                            GUILayout.BeginHorizontal();
                             {
-                                try
+                                GUILayout.Label($"Temperature: {weatherSim.TemperatureValue:F0}C", GUILayout.Width(120));
+                                weatherSim.TemperatureValue = GUILayout.HorizontalSlider(weatherSim.TemperatureValue,
+                                    weatherSim.EnvironmentProfile.TemperatureBorder.MinDegree,
+                                    weatherSim.EnvironmentProfile.TemperatureBorder.MaxDegree);
+                            }
+                            GUILayout.EndHorizontal();
+                        }
+
+                        if (weatherSim.EnviroSky != null && weatherSim.EnviroSky.GameTime != null)
+                        {
+                            GUILayout.BeginHorizontal();
+                            {
+                                var gameTime = weatherSim.EnviroSky.GameTime;
+                                //var dt = DateTime.MinValue.AddHours(gameTime.Hours).AddMinutes(gameTime.Minutes).AddSeconds(gameTime.Seconds);
+                                GUILayout.Label("Game time:", GUILayout.Width(120));
+                                var timeText = _gameTimeText ?? $"{gameTime.Hours:00}:{gameTime.Minutes:00}:{gameTime.Seconds:00}";
+                                var newTimeText = GUILayout.TextField(timeText, GUILayout.ExpandWidth(true));
+                                if (timeText != newTimeText)
                                 {
-                                    var parts = newTimeText.Split(':');
-                                    weatherSim.EnviroSky.SetTime(gameTime.Years, gameTime.Days, int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]));
-                                    _gameTimeText = null;
-                                }
-                                catch
-                                {
-                                    // Let user keep editing if the parsing fails
-                                    _gameTimeText = newTimeText;
+                                    try
+                                    {
+                                        var parts = newTimeText.Split(':');
+                                        weatherSim.EnviroSky.SetTime(gameTime.Years, gameTime.Days, int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]));
+                                        _gameTimeText = null;
+                                    }
+                                    catch
+                                    {
+                                        // Let user keep editing if the parsing fails
+                                        _gameTimeText = newTimeText;
+                                    }
                                 }
                             }
+                            GUILayout.EndHorizontal();
                         }
-                        GUILayout.EndHorizontal();
                     }
                 }
 
