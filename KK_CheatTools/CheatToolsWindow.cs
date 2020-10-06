@@ -147,20 +147,24 @@ namespace CheatTools
                 {
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        GUILayout.Label("Global unlocks");
+                        GUILayout.Label("Global unlocks (might need a reload)");
 
-                        if (GUILayout.Button("Unlock all wedding personalities"))
-                        {
-                            foreach (var personalityId in Singleton<Voice>.Instance.voiceInfoList.Select(x => x.No).Where(x => x >= 0))
-                                _gameMgr.weddingData.personality.Add(personalityId);
-                        }
-                        if (GUILayout.Button("Unlock all H positions"))
+                        CheatToolsPlugin.UnlockAllPositions.Value = GUILayout.Toggle(CheatToolsPlugin.UnlockAllPositions.Value, "Unlock all H positions");
+
+                        if (GUILayout.Button("Obtain all H positions"))
                         {
                             // Vanilla positions don't seem to go above 60, modded positions are above 1000 usually
                             // 8 buckets might change in the future if game is updated with more h modes, check HSceneProc.lstAnimInfo for how many are needed
                             for (int i = 0; i < 10; i++)
                                 _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 9999));
                         }
+
+                        if (GUILayout.Button("Unlock all wedding personalities"))
+                        {
+                            foreach (var personalityId in Singleton<Voice>.Instance.voiceInfoList.Select(x => x.No).Where(x => x >= 0))
+                                _gameMgr.weddingData.personality.Add(personalityId);
+                        }
+
                         /* Doesn't work, need a list of items to put into glSaveData.clubContents from somewhere 
                         if (GUILayout.Button("Unlock all free H toys/extras"))
                         {

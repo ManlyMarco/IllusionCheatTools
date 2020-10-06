@@ -25,6 +25,9 @@ namespace CheatTools
         private ConfigEntry<KeyboardShortcut> _showCheatWindow;
         private ConfigEntry<KeyboardShortcut> _noclip;
 
+        internal static ConfigEntry<bool> UnlockAllPositions;
+        internal static ConfigEntry<bool> UnlockAllPositionsIndiscriminately;
+
         internal static new ManualLogSource Logger;
 
         private IEnumerator Start()
@@ -32,6 +35,14 @@ namespace CheatTools
             Logger = base.Logger;
             _showCheatWindow = Config.Bind("Hotkeys", "Toggle cheat window", new KeyboardShortcut(KeyCode.Pause));
             _noclip = Config.Bind("Hotkeys", "Toggle player noclip", KeyboardShortcut.Empty);
+
+            UnlockAllPositions = Config.Bind("Cheats", "Unlock all H positions", false, "Reload the H scene to see changes.");
+            UnlockAllPositions.SettingChanged += (sender, args) => UnlockPositionsHooks.Enabled = UnlockAllPositions.Value;
+            UnlockPositionsHooks.Enabled = UnlockAllPositions.Value;
+
+            UnlockAllPositionsIndiscriminately = Config.Bind("Cheats", "Unlock invalid H positions as well", false, "This will unlock all positions even if they should not be possible.\nWARNING: Can result in bugs and even game crashes in some cases.\nReload the H scene to see changes.");
+            UnlockAllPositionsIndiscriminately.SettingChanged += (sender, args) => UnlockPositionsHooks.UnlockAll = UnlockAllPositionsIndiscriminately.Value;
+            UnlockPositionsHooks.UnlockAll = UnlockAllPositionsIndiscriminately.Value;
 
             // Wait for runtime editor to init
             yield return null;
