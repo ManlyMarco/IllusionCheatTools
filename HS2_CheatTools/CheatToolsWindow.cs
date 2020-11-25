@@ -270,6 +270,12 @@ namespace CheatTools
                         if (GUILayout.Button(state.ToString()))
                         {
                             gi2.nowState = state; gi2.calcState = state; gi2.nowDrawState = state;
+                            gi2.Favor = state == ChaFileDefine.State.Favor ? 100 : Mathf.Min(gi2.Favor, 90);
+                            gi2.Enjoyment = state == ChaFileDefine.State.Enjoyment ? 100 : Mathf.Min(gi2.Enjoyment, 90);
+                            gi2.Aversion = state == ChaFileDefine.State.Aversion ? 100 : Mathf.Min(gi2.Aversion, 90);
+                            gi2.Slavery = state == ChaFileDefine.State.Slavery ? 100 : Mathf.Min(gi2.Slavery, 90);
+                            gi2.Broken = state == ChaFileDefine.State.Broken ? 100 : Mathf.Min(gi2.Broken, 90);
+                            gi2.Dependence = state == ChaFileDefine.State.Dependence ? 100 : Mathf.Min(gi2.Dependence, 90);
                         }
                     }
                     GUILayout.BeginHorizontal();
