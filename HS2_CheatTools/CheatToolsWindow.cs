@@ -27,7 +27,8 @@ namespace CheatTools
         private Rect _screenRect;
         private bool _show;
 
-        private Heroine _currentVisibleGirl;
+        internal static Heroine _currentVisibleGirl;
+        internal static Action<Heroine> _onGirlStatsChanged;
 
         private Studio.Studio _studioInstance;
         private Manager.Sound _soundInstance;
@@ -120,6 +121,13 @@ namespace CheatTools
 
                 DrawHSceneCheats();
 
+                // Needs to be in h scene to save properly, in other places the data is lost since card doesn't save
+                if (_hScene != null || Singleton<LobbySceneManager>.IsInstance())
+                    DrawGirlCheatMenu();
+                else
+                    GUILayout.Label("Unable to edit character stats on this screen. Start an H scene or enter the lobby.");
+
+                GUILayout.Space(6);
 
                 if (_studioInstance == null && _gameMgr != null && _gameMgr.saveData != null)
                 {
@@ -181,11 +189,7 @@ namespace CheatTools
         private void DrawHSceneCheats()
         {
             if (_hScene == null)
-            {
-                GUILayout.Label("Start an H Scene to be able to edit status of characters");
-                GUILayout.Space(6);
                 return;
-            }
 
             GUILayout.BeginVertical(GUI.skin.box);
             {
@@ -218,11 +222,6 @@ namespace CheatTools
             GUILayout.EndVertical();
 
             GUILayout.Space(6);
-
-            // Needs to be in h scene to save properly, in other places the data is lost since card doesn't save
-            DrawGirlCheatMenu();
-
-            GUILayout.Space(6);
         }
 
         private void DrawGirlCheatMenu()
@@ -233,16 +232,19 @@ namespace CheatTools
             {
                 GUILayout.Label("Character status editor");
 
-                var visibleGirls = _gameMgr.heroineList;
-
-                for (var i = 0; i < visibleGirls.Count; i++)
+                if (!Singleton<LobbySceneManager>.IsInstance())
                 {
-                    var girl = visibleGirls[i];
-                    if (GUILayout.Button($"Select #{i} - {GetHeroineName(girl)}"))
-                        _currentVisibleGirl = girl;
-                }
+                    var visibleGirls = _gameMgr.heroineList;
 
-                GUILayout.Space(6);
+                    for (var i = 0; i < visibleGirls.Count; i++)
+                    {
+                        var girl = visibleGirls[i];
+                        if (GUILayout.Button($"Select #{i} - {GetHeroineName(girl)}"))
+                            _currentVisibleGirl = girl;
+                    }
+
+                    GUILayout.Space(6);
+                }
 
                 if (_currentVisibleGirl != null)
                     DrawSingleGirlCheats(_currentVisibleGirl);
@@ -263,6 +265,7 @@ namespace CheatTools
 
                 if (currentAdvGirl.chaCtrl != null && currentAdvGirl.chaCtrl.fileGameInfo2 != null)
                 {
+                    var anyChanges = false;
                     var gi2 = currentAdvGirl.gameinfo2;
 
                     void DrawSingleStateBtn(ChaFileDefine.State state)
@@ -276,6 +279,7 @@ namespace CheatTools
                             gi2.Slavery = state == ChaFileDefine.State.Slavery ? 100 : Mathf.Min(gi2.Slavery, 90);
                             gi2.Broken = state == ChaFileDefine.State.Broken ? 100 : Mathf.Min(gi2.Broken, 90);
                             gi2.Dependence = state == ChaFileDefine.State.Dependence ? 100 : Mathf.Min(gi2.Dependence, 90);
+                            anyChanges = true;
                         }
                     }
                     GUILayout.BeginHorizontal();
@@ -312,7 +316,10 @@ namespace CheatTools
                             GUILayout.Label(name + ": " + status, GUILayout.Width(120));
                             var newStatus = Mathf.RoundToInt(GUILayout.HorizontalSlider(status, 0, 100));
                             if (newStatus != status)
+                            {
                                 set(newStatus);
+                                anyChanges = true;
+                            }
                         }
                         GUILayout.EndHorizontal();
                     }
@@ -325,7 +332,11 @@ namespace CheatTools
                             var status = get();
                             var textField = GUILayout.TextField(status.ToString());
                             if (GUI.changed && int.TryParse(textField, out var newStatus) && newStatus != status)
+                            {
                                 set(newStatus);
+                                anyChanges = true;
+                            }
+
                             GUI.changed = false;
                         }
                         GUILayout.EndHorizontal();
@@ -343,6 +354,9 @@ namespace CheatTools
                     ShowSingleSlider(nameof(gi2.Libido), i => gi2.Libido = i, () => gi2.Libido);
 
                     ShowSingleTextfield(nameof(gi2.hCount), i => { gi2.hCount = i; if (i == 0) gi2.firstHFlag = true; }, () => gi2.hCount);
+
+                    if (anyChanges)
+                        _onGirlStatsChanged(_currentVisibleGirl);
 
                     if (GUILayout.Button("View more stats and flags"))
                         _editor.Inspector.Push(new InstanceStackEntry(gi2, "Heroine " + GetHeroineName(currentAdvGirl)), true);

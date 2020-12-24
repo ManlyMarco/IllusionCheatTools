@@ -45,6 +45,8 @@ namespace CheatTools
 
             // Disable the default hotkey since we'll be controlling the show state manually
             _runtimeUnityEditorCore.ShowHotkey = KeyCode.None;
+
+            HarmonyLib.Harmony.CreateAndPatchAll(typeof(Hooks));
         }
 
         private void OnGUI()
