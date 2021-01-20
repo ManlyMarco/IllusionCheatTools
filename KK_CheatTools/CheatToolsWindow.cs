@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using ActionGame;
+using HarmonyLib;
+using Illusion.Component;
 using Illusion.Game;
 using Manager;
 using RuntimeUnityEditor.Core;
@@ -43,6 +45,7 @@ namespace CheatTools
 
         private readonly Func<object> _funcGetHeroines;
         private readonly Func<object> _funcGetRootGos;
+        private TriggerEnterExitEvent _playerEnterExitTrigger;
 
         public CheatToolsWindow(RuntimeUnityEditorCore editor)
         {
@@ -627,6 +630,20 @@ namespace CheatTools
                                     CheatToolsPlugin.Logger.Log(LogLevel.Message, "Disabling shame reactions on map: " + param.MapName);
                                 }
                             }
+                        }
+                    }
+
+                    GUI.changed = false;
+                    var playerIsNoticeable = _playerEnterExitTrigger == null || _playerEnterExitTrigger.enabled;
+                    playerIsNoticeable = !GUILayout.Toggle(!playerIsNoticeable, "Make player unnoticeable");
+                    if (GUI.changed)
+                    {
+                        var actionMap = Object.FindObjectOfType<ActionScene>();
+                        if (actionMap != null)
+                        {
+                            _playerEnterExitTrigger = Traverse.Create(actionMap.Player)
+                                .Field<TriggerEnterExitEvent>("noticeArea").Value;
+                            _playerEnterExitTrigger.enabled = playerIsNoticeable;
                         }
                     }
 
