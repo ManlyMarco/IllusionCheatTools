@@ -726,7 +726,7 @@ namespace CheatTools
             int w = Screen.width, h = Screen.height;
             _screenRect = new Rect(ScreenOffset, ScreenOffset, w - ScreenOffset * 2, h - ScreenOffset * 2);
 
-            const int cheatWindowHeight = 410;
+            const int cheatWindowHeight = 500;
             _cheatWindowRect = new Rect(_screenRect.xMin, _screenRect.yMax - cheatWindowHeight, 270, cheatWindowHeight);
         }
     }
