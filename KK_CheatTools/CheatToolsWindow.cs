@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using ActionGame;
+using ActionGame.Chara;
 using HarmonyLib;
 using Illusion.Component;
 using Illusion.Game;
@@ -271,6 +272,14 @@ namespace CheatTools
                                     h.confessed = true;
                                 }
                             }
+                            if (GUILayout.Button("Make everyone club members"))
+                            {
+                                foreach (var h in Game.Instance.HeroineList)
+                                {
+                                    if (!h.isTeacher)
+                                        h.isStaff = true;
+                                }
+                            }
                             if (GUILayout.Button("Make everyone virgins"))
                             {
                                 foreach (var h in Game.Instance.HeroineList)
@@ -482,6 +491,13 @@ namespace CheatTools
                 currentAdvGirl.denial.anal = GUILayout.Toggle(currentAdvGirl.denial.anal, "Won't refuse anal");
                 currentAdvGirl.denial.aibu = GUILayout.Toggle(currentAdvGirl.denial.aibu, "Won't refuse vibrator");
                 currentAdvGirl.denial.notCondom = GUILayout.Toggle(currentAdvGirl.denial.notCondom, "Insert w/o condom OK");
+
+                if (_gameMgr?.actScene != null && currentAdvGirl.transform != null && GUILayout.Button("Follow me"))
+                {
+                    var npc = currentAdvGirl.transform.GetComponent<NPC>();
+                    if (npc) _gameMgr.actScene.Player.ChaserSet(npc);
+                    else CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, "Could not make heroine follow - NPC component not found");
+                }
 
                 if (GUILayout.Button("Navigate to heroine's GameObject"))
                 {
