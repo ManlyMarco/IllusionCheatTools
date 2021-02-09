@@ -76,6 +76,8 @@
   <ItemGroup>
     <Compile Include="CheatToolsPlugin.cs" />
     <Compile Include="CheatToolsWindow.cs" />
+    <Compile Include="DesireEng.cs" />
+    <Compile Include="HExperienceKindEng.cs" />
     <Compile Include="UnlockPositionsHooks.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
