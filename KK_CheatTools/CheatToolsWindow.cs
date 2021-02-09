@@ -23,6 +23,40 @@ namespace CheatTools
     {
         private const int ScreenOffset = 20;
         private readonly string[] _hExpNames = { "First time", "Inexperienced", "Experienced", "Perverted" };
+        private readonly string[] _desireNames =
+        {
+            "Change clothes",           // id 0             
+            "Go to toilet",             // id 1
+            "Take a shower",            // id 2             
+            "Have a meal",              // id 3               
+            "H (masturbate)",           // id 4     
+            "H (main character)",       // id 5 
+            "Do club activities",       // id 6              
+            "Talk with girls",          // id 7     
+            "Talk with main character", // id 8 
+            "Read",                     // id 9     
+            "Fiddle with smartphone",   // id 10           
+            "Game on smartphone",       // id 11            
+            "Take selfie",              // id 12
+            "Listen to music",          // id 13             
+            "Dance practice",           // id 14               
+            "Improve my appearance",    // id 15     
+            "Drink",                    // id 16     
+            "Change my mind",           // id 17     
+            "Exercise",                 // id 18     
+            "Chara-specific behavior",  // id 19         
+            "Get away",                 // id 20                
+            "Study",                    // id 21               
+            "Sleep",                    // id 22               
+            "Follow me",                // id 23               
+            "Request",                  // id 24              
+            "Shy",                      // id 25               
+            "Lesbian",                  // id 26               
+            "Lesbian partner",          // id 27               
+            "Ask MC to talk",           // id 28       
+            "Ask MC for H",             // id 29       
+            "Fidgeting waiting",        // id 30               
+        };
 
         private readonly RuntimeUnityEditorCore _editor;
 
@@ -416,17 +450,36 @@ namespace CheatTools
                 }
                 GUILayout.EndHorizontal();
 
-                GUILayout.Space(4);
+                GUILayout.Space(8);
 
                 if (GUILayout.Button("Reset conversation time"))
                     currentAdvGirl.talkTime = currentAdvGirl.talkTimeMax;
 
                 if (_gameMgr.actScene != null && _gameMgr.actScene.actCtrl != null)
                 {
-                    var desires = Enumerable.Range(0, 31).Select(i => new { i, desire = _gameMgr.actScene.actCtrl.GetDesire(i, currentAdvGirl) });
-                    var sorted = desires.Where(x => x.desire > 10).OrderByDescending(x => x.desire).Select(x => x.i.ToString()).Take(8).ToArray();
-                    var desireText = sorted.Length == 0 ? "Has no desires" : "Desires: " + string.Join(", ", sorted);
-                    GUILayout.Label(desireText);
+                    var sortedDesires = Enumerable.Range(0, 31)
+                        .Select(i => new { i, desire = _gameMgr.actScene.actCtrl.GetDesire(i, currentAdvGirl) })
+                        .Where(x => x.desire > 5)
+                        .OrderByDescending(x => x.desire)
+                        .Take(8);
+
+                    var any = false;
+                    foreach (var desire in sortedDesires)
+                    {
+                        if (!any)
+                        {
+                            GUILayout.Label("Desires (and their strengths):\n");
+                            any = true;
+                        }
+                        GUILayout.BeginHorizontal();
+                        {
+                            GUILayout.Label(desire.i < _desireNames.Length ? _desireNames[desire.i] : desire.i.ToString());
+                            GUILayout.FlexibleSpace();
+                            GUILayout.Label(desire.desire.ToString());
+                        }
+                        GUILayout.EndHorizontal();
+                    }
+                    if (!any) GUILayout.Label("Has no desires");
 
                     if (GUILayout.Button("Clear all desires"))
                     {
@@ -459,7 +512,7 @@ namespace CheatTools
                     GUILayout.Label("Clear desires first to prioritize");
                 }
 
-                GUILayout.Space(4);
+                GUILayout.Space(8);
 
                 // 危険日 is risky, 安全日 is safe. Only change when user clicks to avoid messing with the value unnecessarily
                 GUI.changed = false;
