@@ -22,41 +22,48 @@ namespace CheatTools
     public class CheatToolsWindow
     {
         private const int ScreenOffset = 20;
-        private readonly string[] _hExpNames = { "First time", "Inexperienced", "Experienced", "Perverted" };
-        private readonly string[] _desireNames =
+        private enum HExperienceKindEng
         {
-            "Change clothes",           // id 0             
-            "Go to toilet",             // id 1
-            "Take a shower",            // id 2             
-            "Have a meal",              // id 3               
-            "H (masturbate)",           // id 4     
-            "H (main character)",       // id 5 
-            "Do club activities",       // id 6              
-            "Talk with girls",          // id 7     
-            "Talk with main character", // id 8 
-            "Read",                     // id 9     
-            "Fiddle with smartphone",   // id 10           
-            "Game on smartphone",       // id 11            
-            "Take selfie",              // id 12
-            "Listen to music",          // id 13             
-            "Dance practice",           // id 14               
-            "Improve my appearance",    // id 15     
-            "Drink",                    // id 16     
-            "Change my mind",           // id 17     
-            "Exercise",                 // id 18     
-            "Chara-specific behavior",  // id 19         
-            "Get away",                 // id 20                
-            "Study",                    // id 21               
-            "Sleep",                    // id 22               
-            "Follow me",                // id 23               
-            "Request",                  // id 24              
-            "Shy",                      // id 25               
-            "Lesbian",                  // id 26               
-            "Lesbian partner",          // id 27               
-            "Ask MC to talk",           // id 28       
-            "Ask MC for H",             // id 29       
-            "Fidgeting waiting",        // id 30               
+            FirstTime = 0,
+            Inexperienced = 1,
+            Experienced = 2,
+            Perverted = 3,
         };
+
+        private enum DesireEng
+        {
+            ChangeClothes = 0,
+            GoToToilet = 1,
+            TakeShower = 2,
+            HaveMeal = 3,
+            HMasturbate = 4,
+            HWithPlayer = 5,
+            DoClubActivities = 6,
+            TalkWithGirls = 7,
+            TalkWithPlayer = 8,
+            Read = 9,
+            FiddleWithSmartphone = 10,
+            GameOnSmartphone = 11,
+            TakeSelfie = 12,
+            ListenToMusic = 13,
+            DancePractice = 14,
+            ImproveMyAppearance = 15,
+            Drink = 16,
+            ChangeMyMind = 17,
+            Exercise = 18,
+            CharaSpecificBehavior = 19,
+            GetAway = 20,
+            Study = 21,
+            Sleep = 22,
+            FollowMe = 23,
+            Request = 24,
+            Shy = 25,
+            Lesbian = 26,
+            LesbianPartner = 27,
+            AskPlayerToTalk = 28,
+            AskPlayerForH = 29,
+            FidgetingWaiting = 30
+        }
 
         private readonly RuntimeUnityEditorCore _editor;
 
@@ -81,6 +88,8 @@ namespace CheatTools
         private readonly Func<object> _funcGetHeroines;
         private readonly Func<object> _funcGetRootGos;
         private TriggerEnterExitEvent _playerEnterExitTrigger;
+        private string _setdesireId;
+        private string _setdesireValue;
 
         public CheatToolsWindow(RuntimeUnityEditorCore editor)
         {
@@ -455,12 +464,13 @@ namespace CheatTools
                 if (GUILayout.Button("Reset conversation time"))
                     currentAdvGirl.talkTime = currentAdvGirl.talkTimeMax;
 
-                if (_gameMgr.actScene != null && _gameMgr.actScene.actCtrl != null)
+                var actCtrl = _gameMgr?.actScene?.actCtrl;
+                if (actCtrl != null)
                 {
-                    var sortedDesires = Enumerable.Range(0, 31)
-                        .Select(i => new { i, desire = _gameMgr.actScene.actCtrl.GetDesire(i, currentAdvGirl) })
-                        .Where(x => x.desire > 5)
-                        .OrderByDescending(x => x.desire)
+                    var sortedDesires = Enum.GetValues(typeof(DesireEng)).Cast<DesireEng>()
+                        .Select(i => new { id = i, value = actCtrl.GetDesire((int)i, currentAdvGirl) })
+                        .Where(x => x.value > 5)
+                        .OrderByDescending(x => x.value)
                         .Take(8);
 
                     var any = false;
@@ -473,9 +483,11 @@ namespace CheatTools
                         }
                         GUILayout.BeginHorizontal();
                         {
-                            GUILayout.Label(desire.i < _desireNames.Length ? _desireNames[desire.i] : desire.i.ToString());
+                            GUILayout.Label((int)desire.id + " " + desire.id);
                             GUILayout.FlexibleSpace();
-                            GUILayout.Label(desire.desire.ToString());
+                            GUILayout.Label(desire.value + "%");
+                            if (GUILayout.Button("X", GUILayout.ExpandWidth(false)))
+                                actCtrl.SetDesire((int)desire.id, currentAdvGirl, 0);
                         }
                         GUILayout.EndHorizontal();
                     }
@@ -483,33 +495,45 @@ namespace CheatTools
 
                     if (GUILayout.Button("Clear all desires"))
                     {
-                        for (int i = 0; i < 31; i++) Game.Instance.actScene.actCtrl.SetDesire(i, currentAdvGirl, 0);
+                        for (int i = 0; i < 31; i++) actCtrl.SetDesire(i, currentAdvGirl, 0);
                     }
 
-                    var wantsMast = _gameMgr.actScene.actCtrl.GetDesire(4, currentAdvGirl) > 80;
-                    if (wantsMast)
+                    GUILayout.BeginHorizontal();
                     {
-                        GUILayout.Label("Desires to masturbate");
+                        GUILayout.Label("Set desire ", GUILayout.ExpandWidth(false));
+                        _setdesireId = GUILayout.TextField(_setdesireId);
+                        GUILayout.Label(" to value ", GUILayout.ExpandWidth(false));
+                        _setdesireValue = GUILayout.TextField(_setdesireValue);
+                        if (GUILayout.Button("OK", GUILayout.ExpandWidth(false)))
+                        {
+                            try
+                            {
+                                actCtrl.SetDesire((int)Enum.Parse(typeof(DesireEng), _setdesireId), currentAdvGirl, int.Parse(_setdesireValue));
+                            }
+                            catch (Exception e)
+                            {
+                                CheatToolsPlugin.Logger.LogMessage("Invalid desire ID (0-30) or value (0-100) - " + e.Message);
+                            }
+                        }
                     }
-                    else
+                    GUILayout.EndHorizontal();
+
+                    var wantsMast = actCtrl.GetDesire(4, currentAdvGirl) > 80;
+                    if (!wantsMast)
                     {
                         if (GUILayout.Button("Make desire to masturbate"))
-                            Game.Instance.actScene.actCtrl.SetDesire(4, currentAdvGirl, 100);
+                            actCtrl.SetDesire(4, currentAdvGirl, 100);
                     }
-                    var wantsLes = _gameMgr.actScene.actCtrl.GetDesire(26, currentAdvGirl) > 80;
-                    if (wantsLes)
-                    {
-                        GUILayout.Label("Desires to lesbian");
-                    }
-                    else
+
+                    var wantsLes = actCtrl.GetDesire(26, currentAdvGirl) > 80;
+                    if (!wantsLes)
                     {
                         if (GUILayout.Button("Make desire to lesbian"))
                         {
-                            Game.Instance.actScene.actCtrl.SetDesire(26, currentAdvGirl, 100);
-                            Game.Instance.actScene.actCtrl.SetDesire(27, currentAdvGirl, 100);
+                            actCtrl.SetDesire(26, currentAdvGirl, 100);
+                            actCtrl.SetDesire(27, currentAdvGirl, 100);
                         }
                     }
-                    GUILayout.Label("Clear desires first to prioritize");
                 }
 
                 GUILayout.Space(8);
@@ -758,7 +782,7 @@ namespace CheatTools
 
         private string GetHExpText(SaveData.Heroine currentAdvGirl)
         {
-            return _hExpNames[(int)currentAdvGirl.HExperience];
+            return ((HExperienceKindEng)currentAdvGirl.HExperience).ToString();
         }
 
         public void DisplayCheatWindow()
