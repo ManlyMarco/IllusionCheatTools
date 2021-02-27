@@ -20,9 +20,6 @@ namespace CheatTools
         private RuntimeUnityEditorCore _runtimeUnityEditorCore;
 
         private ConfigEntry<KeyboardShortcut> _showCheatWindow;
-        private ConfigEntry<KeyboardShortcut> _noclip;
-        internal static ConfigEntry<bool> BuildAnywhere;
-        internal static ConfigEntry<bool> BuildOverlap;
 
         internal static new ManualLogSource Logger;
 

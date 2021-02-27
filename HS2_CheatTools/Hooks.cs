@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Timers;
-using Actor;
 using AIChara;
 using BepInEx;
 using GameLoadCharaFileSystem;
