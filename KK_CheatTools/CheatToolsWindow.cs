@@ -459,9 +459,9 @@ namespace CheatTools
                     GUILayout.BeginHorizontal();
                     {
                         GUILayout.Label("Set desire ", GUILayout.ExpandWidth(false));
-                        _setdesireId = GUILayout.TextField(_setdesireId);
+                        _setdesireId = GUILayout.TextField(_setdesireId ?? "");
                         GUILayout.Label(" to value ", GUILayout.ExpandWidth(false));
-                        _setdesireValue = GUILayout.TextField(_setdesireValue);
+                        _setdesireValue = GUILayout.TextField(_setdesireValue ?? "");
                         if (GUILayout.Button("OK", GUILayout.ExpandWidth(false)))
                         {
                             try
