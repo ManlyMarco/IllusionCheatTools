@@ -518,6 +518,37 @@ namespace CheatTools
                 currentAdvGirl.isAnger = GUILayout.Toggle(currentAdvGirl.isAnger, "Is angry");
                 currentAdvGirl.isDate = GUILayout.Toggle(currentAdvGirl.isDate, "Date promised");
                 //currentAdvGirl.isFirstGirlfriend = GUILayout.Toggle(currentAdvGirl.isFirstGirlfriend, "isFirstGirlfriend");
+
+                GUI.changed = false;
+                var newVal = GUILayout.Toggle(currentAdvGirl.talkEvent.Contains(0) || currentAdvGirl.talkEvent.Contains(1), "Had first meeting");
+                if (GUI.changed)
+                {
+                    if (newVal)
+                    {
+                        currentAdvGirl.talkEvent.Add(0);
+                        currentAdvGirl.talkEvent.Add(1);
+                    }
+                    else
+                    {
+                        currentAdvGirl.talkEvent.Remove(0);
+                        currentAdvGirl.talkEvent.Remove(1);
+                    }
+                }
+
+                GUI.changed = false;
+                newVal = GUILayout.Toggle(currentAdvGirl.talkEvent.Contains(2), "Is a friend");
+                if (GUI.changed)
+                {
+                    if (newVal)
+                    {
+                        currentAdvGirl.talkEvent.Add(2);
+                    }
+                    else
+                    {
+                        currentAdvGirl.talkEvent.Remove(2);
+                    }
+                }
+
                 currentAdvGirl.isGirlfriend = GUILayout.Toggle(currentAdvGirl.isGirlfriend, "Is a girlfriend");
                 currentAdvGirl.isStaff = GUILayout.Toggle(currentAdvGirl.isStaff, "Is a club member");
 
