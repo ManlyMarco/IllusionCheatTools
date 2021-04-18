@@ -497,6 +497,11 @@ namespace CheatTools
 
                 if (GUILayout.Button("Open Actor in inspector"))
                     _editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Actor " + currentAdvGirl.CharaName), true);
+
+                if (GUILayout.Button("Inspect extended data"))
+                {
+                    _editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.ChaControl?.chaFile), "ExtData for " + currentAdvGirl.CharaName), true);
+                }
             }
             GUILayout.EndVertical();
         }

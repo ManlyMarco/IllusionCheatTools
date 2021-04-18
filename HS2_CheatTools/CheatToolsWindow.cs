@@ -374,6 +374,11 @@ namespace CheatTools
 
                 if (GUILayout.Button("Open Heroine in inspector"))
                     _editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + GetHeroineName(currentAdvGirl)), true);
+
+                if (GUILayout.Button("Inspect extended data"))
+                {
+                    _editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.chaFile), "ExtData for " + currentAdvGirl.Name), true);
+                }
             }
             GUILayout.EndVertical();
         }

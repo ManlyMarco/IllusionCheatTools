@@ -577,6 +577,11 @@ namespace CheatTools
                 {
                     _editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name), true);
                 }
+
+                if (GUILayout.Button("Inspect extended data"))
+                {
+                    _editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.charFile), "ExtData for " + currentAdvGirl.Name), true);
+                }
             }
             GUILayout.EndVertical();
         }
