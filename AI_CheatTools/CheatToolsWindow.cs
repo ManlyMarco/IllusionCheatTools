@@ -157,7 +157,7 @@ namespace CheatTools
 
         private void DrawPlayerCheats()
         {
-            if (_map != null && _map.Player == null) return;
+            if (_map == null || _map.Player == null) return;
             var playerData = _map.Player.PlayerData;
             if (playerData == null) return;
 
