@@ -66,7 +66,7 @@ namespace CheatTools
             lsmInstance.ParameterUI.SetParameter(heroine.chaFile, -1, charaEntryNo);
             //todo have as an extra button?
             lsmInstance.SetCharaAnimationAndPosition();
-            var scrollCtrl = Traverse.Create(lsmInstance.SelectUI).Field<LobbyCharaSelectInfoScrollController>("scrollCtrl").Value;
+            var scrollCtrl = lsmInstance.SelectUI.scrollCtrl;
             if (scrollCtrl.selectInfo != null)
             {
                 scrollCtrl.selectInfo.info.state = heroine.chaFile.gameinfo2.nowState;

@@ -53,6 +53,7 @@ namespace CheatTools
 
         private static bool CreateListAnimationFileNameUnlockPatch(object __instance, ref bool _isAnimListCreate, ref int _list)
         {
+            // Need to use traverse because the instance could be one of two different types
             var traverse = Traverse.Create(__instance);
 
             _fixUi = false;

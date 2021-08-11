@@ -19,7 +19,7 @@ namespace CheatTools
                 if (value != Enabled)
                 {
                     if (value)
-                        _hInstance = HarmonyWrapper.PatchAll(typeof(FishingHackHooks));
+                        _hInstance = Harmony.CreateAndPatchAll(typeof(FishingHackHooks));
                     else
                     {
                         _hInstance.UnpatchAll(_hInstance.Id);

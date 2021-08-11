@@ -23,7 +23,7 @@ namespace CheatTools
                 {
                     if (value)
                     {
-                        _hInstance = HarmonyWrapper.PatchAll(typeof(UnlockCraftingHooks));
+                        _hInstance = Harmony.CreateAndPatchAll(typeof(UnlockCraftingHooks));
                         _hInstance.Patch(
                             typeof(Manager.Housing.LoadInfo).GetConstructor(new[] { typeof(int), typeof(List<string>) }),
                             postfix: new HarmonyMethod(typeof(UnlockCraftingHooks), nameof(LoadInfoCtor)));

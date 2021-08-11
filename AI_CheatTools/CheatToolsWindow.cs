@@ -208,9 +208,8 @@ namespace CheatTools
                                 GUI.enabled = false;
                             if (GUILayout.Button("Unlimited inventory slots"))
                             {
-                                var tr = Traverse.Create(dp.MapDefines);
-                                tr.Field("_itemSlotMax").SetValue(99999);
-                                tr.Field("_itemStackUpperLimit").SetValue(99999);
+                                dp.MapDefines._itemSlotMax = 99999;
+                                dp.MapDefines._itemStackUpperLimit = 99999;
                                 playerData.InventorySlotMax = 99999;
                             }
                             GUI.enabled = true;

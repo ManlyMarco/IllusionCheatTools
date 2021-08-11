@@ -729,8 +729,7 @@ namespace CheatTools
                         var actionMap = Object.FindObjectOfType<ActionScene>();
                         if (actionMap != null)
                         {
-                            _playerEnterExitTrigger = Traverse.Create(actionMap.Player)
-                                .Field<TriggerEnterExitEvent>("noticeArea").Value;
+                            _playerEnterExitTrigger = actionMap.Player.noticeArea;
                             _playerEnterExitTrigger.enabled = playerIsNoticeable;
                         }
                     }

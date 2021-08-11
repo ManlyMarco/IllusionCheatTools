@@ -19,7 +19,7 @@ namespace CheatTools
                 if (value != Enabled)
                 {
                     if (value)
-                        _hInstance = HarmonyWrapper.PatchAll(typeof(BuildOverlapHooks));
+                        _hInstance = Harmony.CreateAndPatchAll(typeof(BuildOverlapHooks));
                     else
                     {
                         _hInstance.UnpatchAll(_hInstance.Id);

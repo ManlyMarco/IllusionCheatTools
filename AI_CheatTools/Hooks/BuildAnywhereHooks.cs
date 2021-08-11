@@ -21,7 +21,7 @@ namespace CheatTools
                 if (value != Enabled)
                 {
                     if (value)
-                        _hInstance = HarmonyWrapper.PatchAll(typeof(BuildAnywhereHooks));
+                        _hInstance = Harmony.CreateAndPatchAll(typeof(BuildAnywhereHooks));
                     else
                     {
                         _hInstance.UnpatchAll(_hInstance.Id);
