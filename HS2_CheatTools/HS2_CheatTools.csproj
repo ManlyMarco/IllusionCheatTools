@@ -23,6 +23,7 @@
     <DefineConstants>TRACE;DEBUG;HS2</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>embedded</DebugType>
@@ -32,6 +33,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <DebugSymbols>true</DebugSymbols>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -39,7 +41,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IllusionLibs.HoneySelect2.Assembly-CSharp.2020.5.29.2\lib\net46\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\packages\IllusionLibs.HoneySelect2.Assembly-CSharp.2020.5.29.4\lib\net46\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="BepInEx, Version=5.1.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -51,11 +53,11 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="HS2_ExtensibleSaveFormat, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ExtensibleSaveFormat.HoneySelect2.16.0.0\lib\net46\HS2_ExtensibleSaveFormat.dll</HintPath>
+      <HintPath>..\packages\ExtensibleSaveFormat.HoneySelect2.16.4.0\lib\net46\HS2_ExtensibleSaveFormat.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="IL, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IllusionLibs.HoneySelect2.IL.2020.5.29.2\lib\net46\IL.dll</HintPath>
+      <HintPath>..\packages\IllusionLibs.HoneySelect2.IL.2020.5.29.4\lib\net46\IL.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="RuntimeUnityEditor.Bepin5">
@@ -69,15 +71,15 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.2\lib\net46\UnityEngine.dll</HintPath>
+      <HintPath>..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.4\lib\net46\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.2\lib\net46\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.4\lib\net46\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.2018.4.11.2\lib\net46\UnityEngine.IMGUIModule.dll</HintPath>
+      <HintPath>..\packages\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.2018.4.11.4\lib\net46\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -93,17 +95,17 @@
   <ItemGroup />
   <Import Project="..\Shared\Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\IllusionLibs.HoneySelect2.Assembly-CSharp.2020.5.29.2\build\IllusionLibs.HoneySelect2.Assembly-CSharp.targets" Condition="Exists('..\packages\IllusionLibs.HoneySelect2.Assembly-CSharp.2020.5.29.2\build\IllusionLibs.HoneySelect2.Assembly-CSharp.targets')" />
+  <Import Project="..\packages\IllusionLibs.HoneySelect2.Assembly-CSharp.2020.5.29.4\build\IllusionLibs.HoneySelect2.Assembly-CSharp.targets" Condition="Exists('..\packages\IllusionLibs.HoneySelect2.Assembly-CSharp.2020.5.29.4\build\IllusionLibs.HoneySelect2.Assembly-CSharp.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\IllusionLibs.HoneySelect2.Assembly-CSharp.2020.5.29.2\build\IllusionLibs.HoneySelect2.Assembly-CSharp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.HoneySelect2.Assembly-CSharp.2020.5.29.2\build\IllusionLibs.HoneySelect2.Assembly-CSharp.targets'))" />
-    <Error Condition="!Exists('..\packages\IllusionLibs.HoneySelect2.IL.2020.5.29.2\build\IllusionLibs.HoneySelect2.IL.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.HoneySelect2.IL.2020.5.29.2\build\IllusionLibs.HoneySelect2.IL.targets'))" />
-    <Error Condition="!Exists('..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.2\build\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.2\build\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.targets'))" />
-    <Error Condition="!Exists('..\packages\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.2018.4.11.2\build\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.2018.4.11.2\build\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.targets'))" />
+    <Error Condition="!Exists('..\packages\IllusionLibs.HoneySelect2.Assembly-CSharp.2020.5.29.4\build\IllusionLibs.HoneySelect2.Assembly-CSharp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.HoneySelect2.Assembly-CSharp.2020.5.29.4\build\IllusionLibs.HoneySelect2.Assembly-CSharp.targets'))" />
+    <Error Condition="!Exists('..\packages\IllusionLibs.HoneySelect2.IL.2020.5.29.4\build\IllusionLibs.HoneySelect2.IL.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.HoneySelect2.IL.2020.5.29.4\build\IllusionLibs.HoneySelect2.IL.targets'))" />
+    <Error Condition="!Exists('..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.4\build\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.4\build\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.targets'))" />
+    <Error Condition="!Exists('..\packages\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.2018.4.11.4\build\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.2018.4.11.4\build\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.targets'))" />
   </Target>
-  <Import Project="..\packages\IllusionLibs.HoneySelect2.IL.2020.5.29.2\build\IllusionLibs.HoneySelect2.IL.targets" Condition="Exists('..\packages\IllusionLibs.HoneySelect2.IL.2020.5.29.2\build\IllusionLibs.HoneySelect2.IL.targets')" />
-  <Import Project="..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.2\build\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.targets" Condition="Exists('..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.2\build\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.targets')" />
-  <Import Project="..\packages\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.2018.4.11.2\build\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.targets" Condition="Exists('..\packages\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.2018.4.11.2\build\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.targets')" />
+  <Import Project="..\packages\IllusionLibs.HoneySelect2.IL.2020.5.29.4\build\IllusionLibs.HoneySelect2.IL.targets" Condition="Exists('..\packages\IllusionLibs.HoneySelect2.IL.2020.5.29.4\build\IllusionLibs.HoneySelect2.IL.targets')" />
+  <Import Project="..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.4\build\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.targets" Condition="Exists('..\packages\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.2018.4.11.4\build\IllusionLibs.HoneySelect2.UnityEngine.CoreModule.targets')" />
+  <Import Project="..\packages\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.2018.4.11.4\build\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.targets" Condition="Exists('..\packages\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.2018.4.11.4\build\IllusionLibs.HoneySelect2.UnityEngine.IMGUIModule.targets')" />
 </Project>

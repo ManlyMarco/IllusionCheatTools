@@ -24,6 +24,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet />
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>embedded</DebugType>
@@ -34,6 +35,7 @@
     <WarningLevel>4</WarningLevel>
     <DebugSymbols>true</DebugSymbols>
     <CodeAnalysisRuleSet />
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -41,11 +43,11 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="AI_ExtensibleSaveFormat, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ExtensibleSaveFormat.AIGirl.16.0.0\lib\net46\AI_ExtensibleSaveFormat.dll</HintPath>
+      <HintPath>..\packages\ExtensibleSaveFormat.AIGirl.16.4.0\lib\net46\AI_ExtensibleSaveFormat.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IllusionLibs.AIGirl.Assembly-CSharp.2020.5.29.2\lib\net46\Assembly-CSharp.dll</HintPath>
+      <HintPath>..\packages\IllusionLibs.AIGirl.Assembly-CSharp.2020.5.29.4\lib\net46\Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="BepInEx, Version=5.1.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -65,24 +67,24 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Sirenix.Serialization, Version=2.0.13.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IllusionLibs.AIGirl.Sirenix.Serialization.2020.5.29.2\lib\net46\Sirenix.Serialization.dll</HintPath>
+      <HintPath>..\packages\IllusionLibs.AIGirl.Sirenix.Serialization.2020.5.29.4\lib\net46\Sirenix.Serialization.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System.Core" />
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.3\lib\net46\UnityEngine.dll</HintPath>
+      <HintPath>..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.4\lib\net46\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.AIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IllusionLibs.AIGirl.UnityEngine.AIModule.2018.2.21.3\lib\net46\UnityEngine.AIModule.dll</HintPath>
+      <HintPath>..\packages\IllusionLibs.AIGirl.UnityEngine.AIModule.2018.2.21.4\lib\net46\UnityEngine.AIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.3\lib\net46\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.4\lib\net46\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.IMGUIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.2018.2.21.3\lib\net46\UnityEngine.IMGUIModule.dll</HintPath>
+      <HintPath>..\packages\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.2018.2.21.4\lib\net46\UnityEngine.IMGUIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
@@ -101,19 +103,19 @@
   <ItemGroup />
   <Import Project="..\Shared\Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="..\packages\IllusionLibs.AIGirl.UnityEngine.AIModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.AIModule.targets" Condition="Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.AIModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.AIModule.targets')" />
+  <Import Project="..\packages\IllusionLibs.AIGirl.Assembly-CSharp.2020.5.29.4\build\IllusionLibs.AIGirl.Assembly-CSharp.targets" Condition="Exists('..\packages\IllusionLibs.AIGirl.Assembly-CSharp.2020.5.29.4\build\IllusionLibs.AIGirl.Assembly-CSharp.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.AIModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.AIModule.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.AIGirl.UnityEngine.AIModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.AIModule.targets'))" />
-    <Error Condition="!Exists('..\packages\IllusionLibs.AIGirl.Sirenix.Serialization.2020.5.29.2\build\IllusionLibs.AIGirl.Sirenix.Serialization.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.AIGirl.Sirenix.Serialization.2020.5.29.2\build\IllusionLibs.AIGirl.Sirenix.Serialization.targets'))" />
-    <Error Condition="!Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.CoreModule.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.CoreModule.targets'))" />
-    <Error Condition="!Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.targets'))" />
-    <Error Condition="!Exists('..\packages\IllusionLibs.AIGirl.Assembly-CSharp.2020.5.29.2\build\IllusionLibs.AIGirl.Assembly-CSharp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.AIGirl.Assembly-CSharp.2020.5.29.2\build\IllusionLibs.AIGirl.Assembly-CSharp.targets'))" />
+    <Error Condition="!Exists('..\packages\IllusionLibs.AIGirl.Assembly-CSharp.2020.5.29.4\build\IllusionLibs.AIGirl.Assembly-CSharp.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.AIGirl.Assembly-CSharp.2020.5.29.4\build\IllusionLibs.AIGirl.Assembly-CSharp.targets'))" />
+    <Error Condition="!Exists('..\packages\IllusionLibs.AIGirl.Sirenix.Serialization.2020.5.29.4\build\IllusionLibs.AIGirl.Sirenix.Serialization.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.AIGirl.Sirenix.Serialization.2020.5.29.4\build\IllusionLibs.AIGirl.Sirenix.Serialization.targets'))" />
+    <Error Condition="!Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.AIModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.AIModule.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.AIGirl.UnityEngine.AIModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.AIModule.targets'))" />
+    <Error Condition="!Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.CoreModule.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.CoreModule.targets'))" />
+    <Error Condition="!Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.targets'))" />
   </Target>
-  <Import Project="..\packages\IllusionLibs.AIGirl.Sirenix.Serialization.2020.5.29.2\build\IllusionLibs.AIGirl.Sirenix.Serialization.targets" Condition="Exists('..\packages\IllusionLibs.AIGirl.Sirenix.Serialization.2020.5.29.2\build\IllusionLibs.AIGirl.Sirenix.Serialization.targets')" />
-  <Import Project="..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.CoreModule.targets" Condition="Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.CoreModule.targets')" />
-  <Import Project="..\packages\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.targets" Condition="Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.2018.2.21.3\build\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.targets')" />
-  <Import Project="..\packages\IllusionLibs.AIGirl.Assembly-CSharp.2020.5.29.2\build\IllusionLibs.AIGirl.Assembly-CSharp.targets" Condition="Exists('..\packages\IllusionLibs.AIGirl.Assembly-CSharp.2020.5.29.2\build\IllusionLibs.AIGirl.Assembly-CSharp.targets')" />
+  <Import Project="..\packages\IllusionLibs.AIGirl.Sirenix.Serialization.2020.5.29.4\build\IllusionLibs.AIGirl.Sirenix.Serialization.targets" Condition="Exists('..\packages\IllusionLibs.AIGirl.Sirenix.Serialization.2020.5.29.4\build\IllusionLibs.AIGirl.Sirenix.Serialization.targets')" />
+  <Import Project="..\packages\IllusionLibs.AIGirl.UnityEngine.AIModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.AIModule.targets" Condition="Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.AIModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.AIModule.targets')" />
+  <Import Project="..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.CoreModule.targets" Condition="Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.CoreModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.CoreModule.targets')" />
+  <Import Project="..\packages\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.targets" Condition="Exists('..\packages\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.2018.2.21.4\build\IllusionLibs.AIGirl.UnityEngine.IMGUIModule.targets')" />
 </Project>
