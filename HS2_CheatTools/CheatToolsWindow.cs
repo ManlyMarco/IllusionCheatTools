@@ -1,262 +1,139 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Actor;
 using AIChara;
 using Manager;
-using RuntimeUnityEditor.Core;
-using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
-using RuntimeUnityEditor.Core.UI;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
 using LogLevel = BepInEx.Logging.LogLevel;
 
 namespace CheatTools
 {
-    public class CheatToolsWindow
+    public static partial class CheatToolsWindowInit
     {
-        private const int ScreenOffset = 20;
-
-        private readonly RuntimeUnityEditorCore _editor;
-
-        private readonly string _mainWindowTitle;
-        private Vector2 _cheatsScrollPos;
-        private Rect _cheatWindowRect;
-        private Rect _screenRect;
-        private bool _show;
-
         internal static Heroine _currentVisibleGirl;
         internal static Action<Heroine> _onGirlStatsChanged;
 
-        private Studio.Studio _studioInstance;
-        private Manager.Sound _soundInstance;
-        private Scene _sceneInstance;
-        private Game _gameMgr;
-        private BaseMap _baseMap;
-        private HSceneFlagCtrl _hScene;
+        private static Studio.Studio _studioInstance;
+        private static Manager.Sound _soundInstance;
+        private static Scene _sceneInstance;
+        private static Game _gameMgr;
+        private static BaseMap _baseMap;
+        private static HSceneFlagCtrl _hScene;
+        private static KeyValuePair<object, string>[] _openInInspectorButtons;
 
-        private readonly Func<object> _funcGetHeroines;
-        private readonly Func<object> _funcGetRootGos;
-
-        public CheatToolsWindow(RuntimeUnityEditorCore editor)
-        {
-            _editor = editor ?? throw new ArgumentNullException(nameof(editor));
-
-            ToStringConverter.AddConverter<Heroine>(GetHeroineName);
-            ToStringConverter.AddConverter<ChaFile>(d => $"ChaFile - {d.charaFileName ?? "Unknown"} ({d.parameter?.fullname ?? "Unknown"})");
-            ToStringConverter.AddConverter<ChaControl>(d => $"{d} - {d.chaFile?.parameter?.fullname ?? d.chaFile?.charaFileName ?? "Unknown"}");
-
-            _mainWindowTitle = "Cheat Tools " + Assembly.GetExecutingAssembly().GetName().Version;
-
-            _funcGetHeroines = () => _gameMgr.heroineList.Select(x => new ReadonlyCacheEntry(GetHeroineName(x), x));
-            _funcGetRootGos = EditorUtilities.GetRootGoScanner;
-        }
-
-        private static string GetHeroineName(Heroine heroine)
+        internal static string GetHeroineName(Heroine heroine)
         {
             return !string.IsNullOrEmpty(heroine.Name) ? heroine.Name : heroine.ChaName;
         }
 
-        public bool Show
+        public static void InitializeCheats()
         {
-            get => _show;
-            set
+            CheatToolsWindow.OnShown = window =>
             {
-                _show = value;
-                _editor.Show = value;
-
-                if (value)
-                    SetWindowSizes();
-
                 _studioInstance = Studio.Studio.IsInstance() ? Studio.Studio.Instance : null;
                 _soundInstance = Manager.Sound.instance;
                 _sceneInstance = Scene.instance;
                 _gameMgr = Game.IsInstance() ? Game.Instance : null;
                 _baseMap = BaseMap.instance;
                 _hScene = HSceneFlagCtrl.IsInstance() ? HSceneFlagCtrl.Instance : null;
+
+                _openInInspectorButtons = new[]
+                {
+                    new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.heroineList.Count > 0 ? (Func<object>) (() => _gameMgr.heroineList.Select(x => new ReadonlyCacheEntry(GetHeroineName(x), x))) : null, "Heroine list"),
+                    new KeyValuePair<object, string>(ADVManager.IsInstance() ? ADVManager.Instance : null, "Manager.ADVManager.Instance"),
+                    new KeyValuePair<object, string>(_baseMap, "Manager.BaseMap.instance"),
+                    new KeyValuePair<object, string>(Character.IsInstance() ? Character.Instance : null, "Manager.Character.Instance"),
+                    new KeyValuePair<object, string>(typeof(Manager.Config), "Manager.Config"),
+                    new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
+                    new KeyValuePair<object, string>(GameSystem.IsInstance() ? GameSystem.Instance : null, "Manager.GameSystem.Instance"),
+                    new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.instance"),
+                    new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.instance"),
+                    new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
+                    new KeyValuePair<object, string>((Func<object>) EditorUtilities.GetRootGoScanner, "Root Objects")
+                };
+            };
+
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _hScene != null, DrawHSceneCheats, null));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _baseMap != null && (_hScene != null || Singleton<LobbySceneManager>.IsInstance()), DrawGirlCheatMenu, "Unable to edit character stats on this screen. Start an H scene or enter the lobby."));
+            CheatToolsWindow.Cheats.Add(CheatEntry.CreateOpenInInspectorButtons(() => _openInInspectorButtons));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _studioInstance == null && _gameMgr != null && _gameMgr.saveData != null, DrawGlobalUnlocks, null));
+
+            HarmonyLib.Harmony.CreateAndPatchAll(typeof(Hooks));
+        }
+
+        private static void DrawGlobalUnlocks(CheatToolsWindow obj)
+        {
+            GUILayout.Label("Danger zone! These cheats are permanent and can't be undone without resetting the save.");
+
+            if (GUILayout.Button("Get all achievements", GUILayout.ExpandWidth(true)))
+            {
+                foreach (var achievementKey in _gameMgr.saveData.achievement.Keys.ToList())
+                    SaveData.SetAchievementAchieve(achievementKey);
+            }
+            if (GUILayout.Button("Unlock all perks", GUILayout.ExpandWidth(true)))
+            {
+                foreach (var achievementKey in _gameMgr.saveData.achievementExchange.Keys.ToList())
+                    SaveData.SetAchievementExchangeRelease(achievementKey);
             }
         }
 
-        private void SetWindowSizes()
+        private static void DrawHSceneCheats(CheatToolsWindow cheatToolsWindow)
         {
-            int w = Screen.width, h = Screen.height;
-            _screenRect = new Rect(ScreenOffset, ScreenOffset, w - ScreenOffset * 2, h - ScreenOffset * 2);
+            GUILayout.Label("H scene controls");
 
-            const int cheatWindowHeight = 410;
-            _cheatWindowRect = new Rect(_screenRect.xMin, _screenRect.yMax - cheatWindowHeight, 270, cheatWindowHeight);
-        }
-
-        public void DisplayCheatWindow()
-        {
-            if (!Show) return;
-
-            var skinBack = GUI.skin;
-            GUI.skin = InterfaceMaker.CustomSkin;
-
-            _cheatWindowRect = GUILayout.Window(591, _cheatWindowRect, CheatWindowContents, _mainWindowTitle);
-
-            InterfaceMaker.EatInputInRect(_cheatWindowRect);
-            GUI.skin = skinBack;
-        }
-
-        private void CheatWindowContents(int id)
-        {
-            _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
+            GUILayout.BeginHorizontal();
             {
-                //DrawPlayerCheats();
+                GUILayout.Label("Male Gauge: " + _hScene.feel_m.ToString("F2"), GUILayout.Width(150));
+                _hScene.feel_m = GUILayout.HorizontalSlider(_hScene.feel_m, 0, 1);
+            }
+            GUILayout.EndHorizontal();
 
-                //DrawEnviroControls();
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.Label("Female Gauge: " + _hScene.feel_f.ToString("F2"), GUILayout.Width(150));
+                _hScene.feel_f = GUILayout.HorizontalSlider(_hScene.feel_f, 0, 1);
+            }
+            GUILayout.EndHorizontal();
 
-                GUILayout.BeginHorizontal();
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.Label("Pain Gauge: " + _hScene.feelPain.ToString("F2"), GUILayout.Width(150));
+                _hScene.feelPain = GUILayout.HorizontalSlider(_hScene.feelPain, 0, 1);
+            }
+            GUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Open HScene Flags in inspector"))
+                cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(_hScene, "HSceneFlagCtrl"), true);
+        }
+
+        private static void DrawGirlCheatMenu(CheatToolsWindow cheatToolsWindow)
+        {
+            GUILayout.Label("Character status editor");
+
+            if (!Singleton<LobbySceneManager>.IsInstance())
+            {
+                var visibleGirls = _gameMgr.heroineList;
+
+                for (var i = 0; i < visibleGirls.Count; i++)
                 {
-                    GUILayout.Label("Speed", GUILayout.ExpandWidth(false));
-                    GUILayout.Label((int)Math.Round(Time.timeScale * 100) + "%", GUILayout.Width(35));
-                    Time.timeScale = GUILayout.HorizontalSlider(Time.timeScale, 0, 5, GUILayout.ExpandWidth(true));
-                    if (GUILayout.Button("Reset", GUILayout.ExpandWidth(false)))
-                        Time.timeScale = 1;
+                    var girl = visibleGirls[i];
+                    if (GUILayout.Button($"Select #{i} - {GetHeroineName(girl)}"))
+                        _currentVisibleGirl = girl;
                 }
-                GUILayout.EndHorizontal();
-
-                DrawHSceneCheats();
-
-                // Needs to be in h scene to save properly, in other places the data is lost since card doesn't save
-                if (_hScene != null || Singleton<LobbySceneManager>.IsInstance())
-                    DrawGirlCheatMenu();
-                else
-                    GUILayout.Label("Unable to edit character stats on this screen. Start an H scene or enter the lobby.");
 
                 GUILayout.Space(6);
-
-                if (_studioInstance == null && _gameMgr != null && _gameMgr.saveData != null)
-                {
-                    GUILayout.BeginVertical(GUI.skin.box);
-                    {
-                        GUILayout.Label("Danger zone! These cheats are permanent and can't be undone without resetting the save.");
-
-                        if (GUILayout.Button("Get all achievements", GUILayout.ExpandWidth(true)))
-                        {
-                            foreach (var achievementKey in _gameMgr.saveData.achievement.Keys.ToList())
-                                SaveData.SetAchievementAchieve(achievementKey);
-                        }
-                        if (GUILayout.Button("Unlock all perks", GUILayout.ExpandWidth(true)))
-                        {
-                            foreach (var achievementKey in _gameMgr.saveData.achievementExchange.Keys.ToList())
-                                SaveData.SetAchievementExchangeRelease(achievementKey);
-                        }
-                    }
-                    GUILayout.EndVertical();
-                }
-
-                GUILayout.BeginVertical(GUI.skin.box);
-                {
-                    GUILayout.Label("Open in inspector");
-                    foreach (var obj in new[]
-                    {
-                            new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.heroineList.Count > 0 ? _funcGetHeroines : null, "Heroine list"),
-                            new KeyValuePair<object, string>(ADVManager.IsInstance() ? ADVManager.Instance : null, "Manager.ADVManager.Instance"),
-                            new KeyValuePair<object, string>(_baseMap, "Manager.BaseMap.instance"),
-                            new KeyValuePair<object, string>(Character.IsInstance() ? Character.Instance : null, "Manager.Character.Instance"),
-                            new KeyValuePair<object, string>(typeof(Manager.Config), "Manager.Config"),
-                            new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
-                            new KeyValuePair<object, string>(GameSystem.IsInstance() ? GameSystem.Instance : null, "Manager.GameSystem.Instance"),
-                            new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.instance"),
-                            new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.instance"),
-                            new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                            new KeyValuePair<object, string>(_funcGetRootGos, "Root Objects")
-                        })
-                    {
-                        if (obj.Key == null) continue;
-                        if (GUILayout.Button(obj.Value))
-                        {
-                            if (obj.Key is Type t)
-                                _editor.Inspector.Push(new StaticStackEntry(t, obj.Value), true);
-                            else if (obj.Key is Func<object> f)
-                                _editor.Inspector.Push(new InstanceStackEntry(f(), obj.Value), true);
-                            else
-                                _editor.Inspector.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
-                        }
-                    }
-                }
-                GUILayout.EndVertical();
             }
-            GUILayout.EndScrollView();
 
-            GUI.DragWindow();
+            if (_currentVisibleGirl != null)
+                DrawSingleGirlCheats(_currentVisibleGirl, cheatToolsWindow);
+            else
+                GUILayout.Label("Select a character to edit their stats");
         }
 
-        private void DrawHSceneCheats()
-        {
-            if (_hScene == null)
-                return;
-
-            GUILayout.BeginVertical(GUI.skin.box);
-            {
-                GUILayout.Label("H scene controls");
-
-                GUILayout.BeginHorizontal();
-                {
-                    GUILayout.Label("Male Gauge: " + _hScene.feel_m.ToString("F2"), GUILayout.Width(150));
-                    _hScene.feel_m = GUILayout.HorizontalSlider(_hScene.feel_m, 0, 1);
-                }
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                {
-                    GUILayout.Label("Female Gauge: " + _hScene.feel_f.ToString("F2"), GUILayout.Width(150));
-                    _hScene.feel_f = GUILayout.HorizontalSlider(_hScene.feel_f, 0, 1);
-                }
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                {
-                    GUILayout.Label("Pain Gauge: " + _hScene.feelPain.ToString("F2"), GUILayout.Width(150));
-                    _hScene.feelPain = GUILayout.HorizontalSlider(_hScene.feelPain, 0, 1);
-                }
-                GUILayout.EndHorizontal();
-
-                if (GUILayout.Button("Open HScene Flags in inspector"))
-                    _editor.Inspector.Push(new InstanceStackEntry(_hScene, "HSceneFlagCtrl"), true);
-            }
-            GUILayout.EndVertical();
-
-            GUILayout.Space(6);
-        }
-
-        private void DrawGirlCheatMenu()
-        {
-            if (_baseMap == null) return;
-
-            GUILayout.BeginVertical(GUI.skin.box);
-            {
-                GUILayout.Label("Character status editor");
-
-                if (!Singleton<LobbySceneManager>.IsInstance())
-                {
-                    var visibleGirls = _gameMgr.heroineList;
-
-                    for (var i = 0; i < visibleGirls.Count; i++)
-                    {
-                        var girl = visibleGirls[i];
-                        if (GUILayout.Button($"Select #{i} - {GetHeroineName(girl)}"))
-                            _currentVisibleGirl = girl;
-                    }
-
-                    GUILayout.Space(6);
-                }
-
-                if (_currentVisibleGirl != null)
-                    DrawSingleGirlCheats(_currentVisibleGirl);
-                else
-                    GUILayout.Label("Select a character to edit their stats");
-            }
-            GUILayout.EndVertical();
-
-            GUILayout.Space(6);
-        }
-
-        private void DrawSingleGirlCheats(Heroine currentAdvGirl)
+        private static void DrawSingleGirlCheats(Heroine currentAdvGirl, CheatToolsWindow cheatToolsWindow)
         {
             GUILayout.BeginVertical(GUI.skin.box);
             {
@@ -359,7 +236,7 @@ namespace CheatTools
                         _onGirlStatsChanged(_currentVisibleGirl);
 
                     if (GUILayout.Button("View more stats and flags"))
-                        _editor.Inspector.Push(new InstanceStackEntry(gi2, "Heroine " + GetHeroineName(currentAdvGirl)), true);
+                        cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(gi2, "Heroine " + GetHeroineName(currentAdvGirl)), true);
                 }
 
                 GUILayout.Space(6);
@@ -367,17 +244,17 @@ namespace CheatTools
                 if (GUILayout.Button("Navigate to Heroine's GameObject"))
                 {
                     if (currentAdvGirl.transform != null)
-                        _editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
+                        cheatToolsWindow.Editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
                     else
                         CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
                 }
 
                 if (GUILayout.Button("Open Heroine in inspector"))
-                    _editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + GetHeroineName(currentAdvGirl)), true);
+                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + GetHeroineName(currentAdvGirl)), true);
 
                 if (GUILayout.Button("Inspect extended data"))
                 {
-                    _editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.chaFile), "ExtData for " + currentAdvGirl.Name), true);
+                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.chaFile), "ExtData for " + currentAdvGirl.Name), true);
                 }
             }
             GUILayout.EndVertical();

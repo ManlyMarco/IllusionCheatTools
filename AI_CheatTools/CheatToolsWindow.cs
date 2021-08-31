@@ -1,17 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using AIChara;
 using AIProject;
 using AIProject.Definitions;
 using AIProject.SaveData;
-using HarmonyLib;
 using Manager;
-using RuntimeUnityEditor.Core;
-using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
-using RuntimeUnityEditor.Core.UI;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
 using Map = Manager.Map;
@@ -19,58 +13,24 @@ using Resources = Manager.Resources;
 
 namespace CheatTools
 {
-    public class CheatToolsWindow
+    public static class CheatToolsWindowInit
     {
-        private const int ScreenOffset = 20;
+        private static AgentActor _currentVisibleGirl;
 
-        private readonly RuntimeUnityEditorCore _editor;
+        private static Studio.Studio _studioInstance;
+        private static Manager.Sound _soundInstance;
+        private static Scene _sceneInstance;
+        private static Game _gameMgr;
+        private static Resources _resources;
+        private static Map _map;
+        private static HSceneFlagCtrl _hScene;
+        private static string _gameTimeText;
+        private static KeyValuePair<object, string>[] _openInInspectorButtons;
 
-        private readonly string _mainWindowTitle;
-        private Vector2 _cheatsScrollPos;
-        private Rect _cheatWindowRect;
-        private Rect _screenRect;
-        private bool _show;
-
-        private AgentActor _currentVisibleGirl;
-
-        private Studio.Studio _studioInstance;
-        private Manager.Sound _soundInstance;
-        private Scene _sceneInstance;
-        private Game _gameMgr;
-        private Resources _resources;
-        private Map _map;
-        private HSceneFlagCtrl _hScene;
-        private string _gameTimeText;
-
-        private readonly Func<object> _funcGetHeroines;
-        private readonly Func<object> _funcGetRootGos;
-
-        public CheatToolsWindow(RuntimeUnityEditorCore editor)
+        public static void Initialize()
         {
-            _editor = editor ?? throw new ArgumentNullException(nameof(editor));
-
-            ToStringConverter.AddConverter<AgentActor>(heroine => !string.IsNullOrEmpty(heroine.CharaName) ? heroine.CharaName : heroine.name);
-            ToStringConverter.AddConverter<AgentData>(d => $"AgentData - {d.CharaFileName} | {d.NowCoordinateFileName}");
-            ToStringConverter.AddConverter<ChaFile>(d => $"ChaFile - {d.charaFileName ?? "Unknown"} ({d.parameter?.fullname ?? "Unknown"})");
-            ToStringConverter.AddConverter<ChaControl>(d => $"{d} - {d.chaFile?.parameter?.fullname ?? d.chaFile?.charaFileName ?? "Unknown"}");
-
-            _mainWindowTitle = "Cheat Tools " + Assembly.GetExecutingAssembly().GetName().Version;
-
-            _funcGetHeroines = () => _map.AgentTable.Values.Select(x => new ReadonlyCacheEntry(x.CharaName, x));
-            _funcGetRootGos = EditorUtilities.GetRootGoScanner;
-        }
-
-        public bool Show
-        {
-            get => _show;
-            set
+            CheatToolsWindow.OnShown = window =>
             {
-                _show = value;
-                _editor.Show = value;
-
-                if (value)
-                    SetWindowSizes();
-
                 _studioInstance = Studio.Studio.IsInstance() ? Studio.Studio.Instance : null;
                 _soundInstance = Manager.Sound.Instance;
                 _sceneInstance = Scene.Instance;
@@ -80,332 +40,238 @@ namespace CheatTools
                 _hScene = HSceneFlagCtrl.IsInstance() ? HSceneFlagCtrl.Instance : null;
 
                 _gameTimeText = null;
-            }
-        }
 
-        private void SetWindowSizes()
-        {
-            int w = Screen.width, h = Screen.height;
-            _screenRect = new Rect(ScreenOffset, ScreenOffset, w - ScreenOffset * 2, h - ScreenOffset * 2);
-
-            const int cheatWindowHeight = 410;
-            _cheatWindowRect = new Rect(_screenRect.xMin, _screenRect.yMax - cheatWindowHeight, 270, cheatWindowHeight);
-        }
-
-        public void DisplayCheatWindow()
-        {
-            if (!Show) return;
-
-            var skinBack = GUI.skin;
-            GUI.skin = InterfaceMaker.CustomSkin;
-
-            _cheatWindowRect = GUILayout.Window(591, _cheatWindowRect, CheatWindowContents, _mainWindowTitle);
-
-            InterfaceMaker.EatInputInRect(_cheatWindowRect);
-            GUI.skin = skinBack;
-        }
-
-        private void CheatWindowContents(int id)
-        {
-            _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
-            {
-                DrawPlayerCheats();
-
-                DrawEnviroControls();
-
-                DrawHSceneCheats();
-
-                DrawGirlCheatMenu();
-
-                GUILayout.BeginVertical(GUI.skin.box);
+                _openInInspectorButtons = new[]
                 {
-                    GUILayout.Label("Open in inspector");
-                    foreach (var obj in new[]
-                    {
-                            new KeyValuePair<object, string>(_map != null && _map.AgentTable.Count > 0 ? _funcGetHeroines : null, "Heroine list"),
-                            new KeyValuePair<object, string>(Manager.ADV.IsInstance() ? Manager.ADV.Instance : null, "Manager.ADV.Instance"),
-                            new KeyValuePair<object, string>(AnimalManager.IsInstance() ? AnimalManager.Instance : null, "Manager.AnimalManager.Instance"),
-                            new KeyValuePair<object, string>(_map, "Manager.Map.Instance"),
-                            new KeyValuePair<object, string>(Character.IsInstance() ? Character.Instance : null, "Manager.Character.Instance"),
-                            new KeyValuePair<object, string>(Config.IsInstance() ? Config.Instance : null, "Manager.Config.Instance"),
-                            new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
-                            new KeyValuePair<object, string>(Manager.Housing.IsInstance() ? Manager.Housing.Instance : null, "Manager.Housing.Instance"),
-                            new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
-                            new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
-                            new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                            new KeyValuePair<object, string>(_funcGetRootGos, "Root Objects")
-                    })
-                    {
-                        if (obj.Key == null) continue;
-                        if (GUILayout.Button(obj.Value))
-                        {
-                            if (obj.Key is Type t)
-                                _editor.Inspector.Push(new StaticStackEntry(t, obj.Value), true);
-                            else if (obj.Key is Func<object> f)
-                                _editor.Inspector.Push(new InstanceStackEntry(f(), obj.Value), true);
-                            else
-                                _editor.Inspector.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
-                        }
-                    }
-                }
-                GUILayout.EndVertical();
-            }
-            GUILayout.EndScrollView();
+                    new KeyValuePair<object, string>(_map != null && _map.AgentTable.Count > 0 ? (Func<object>) (() => _map.AgentTable.Values.Select(x => new ReadonlyCacheEntry(x.CharaName, x))) : null, "Heroine list"),
+                    new KeyValuePair<object, string>(Manager.ADV.IsInstance() ? Manager.ADV.Instance : null, "Manager.ADV.Instance"),
+                    new KeyValuePair<object, string>(AnimalManager.IsInstance() ? AnimalManager.Instance : null, "Manager.AnimalManager.Instance"),
+                    new KeyValuePair<object, string>(_map, "Manager.Map.Instance"),
+                    new KeyValuePair<object, string>(Character.IsInstance() ? Character.Instance : null, "Manager.Character.Instance"),
+                    new KeyValuePair<object, string>(Config.IsInstance() ? Config.Instance : null, "Manager.Config.Instance"),
+                    new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
+                    new KeyValuePair<object, string>(Manager.Housing.IsInstance() ? Manager.Housing.Instance : null, "Manager.Housing.Instance"),
+                    new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
+                    new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
+                    new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
+                    new KeyValuePair<object, string>((Func<object>) EditorUtilities.GetRootGoScanner, "Root Objects")
+                };
+            };
 
-            GUI.DragWindow();
+
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _map != null && _map.Player != null && _map.Player.PlayerData != null, DrawPlayerCheats, "Start the game to see player cheats"));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _map != null && _map.Simulator != null, DrawEnviroControls, null));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _hScene == null, DrawHSceneCheats, null));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _map == null, DrawGirlCheatMenu, null));
+
+            CheatToolsWindow.Cheats.Add(CheatEntry.CreateOpenInInspectorButtons(() => _openInInspectorButtons));
         }
 
-        private void DrawPlayerCheats()
+        private static void DrawPlayerCheats(CheatToolsWindow cheatToolsWindow)
         {
-            if (_map == null || _map.Player == null) return;
+            GUILayout.Label("General / Player");
             var playerData = _map.Player.PlayerData;
-            if (playerData == null) return;
 
-            GUILayout.BeginVertical(GUI.skin.box);
+            GUILayout.BeginHorizontal();
             {
-                GUILayout.Label("General / Player");
+                GUILayout.Label("Fishing skill lvl: " + playerData.FishingSkill.Level, GUILayout.Width(150));
+                if (GUILayout.Button("+500 exp")) playerData.FishingSkill.AddExperience(500);
+            }
+            GUILayout.EndHorizontal();
 
-                GUILayout.BeginHorizontal();
+            if (_resources != null)
+            {
+                var mp = _resources.MerchantProfile;
+                if (mp != null)
                 {
-                    GUILayout.Label("Fishing skill lvl: " + playerData.FishingSkill.Level, GUILayout.Width(150));
-                    if (GUILayout.Button("+500 exp")) playerData.FishingSkill.AddExperience(500);
-                }
-                GUILayout.EndHorizontal();
-
-                if (_resources != null)
-                {
-                    var mp = _resources.MerchantProfile;
-                    if (mp != null)
+                    GUILayout.BeginHorizontal();
                     {
+                        var shanLvl = mp.SpendMoneyBorder.Count(x => playerData.SpendMoney >= x) + 1;
+                        GUILayout.Label("Shan heart lvl: " + shanLvl, GUILayout.Width(150));
+                        if (GUILayout.Button("1")) playerData.SpendMoney = 0;
+                        if (GUILayout.Button("2")) playerData.SpendMoney = mp.SpendMoneyBorder[0];
+                        if (GUILayout.Button("3")) playerData.SpendMoney = mp.SpendMoneyBorder[1];
+                    }
+                    GUILayout.EndHorizontal();
+                }
+            }
+
+            FishingHackHooks.Enabled = GUILayout.Toggle(FishingHackHooks.Enabled, "Enable instant fishing");
+            UnlockCraftingHooks.Enabled = GUILayout.Toggle(UnlockCraftingHooks.Enabled, "Enable free crafting");
+            NoclipFeature.NoclipMode = GUILayout.Toggle(NoclipFeature.NoclipMode, "Enable player noclip");
+
+            CheatToolsPlugin.BuildAnywhere.Value = GUILayout.Toggle(CheatToolsPlugin.BuildAnywhere.Value, "Allow building anywhere");
+            CheatToolsPlugin.BuildOverlap.Value = GUILayout.Toggle(CheatToolsPlugin.BuildOverlap.Value, "Allow building items to overlap");
+
+            if (_resources != null)
+            {
+                var dp = _resources.DefinePack;
+                if (dp != null)
+                {
+                    GUILayout.BeginVertical(GUI.skin.box);
+                    {
+                        GUILayout.Label("Warning: These can't be turned off!");
+                        if (dp.MapDefines.ItemSlotMax >= 99999 && playerData.InventorySlotMax >= 99999)
+                            GUI.enabled = false;
+                        if (GUILayout.Button("Unlimited inventory slots"))
+                        {
+                            dp.MapDefines._itemSlotMax = 99999;
+                            dp.MapDefines._itemStackUpperLimit = 99999;
+                            playerData.InventorySlotMax = 99999;
+                        }
+                        GUI.enabled = true;
+
+                        if (playerData.ItemList.Count == 0)
+                            GUI.enabled = false;
+                        if (GUILayout.Button("Clear player inventory"))
+                        {
+                            playerData.ItemList.Clear();
+                            //MapUIContainer.AddNotify();
+                            CheatToolsPlugin.Logger.LogMessage("Your inventory has been cleared.");
+                        }
+                        GUI.enabled = true;
+
                         GUILayout.BeginHorizontal();
                         {
-                            var shanLvl = mp.SpendMoneyBorder.Count(x => playerData.SpendMoney >= x) + 1;
-                            GUILayout.Label("Shan heart lvl: " + shanLvl, GUILayout.Width(150));
-                            if (GUILayout.Button("1")) playerData.SpendMoney = 0;
-                            if (GUILayout.Button("2")) playerData.SpendMoney = mp.SpendMoneyBorder[0];
-                            if (GUILayout.Button("3")) playerData.SpendMoney = mp.SpendMoneyBorder[1];
-                        }
-                        GUILayout.EndHorizontal();
-                    }
-                }
-
-                FishingHackHooks.Enabled = GUILayout.Toggle(FishingHackHooks.Enabled, "Enable instant fishing");
-                UnlockCraftingHooks.Enabled = GUILayout.Toggle(UnlockCraftingHooks.Enabled, "Enable free crafting");
-                CheatToolsPlugin.NoclipMode = GUILayout.Toggle(CheatToolsPlugin.NoclipMode, "Enable player noclip");
-
-                CheatToolsPlugin.BuildAnywhere.Value = GUILayout.Toggle(CheatToolsPlugin.BuildAnywhere.Value, "Allow building anywhere");
-                CheatToolsPlugin.BuildOverlap.Value = GUILayout.Toggle(CheatToolsPlugin.BuildOverlap.Value, "Allow building items to overlap");
-
-                if (_resources != null)
-                {
-                    var dp = _resources.DefinePack;
-                    if (dp != null)
-                    {
-                        GUILayout.BeginVertical(GUI.skin.box);
-                        {
-                            GUILayout.Label("Warning: These can't be turned off!");
-                            if (dp.MapDefines.ItemSlotMax >= 99999 && playerData.InventorySlotMax >= 99999)
-                                GUI.enabled = false;
-                            if (GUILayout.Button("Unlimited inventory slots"))
+                            var add1 = GUILayout.Button("Get +1 of all items");
+                            var add99 = GUILayout.Button("+99");
+                            if (add1 || add99)
                             {
-                                dp.MapDefines._itemSlotMax = 99999;
-                                dp.MapDefines._itemStackUpperLimit = 99999;
-                                playerData.InventorySlotMax = 99999;
-                            }
-                            GUI.enabled = true;
-
-                            if (playerData.ItemList.Count == 0)
-                                GUI.enabled = false;
-                            if (GUILayout.Button("Clear player inventory"))
-                            {
-                                playerData.ItemList.Clear();
-                                //MapUIContainer.AddNotify();
-                                CheatToolsPlugin.Logger.LogMessage("Your inventory has been cleared.");
-                            }
-                            GUI.enabled = true;
-
-                            GUILayout.BeginHorizontal();
-                            {
-                                var add1 = GUILayout.Button("Get +1 of all items");
-                                var add99 = GUILayout.Button("+99");
-                                if (add1 || add99)
+                                if (_resources.GameInfo != null)
                                 {
-                                    if (_resources.GameInfo != null)
+                                    var addAmount = add1 ? 1 : 99;
+                                    foreach (var category in _resources.GameInfo.GetItemCategories())
                                     {
-                                        var addAmount = add1 ? 1 : 99;
-                                        foreach (var category in _resources.GameInfo.GetItemCategories())
+                                        foreach (var stuffItemInfo in _resources.GameInfo.GetItemTable(category).Values)
                                         {
-                                            foreach (var stuffItemInfo in _resources.GameInfo.GetItemTable(category).Values)
-                                            {
-                                                var it = playerData.ItemList.Find(item => item.CategoryID == stuffItemInfo.CategoryID && item.ID == stuffItemInfo.ID);
-                                                if (it != null) it.Count += addAmount;
-                                                else playerData.ItemList.Add(new StuffItem(stuffItemInfo.CategoryID, stuffItemInfo.ID, addAmount));
-                                            }
+                                            var it = playerData.ItemList.Find(item => item.CategoryID == stuffItemInfo.CategoryID && item.ID == stuffItemInfo.ID);
+                                            if (it != null) it.Count += addAmount;
+                                            else playerData.ItemList.Add(new StuffItem(stuffItemInfo.CategoryID, stuffItemInfo.ID, addAmount));
                                         }
-
-                                        CheatToolsPlugin.Logger.LogMessage(addAmount + " of all items have been added to your inventory");
                                     }
+
+                                    CheatToolsPlugin.Logger.LogMessage(addAmount + " of all items have been added to your inventory");
                                 }
                             }
-                            GUILayout.EndHorizontal();
-                        }
-                        GUILayout.EndVertical();
-                    }
-                }
-
-                if (GUILayout.Button("Navigate to Player's GameObject"))
-                {
-                    if (_map.Player.transform != null)
-                        _editor.TreeViewer.SelectAndShowObject(_map.Player.transform);
-                    else
-                        CheatToolsPlugin.Logger.Log(BepInEx.Logging.LogLevel.Warning | BepInEx.Logging.LogLevel.Message,
-                            "Player has no body assigned");
-                }
-
-                if (GUILayout.Button("Open Player in inspector"))
-                    _editor.Inspector.Push(new InstanceStackEntry(_map.Player, "Player"), true);
-            }
-            GUILayout.EndVertical();
-
-            GUILayout.Space(6);
-        }
-
-        private void DrawEnviroControls()
-        {
-            GUILayout.BeginVertical(GUI.skin.box);
-            {
-                if (_map != null)
-                {
-                    var weatherSim = _map.Simulator;
-                    if (weatherSim != null)
-                    {
-                        GUILayout.BeginHorizontal();
-                        {
-                            GUILayout.Label("Weather: " + weatherSim.Weather, GUILayout.Width(120));
-
-                            if (weatherSim.Weather == Weather.Clear) GUI.enabled = false;
-                            if (GUILayout.Button("Clear")) weatherSim.RefreshWeather(Weather.Clear, true);
-                            GUI.enabled = true;
-
-                            if (GUILayout.Button("Next")) weatherSim.RefreshWeather(weatherSim.Weather.Next(), true);
                         }
                         GUILayout.EndHorizontal();
+                    }
+                    GUILayout.EndVertical();
+                }
+            }
 
-                        if (weatherSim.EnvironmentProfile != null)
+            if (GUILayout.Button("Navigate to Player's GameObject"))
+            {
+                if (_map.Player.transform != null)
+                    cheatToolsWindow.Editor.TreeViewer.SelectAndShowObject(_map.Player.transform);
+                else
+                    CheatToolsPlugin.Logger.Log(BepInEx.Logging.LogLevel.Warning | BepInEx.Logging.LogLevel.Message,
+                        "Player has no body assigned");
+            }
+
+            if (GUILayout.Button("Open Player in inspector"))
+                cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(_map.Player, "Player"), true);
+        }
+
+        private static void DrawEnviroControls(CheatToolsWindow cheatToolsWindow)
+        {
+            var weatherSim = _map.Simulator;
+
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.Label("Weather: " + weatherSim.Weather, GUILayout.Width(120));
+
+                if (weatherSim.Weather == Weather.Clear) GUI.enabled = false;
+                if (GUILayout.Button("Clear")) weatherSim.RefreshWeather(Weather.Clear, true);
+                GUI.enabled = true;
+
+                if (GUILayout.Button("Next")) weatherSim.RefreshWeather(weatherSim.Weather.Next(), true);
+            }
+            GUILayout.EndHorizontal();
+
+            if (weatherSim.EnvironmentProfile != null)
+            {
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label($"Temperature: {weatherSim.TemperatureValue:F0}C", GUILayout.Width(120));
+                    weatherSim.TemperatureValue = GUILayout.HorizontalSlider(weatherSim.TemperatureValue,
+                        weatherSim.EnvironmentProfile.TemperatureBorder.MinDegree,
+                        weatherSim.EnvironmentProfile.TemperatureBorder.MaxDegree);
+                }
+                GUILayout.EndHorizontal();
+            }
+
+            if (weatherSim.EnviroSky != null && weatherSim.EnviroSky.GameTime != null)
+            {
+                GUILayout.BeginHorizontal();
+                {
+                    var gameTime = weatherSim.EnviroSky.GameTime;
+                    //var dt = DateTime.MinValue.AddHours(gameTime.Hours).AddMinutes(gameTime.Minutes).AddSeconds(gameTime.Seconds);
+                    GUILayout.Label("Game time:", GUILayout.Width(120));
+                    var timeText = _gameTimeText ?? $"{gameTime.Hours:00}:{gameTime.Minutes:00}:{gameTime.Seconds:00}";
+                    var newTimeText = GUILayout.TextField(timeText, GUILayout.ExpandWidth(true));
+                    if (timeText != newTimeText)
+                    {
+                        try
                         {
-                            GUILayout.BeginHorizontal();
-                            {
-                                GUILayout.Label($"Temperature: {weatherSim.TemperatureValue:F0}C", GUILayout.Width(120));
-                                weatherSim.TemperatureValue = GUILayout.HorizontalSlider(weatherSim.TemperatureValue,
-                                    weatherSim.EnvironmentProfile.TemperatureBorder.MinDegree,
-                                    weatherSim.EnvironmentProfile.TemperatureBorder.MaxDegree);
-                            }
-                            GUILayout.EndHorizontal();
+                            var parts = newTimeText.Split(':');
+                            weatherSim.EnviroSky.SetTime(gameTime.Years, gameTime.Days, int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]));
+                            _gameTimeText = null;
                         }
-
-                        if (weatherSim.EnviroSky != null && weatherSim.EnviroSky.GameTime != null)
+                        catch
                         {
-                            GUILayout.BeginHorizontal();
-                            {
-                                var gameTime = weatherSim.EnviroSky.GameTime;
-                                //var dt = DateTime.MinValue.AddHours(gameTime.Hours).AddMinutes(gameTime.Minutes).AddSeconds(gameTime.Seconds);
-                                GUILayout.Label("Game time:", GUILayout.Width(120));
-                                var timeText = _gameTimeText ?? $"{gameTime.Hours:00}:{gameTime.Minutes:00}:{gameTime.Seconds:00}";
-                                var newTimeText = GUILayout.TextField(timeText, GUILayout.ExpandWidth(true));
-                                if (timeText != newTimeText)
-                                {
-                                    try
-                                    {
-                                        var parts = newTimeText.Split(':');
-                                        weatherSim.EnviroSky.SetTime(gameTime.Years, gameTime.Days, int.Parse(parts[0]), int.Parse(parts[1]), int.Parse(parts[2]));
-                                        _gameTimeText = null;
-                                    }
-                                    catch
-                                    {
-                                        // Let user keep editing if the parsing fails
-                                        _gameTimeText = newTimeText;
-                                    }
-                                }
-                            }
-                            GUILayout.EndHorizontal();
+                            // Let user keep editing if the parsing fails
+                            _gameTimeText = newTimeText;
                         }
                     }
                 }
-
-                GUILayout.BeginHorizontal();
-                {
-                    GUILayout.Label("Speed", GUILayout.ExpandWidth(false));
-                    GUILayout.Label((int)Math.Round(Time.timeScale * 100) + "%", GUILayout.Width(35));
-                    Time.timeScale = GUILayout.HorizontalSlider(Time.timeScale, 0, 5, GUILayout.ExpandWidth(true));
-                    if (GUILayout.Button("Reset", GUILayout.ExpandWidth(false)))
-                        Time.timeScale = 1;
-                }
                 GUILayout.EndHorizontal();
             }
-            GUILayout.EndVertical();
-
-            GUILayout.Space(6);
         }
 
-        private void DrawHSceneCheats()
+        private static void DrawHSceneCheats(CheatToolsWindow cheatToolsWindow)
         {
-            if (_hScene == null) return;
+            GUILayout.Label("H scene controls");
 
-            GUILayout.BeginVertical(GUI.skin.box);
+            GUILayout.BeginHorizontal();
             {
-                GUILayout.Label("H scene controls");
-
-                GUILayout.BeginHorizontal();
-                {
-                    GUILayout.Label("Male Gauge: " + _hScene.feel_m.ToString("F2"), GUILayout.Width(150));
-                    _hScene.feel_m = GUILayout.HorizontalSlider(_hScene.feel_m, 0, 1);
-                }
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                {
-                    GUILayout.Label("Female Gauge: " + _hScene.feel_f.ToString("F2"), GUILayout.Width(150));
-                    _hScene.feel_f = GUILayout.HorizontalSlider(_hScene.feel_f, 0, 1);
-                }
-                GUILayout.EndHorizontal();
-
-                if (GUILayout.Button("Open HScene Flags in inspector"))
-                    _editor.Inspector.Push(new InstanceStackEntry(_hScene, "HSceneFlagCtrl"), true);
+                GUILayout.Label("Male Gauge: " + _hScene.feel_m.ToString("F2"), GUILayout.Width(150));
+                _hScene.feel_m = GUILayout.HorizontalSlider(_hScene.feel_m, 0, 1);
             }
-            GUILayout.EndVertical();
+            GUILayout.EndHorizontal();
 
-            GUILayout.Space(6);
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.Label("Female Gauge: " + _hScene.feel_f.ToString("F2"), GUILayout.Width(150));
+                _hScene.feel_f = GUILayout.HorizontalSlider(_hScene.feel_f, 0, 1);
+            }
+            GUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Open HScene Flags in inspector"))
+                cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(_hScene, "HSceneFlagCtrl"), true);
         }
 
-        private void DrawGirlCheatMenu()
+        private static void DrawGirlCheatMenu(CheatToolsWindow cheatToolsWindow)
         {
-            if (_map == null) return;
+            GUILayout.Label("Heroines");
 
-            GUILayout.BeginVertical(GUI.skin.box);
+            var visibleGirls = _map.AgentTable.Values;
+
+            foreach (var girl in visibleGirls)
             {
-                GUILayout.Label("Heroines");
-
-                var visibleGirls = _map.AgentTable.Values;
-
-                foreach (var girl in visibleGirls)
-                {
-                    if (GUILayout.Button($"Select #{girl.ID} - {girl.CharaName ?? girl.name}"))
-                        _currentVisibleGirl = girl;
-                }
-
-                GUILayout.Space(6);
-
-                if (_currentVisibleGirl != null)
-                    DrawSingleGirlCheats(_currentVisibleGirl);
-                else
-                    GUILayout.Label("Select a heroine to access her stats");
+                if (GUILayout.Button($"Select #{girl.ID} - {girl.CharaName ?? girl.name}"))
+                    _currentVisibleGirl = girl;
             }
-            GUILayout.EndVertical();
 
             GUILayout.Space(6);
+
+            if (_currentVisibleGirl != null)
+                DrawSingleGirlCheats(_currentVisibleGirl, cheatToolsWindow);
+            else
+                GUILayout.Label("Select a heroine to access her stats");
         }
 
-        private void DrawSingleGirlCheats(AgentActor currentAdvGirl)
+        private static void DrawSingleGirlCheats(AgentActor currentAdvGirl, CheatToolsWindow cheatToolsWindow)
         {
             GUILayout.BeginVertical(GUI.skin.box);
             {
@@ -489,17 +355,17 @@ namespace CheatTools
                 if (GUILayout.Button("Navigate to Actor's GameObject"))
                 {
                     if (currentAdvGirl.transform != null)
-                        _editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
+                        cheatToolsWindow.Editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
                     else
                         CheatToolsPlugin.Logger.Log(BepInEx.Logging.LogLevel.Warning | BepInEx.Logging.LogLevel.Message, "Actor has no body assigned");
                 }
 
                 if (GUILayout.Button("Open Actor in inspector"))
-                    _editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Actor " + currentAdvGirl.CharaName), true);
+                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Actor " + currentAdvGirl.CharaName), true);
 
                 if (GUILayout.Button("Inspect extended data"))
                 {
-                    _editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.ChaControl?.chaFile), "ExtData for " + currentAdvGirl.CharaName), true);
+                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.ChaControl?.chaFile), "ExtData for " + currentAdvGirl.CharaName), true);
                 }
             }
             GUILayout.EndVertical();

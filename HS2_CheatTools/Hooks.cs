@@ -10,75 +10,77 @@ using Manager;
 
 namespace CheatTools
 {
-    internal static class Hooks
+    public static partial class CheatToolsWindowInit
     {
-        private static Timer _cardSaveTimer;
-        private static int _lastEntryNo;
-
-        [HarmonyPatch(typeof(LobbyParameterUI), "SetParameter", typeof(ChaFileControl), typeof(int), typeof(int))]
-        [HarmonyPostfix]
-        public static void CharSelected(int _entryNo)
+        private static class Hooks
         {
-            _cardSaveTimer?.Stop();
-            var lsmInstance = Singleton<LobbySceneManager>.Instance;
-            if (lsmInstance == null)
+            private static Timer _cardSaveTimer;
+            private static int _lastEntryNo;
+
+            [HarmonyPatch(typeof(LobbyParameterUI), "SetParameter", typeof(ChaFileControl), typeof(int), typeof(int))]
+            [HarmonyPostfix]
+            public static void CharSelected(int _entryNo)
             {
-                CheatToolsWindow._currentVisibleGirl = null;
-                CheatToolsWindow._onGirlStatsChanged = null;
-            }
-            else
-            {
-                _lastEntryNo = _entryNo;
-                var heroine = lsmInstance.heroines[_entryNo];
-                CheatToolsWindow._currentVisibleGirl = heroine;
-                CheatToolsWindow._onGirlStatsChanged = h =>
+                _cardSaveTimer?.Stop();
+                var lsmInstance = Singleton<LobbySceneManager>.Instance;
+                if (lsmInstance == null)
                 {
-                    if (lsmInstance == null)
-                        CheatToolsWindow._onGirlStatsChanged = null;
-
-                    // todo rate limiting
-                    if (h == heroine)
+                    _currentVisibleGirl = null;
+                    _onGirlStatsChanged = null;
+                }
+                else
+                {
+                    _lastEntryNo = _entryNo;
+                    var heroine = lsmInstance.heroines[_entryNo];
+                    _currentVisibleGirl = heroine;
+                    _onGirlStatsChanged = h =>
                     {
-                        if (_cardSaveTimer == null)
+                        // todo rate limiting
+                        if (h == heroine)
                         {
-                            _cardSaveTimer = new Timer(4000);
-                            _cardSaveTimer.SynchronizingObject = ThreadingHelper.SynchronizingObject;
-                            _cardSaveTimer.Elapsed += (sender, args) => ApplyParameters(_lastEntryNo);
+                            if (_cardSaveTimer == null)
+                            {
+                                _cardSaveTimer = new Timer(4000);
+                                _cardSaveTimer.SynchronizingObject = ThreadingHelper.SynchronizingObject;
+                                _cardSaveTimer.Elapsed += (sender, args) => ApplyParameters(_lastEntryNo);
+                            }
+
+                            _cardSaveTimer.Start();
                         }
-                        _cardSaveTimer.Start();
-                    }
-                    else
-                    {
-                        Console.WriteLine("wtf " + new StackTrace());
-                    }
-                };
+                        else
+                        {
+                            Console.WriteLine("wtf " + new StackTrace());
+                        }
+                    };
+                }
             }
-        }
 
-        private static void ApplyParameters(int charaEntryNo)
-        {
-            var lsmInstance = Singleton<LobbySceneManager>.Instance;
-            if (lsmInstance == null) return;
-            var heroine = lsmInstance.heroines[charaEntryNo];
-            if (heroine == null) return;
-            GlobalHS2Calc.CalcState(heroine.chaFile.gameinfo2, heroine.personality);
-            heroine.chaFile.SaveCharaFile(heroine.chaFile.charaFileName, byte.MaxValue, false);
-            lsmInstance.ParameterUI.SetParameter(heroine.chaFile, -1, charaEntryNo);
-            //todo have as an extra button?
-            lsmInstance.SetCharaAnimationAndPosition();
-            var scrollCtrl = lsmInstance.SelectUI.scrollCtrl;
-            if (scrollCtrl.selectInfo != null)
+            private static void ApplyParameters(int charaEntryNo)
             {
-                scrollCtrl.selectInfo.info.state = heroine.chaFile.gameinfo2.nowState;
-                scrollCtrl.RefreshShown();
+                var lsmInstance = Singleton<LobbySceneManager>.Instance;
+                if (lsmInstance == null) return;
+                var heroine = lsmInstance.heroines[charaEntryNo];
+                if (heroine == null) return;
+                GlobalHS2Calc.CalcState(heroine.chaFile.gameinfo2, heroine.personality);
+                heroine.chaFile.SaveCharaFile(heroine.chaFile.charaFileName, byte.MaxValue, false);
+                lsmInstance.ParameterUI.SetParameter(heroine.chaFile, -1, charaEntryNo);
+                //todo have as an extra button?
+                lsmInstance.SetCharaAnimationAndPosition();
+                var scrollCtrl = lsmInstance.SelectUI.scrollCtrl;
+                if (scrollCtrl.selectInfo != null)
+                {
+                    scrollCtrl.selectInfo.info.state = heroine.chaFile.gameinfo2.nowState;
+                    scrollCtrl.RefreshShown();
+                }
             }
-        }
 
-        [HarmonyPatch(typeof(LobbyParameterUI), "SetParameter", typeof(GameCharaFileInfo), typeof(int), typeof(int))]
-        [HarmonyPostfix]
-        public static void CharSelected2(int _entryNo)
-        {
-            CharSelected(_entryNo);
+            [HarmonyPatch(typeof(LobbyParameterUI), "SetParameter", typeof(GameCharaFileInfo), typeof(int),
+                typeof(int))]
+            [HarmonyPostfix]
+            public static void CharSelected2(int _entryNo)
+            {
+                CharSelected(_entryNo);
+            }
         }
     }
 }

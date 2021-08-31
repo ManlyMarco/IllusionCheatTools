@@ -10,6 +10,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)AssemblyInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CheatToolsPlugin.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)CheatToolsWindow.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Metadata.cs" />
   </ItemGroup>
 </Project>

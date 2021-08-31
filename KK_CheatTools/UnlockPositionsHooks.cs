@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using ActionGame.H;
-using BepInEx.Harmony;
 using HarmonyLib;
 using UnityEngine;
 
@@ -26,7 +25,7 @@ namespace CheatTools
                 {
                     if (value)
                     {
-                        _hInstance = HarmonyWrapper.PatchAll(typeof(UnlockPositionsHooks));
+                        _hInstance = Harmony.CreateAndPatchAll(typeof(UnlockPositionsHooks));
 
                         foreach (var typeName in new[] { "HSceneProc, Assembly-CSharp", "VRHScene, Assembly-CSharp" })
                         {

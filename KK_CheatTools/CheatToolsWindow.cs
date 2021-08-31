@@ -4,14 +4,10 @@ using System.Linq;
 using System.Reflection;
 using ActionGame;
 using ActionGame.Chara;
-using HarmonyLib;
 using Illusion.Component;
 using Illusion.Game;
 using Manager;
-using RuntimeUnityEditor.Core;
-using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
-using RuntimeUnityEditor.Core.UI;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
 using LogLevel = BepInEx.Logging.LogLevel;
@@ -19,60 +15,29 @@ using Object = UnityEngine.Object;
 
 namespace CheatTools
 {
-    public class CheatToolsWindow
+    public static class CheatToolsWindowInit
     {
-        private const int ScreenOffset = 20;
+        private static SaveData.Heroine _currentVisibleGirl;
+        private static bool _showSelectHeroineList;
 
-        private readonly RuntimeUnityEditorCore _editor;
+        private static HFlag _hFlag;
+        private static TalkScene _talkScene;
+        private static HSprite _hSprite;
+        private static Studio.Studio _studioInstance;
+        private static Manager.Sound _soundInstance;
+        private static Communication _communicationInstance;
+        private static Scene _sceneInstance;
+        private static Game _gameMgr;
 
-        private readonly string _mainWindowTitle;
-        private Vector2 _cheatsScrollPos;
-        private Rect _cheatWindowRect;
-        private Rect _screenRect;
-        private bool _show;
+        private static TriggerEnterExitEvent _playerEnterExitTrigger;
+        private static string _setdesireId;
+        private static string _setdesireValue;
+        private static KeyValuePair<object, string>[] _openInInspectorButtons;
 
-        private SaveData.Heroine _currentVisibleGirl;
-        private bool _showSelectHeroineList;
-
-        private HFlag _hFlag;
-        private TalkScene _talkScene;
-        private HSprite _hSprite;
-        private Studio.Studio _studioInstance;
-        private Manager.Sound _soundInstance;
-        private Communication _communicationInstance;
-        private Scene _sceneInstance;
-        private Game _gameMgr;
-
-        private readonly Func<object> _funcGetHeroines;
-        private readonly Func<object> _funcGetRootGos;
-        private TriggerEnterExitEvent _playerEnterExitTrigger;
-        private string _setdesireId;
-        private string _setdesireValue;
-
-        public CheatToolsWindow(RuntimeUnityEditorCore editor)
+        public static void InitializeCheats()
         {
-            _editor = editor ?? throw new ArgumentNullException(nameof(editor));
-
-            ToStringConverter.AddConverter<SaveData.Heroine>(heroine => !string.IsNullOrEmpty(heroine.Name) ? heroine.Name : heroine.nickname);
-            ToStringConverter.AddConverter<SaveData.CharaData.Params.Data>(d => $"[{d.key} | {d.value}]");
-
-            _mainWindowTitle = "Cheat Tools " + Assembly.GetExecutingAssembly().GetName().Version;
-
-            _funcGetHeroines = () => _gameMgr.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x));
-            _funcGetRootGos = EditorUtilities.GetRootGoScanner;
-        }
-
-        public bool Show
-        {
-            get => _show;
-            set
+            CheatToolsWindow.OnShown = window =>
             {
-                _show = value;
-                _editor.Show = value;
-
-                if (value)
-                    SetWindowSizes();
-
                 _hFlag = Object.FindObjectOfType<HFlag>();
                 _talkScene = Object.FindObjectOfType<TalkScene>();
                 _hSprite = Object.FindObjectOfType<HSprite>();
@@ -81,277 +46,226 @@ namespace CheatTools
                 _communicationInstance = Communication.Instance;
                 _sceneInstance = Scene.Instance;
                 _gameMgr = Game.Instance;
+
+                _openInInspectorButtons = new[]
+                {
+                    new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.HeroineList.Count > 0 ? (Func<object>) (() => _gameMgr.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x))) : null, "Heroine list"),
+                    new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
+                    new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
+                    new KeyValuePair<object, string>(_communicationInstance, "Manager.Communication.Instance"),
+                    new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
+                    new KeyValuePair<object, string>(_hFlag, "HFlag"),
+                    new KeyValuePair<object, string>(_talkScene, "TalkScene"),
+                    new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
+                    new KeyValuePair<object, string>((Func<object>) EditorUtilities.GetRootGoScanner, "Root Objects")
+                };
+            };
+            
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _studioInstance != null && _gameMgr == null || _gameMgr.saveData.isOpening, DrawPlayerCheats, "Start the game to see player cheats"));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _hFlag != null, DrawHSceneCheats, null));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _gameMgr != null, DrawGirlCheatMenu, null));
+
+            CheatToolsWindow.Cheats.Add(CheatEntry.CreateOpenInInspectorButtons(() => _openInInspectorButtons));
+
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _gameMgr != null, DrawGlobalUnlocks, null));
+        }
+
+        private static void DrawGlobalUnlocks(CheatToolsWindow window)
+        {
+            GUILayout.Label("Global unlocks (might need a reload)");
+
+            CheatToolsPlugin.UnlockAllPositions.Value = GUILayout.Toggle(CheatToolsPlugin.UnlockAllPositions.Value, "Unlock all H positions");
+
+            if (GUILayout.Button("Obtain all H positions"))
+            {
+                // Vanilla positions don't seem to go above 60, modded positions are above 1000 usually
+                // 8 buckets might change in the future if game is updated with more h modes, check HSceneProc.lstAnimInfo for how many are needed
+                for (int i = 0; i < 10; i++) _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 9999));
+            }
+
+            if (GUILayout.Button("Unlock all wedding personalities"))
+            {
+                foreach (var personalityId in Singleton<Voice>.Instance.voiceInfoList.Select(x => x.No).Where(x => x >= 0)) _gameMgr.weddingData.personality.Add(personalityId);
+            }
+
+            /* Doesn't work, need a list of items to put into glSaveData.clubContents from somewhere 
+                if (GUILayout.Button("Unlock all free H toys/extras"))
+                {
+                    var go = new GameObject("CheatTools Temp");
+                    var handCtrl = go.AddComponent<HandCtrl>();
+                    var dicItem = (Dictionary<int, HandCtrl.AibuItem>)Traverse.Create(typeof(HandCtrl)).Field("dicItem").GetValue(handCtrl);
+                    _gameMgr.glSaveData.clubContents[0] = new HashSet<int>(dicItem.Select(x => x.Value.saveID).Where(x => x >= 0));
+                    go.Destroy();
+                }*/
+        }
+
+        private static void DrawHSceneCheats(CheatToolsWindow cheatToolsWindow)
+        {
+            GUILayout.Label("H scene controls");
+
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.Label("Male Gauge: " + _hFlag.gaugeMale.ToString("N1"), GUILayout.Width(150));
+                _hFlag.gaugeMale = GUILayout.HorizontalSlider(_hFlag.gaugeMale, 0, 100);
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.Label("Female Gauge: " + _hFlag.gaugeFemale.ToString("N1"), GUILayout.Width(150));
+                _hFlag.gaugeFemale = GUILayout.HorizontalSlider(_hFlag.gaugeFemale, 0, 100);
+            }
+
+            GUILayout.EndHorizontal();
+
+            if (_hSprite != null)
+            {
+                if (GUILayout.Button("Force quit H scene"))
+                {
+                    Utils.Sound.Play(SystemSE.cancel);
+                    _hSprite.flags.click = HFlag.ClickKind.end;
+                    _hSprite.flags.isHSceneEnd = true;
+                    _hSprite.flags.numEnd = 0;
+                }
             }
         }
 
-        private void CheatWindowContents(int id)
+        private static void DrawGirlCheatMenu(CheatToolsWindow cheatToolsWindow)
         {
-            _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
+            GUILayout.Label("Girl stats");
+
+            if (!_showSelectHeroineList)
             {
-                if (_studioInstance == null)
-                    DrawPlayerCheats();
+                var visibleGirls = GetCurrentVisibleGirls();
 
-                if (_hFlag != null)
-                    DrawHSceneCheats(_hFlag);
-
-                if (_hSprite != null)
+                for (var index = 0; index < visibleGirls.Length; index++)
                 {
-                    if (GUILayout.Button("Force quit H scene"))
-                    {
-                        Utils.Sound.Play(SystemSE.cancel);
-                        _hSprite.flags.click = HFlag.ClickKind.end;
-                        _hSprite.flags.isHSceneEnd = true;
-                        _hSprite.flags.numEnd = 0;
-                    }
+                    var girl = visibleGirls[index];
+                    if (GUILayout.Button($"Select current #{index} - {girl.Name}"))
+                        _currentVisibleGirl = girl;
                 }
 
-                if (_gameMgr != null)
-                    DrawGirlCheatMenu();
-
-                GUILayout.BeginHorizontal(GUI.skin.box);
+                var anyHeroines = _gameMgr.HeroineList != null && _gameMgr.HeroineList.Count > 0;
+                if (anyHeroines)
                 {
-                    GUILayout.Label("Speed", GUILayout.ExpandWidth(false));
-                    GUILayout.Label((int)Math.Round(Time.timeScale * 100) + "%", GUILayout.Width(35));
-                    Time.timeScale = GUILayout.HorizontalSlider(Time.timeScale, 0, 5, GUILayout.ExpandWidth(true));
-                    if (GUILayout.Button("Reset", GUILayout.ExpandWidth(false)))
-                        Time.timeScale = 1;
+                    if (GUILayout.Button("Select from heroine list"))
+                        _showSelectHeroineList = true;
                 }
-                GUILayout.EndHorizontal();
 
-                GUILayout.BeginVertical(GUI.skin.box);
+                if (_currentVisibleGirl != null)
                 {
-                    GUILayout.Label("Open in inspector");
-                    foreach (var obj in new[]
-                    {
-                            new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.HeroineList.Count > 0 ? _funcGetHeroines : null, "Heroine list"),
-                            new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
-                            new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
-                            new KeyValuePair<object, string>(_communicationInstance, "Manager.Communication.Instance"),
-                            new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
-                            new KeyValuePair<object, string>(_hFlag, "HFlag"),
-                            new KeyValuePair<object, string>(_talkScene, "TalkScene"),
-                            new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                            new KeyValuePair<object, string>(_funcGetRootGos, "Root Objects")
-                        })
-                    {
-                        if (obj.Key == null) continue;
-                        if (GUILayout.Button(obj.Value))
-                        {
-                            if (obj.Key is Type t)
-                                _editor.Inspector.Push(new StaticStackEntry(t, obj.Value), true);
-                            else if (obj.Key is Func<object> f)
-                                _editor.Inspector.Push(new InstanceStackEntry(f(), obj.Value), true);
-                            else
-                                _editor.Inspector.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
-                        }
-                    }
+                    GUILayout.Space(6);
+                    DrawHeroineCheats(_currentVisibleGirl, cheatToolsWindow);
                 }
-                GUILayout.EndVertical();
+                else
+                {
+                    GUILayout.Label("Select a girl to access her stats");
+                }
 
-                if (_gameMgr != null)
+                if (anyHeroines)
                 {
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        GUILayout.Label("Global unlocks (might need a reload)");
-
-                        CheatToolsPlugin.UnlockAllPositions.Value = GUILayout.Toggle(CheatToolsPlugin.UnlockAllPositions.Value, "Unlock all H positions");
-
-                        if (GUILayout.Button("Obtain all H positions"))
+                        GUILayout.Label("These affect ALL heroines");
+                        if (GUILayout.Button("Make everyone friendly"))
                         {
-                            // Vanilla positions don't seem to go above 60, modded positions are above 1000 usually
-                            // 8 buckets might change in the future if game is updated with more h modes, check HSceneProc.lstAnimInfo for how many are needed
-                            for (int i = 0; i < 10; i++)
-                                _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 9999));
+                            foreach (var h in Game.Instance.HeroineList)
+                            {
+                                h.favor = 100;
+                                h.anger = 0;
+                                h.isAnger = false;
+                            }
                         }
-
-                        if (GUILayout.Button("Unlock all wedding personalities"))
+                        if (GUILayout.Button("Make everyone lovers"))
                         {
-                            foreach (var personalityId in Singleton<Voice>.Instance.voiceInfoList.Select(x => x.No).Where(x => x >= 0))
-                                _gameMgr.weddingData.personality.Add(personalityId);
+                            foreach (var h in Game.Instance.HeroineList)
+                            {
+                                h.anger = 0;
+                                h.isAnger = false;
+                                h.favor = 100;
+                                h.lewdness = 100;
+                                h.intimacy = 100;
+                                h.isGirlfriend = true;
+                                h.confessed = true;
+                            }
                         }
-
-                        /* Doesn't work, need a list of items to put into glSaveData.clubContents from somewhere 
-                        if (GUILayout.Button("Unlock all free H toys/extras"))
+                        if (GUILayout.Button("Make everyone club members"))
                         {
-                            var go = new GameObject("CheatTools Temp");
-                            var handCtrl = go.AddComponent<HandCtrl>();
-                            var dicItem = (Dictionary<int, HandCtrl.AibuItem>)Traverse.Create(typeof(HandCtrl)).Field("dicItem").GetValue(handCtrl);
-                            _gameMgr.glSaveData.clubContents[0] = new HashSet<int>(dicItem.Select(x => x.Value.saveID).Where(x => x >= 0));
-                            go.Destroy();
-                        }*/
+                            foreach (var h in Game.Instance.HeroineList)
+                            {
+                                if (!h.isTeacher)
+                                    h.isStaff = true;
+                            }
+                        }
+                        if (GUILayout.Button("Make everyone virgins"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                                MakeVirgin(h);
+                        }
+                        if (GUILayout.Button("Make everyone inexperienced"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                                MakeInexperienced(h);
+                        }
+                        if (GUILayout.Button("Make everyone experienced"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                                MakeExperienced(h);
+                        }
+                        if (GUILayout.Button("Make everyone perverted"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                                MakeHorny(h);
+                        }
+                        if (GUILayout.Button("Clear everyone's desires"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                            {
+                                for (int i = 0; i < 31; i++)
+                                    Game.Instance.actScene.actCtrl.SetDesire(i, h, 0);
+                            }
+                        }
+                        if (GUILayout.Button("Everyone desires masturbation"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                                Game.Instance.actScene.actCtrl.SetDesire(4, h, 100);
+                        }
+                        if (GUILayout.Button("Everyone desires lesbian"))
+                        {
+                            foreach (var h in Game.Instance.HeroineList)
+                            {
+                                Game.Instance.actScene.actCtrl.SetDesire(26, h, 100);
+                                Game.Instance.actScene.actCtrl.SetDesire(27, h, 100);
+                            }
+                        }
                     }
                     GUILayout.EndVertical();
                 }
             }
-            GUILayout.EndScrollView();
-
-            GUI.DragWindow();
-        }
-
-        private static void DrawHSceneCheats(HFlag hFlag)
-        {
-            GUILayout.BeginVertical(GUI.skin.box);
+            else
             {
-                GUILayout.Label("H scene controls");
-
-                GUILayout.BeginHorizontal();
+                if (_gameMgr.HeroineList == null || _gameMgr.HeroineList.Count == 0)
                 {
-                    GUILayout.Label("Male Gauge: " + hFlag.gaugeMale.ToString("N1"), GUILayout.Width(150));
-                    hFlag.gaugeMale = GUILayout.HorizontalSlider(hFlag.gaugeMale, 0, 100);
-                }
-                GUILayout.EndHorizontal();
-
-                GUILayout.BeginHorizontal();
-                {
-                    GUILayout.Label("Female Gauge: " + hFlag.gaugeFemale.ToString("N1"), GUILayout.Width(150));
-                    hFlag.gaugeFemale = GUILayout.HorizontalSlider(hFlag.gaugeFemale, 0, 100);
-                }
-
-                GUILayout.EndHorizontal();
-            }
-            GUILayout.EndVertical();
-        }
-
-        private void DrawGirlCheatMenu()
-        {
-            GUILayout.BeginVertical(GUI.skin.box);
-            {
-                GUILayout.Label("Girl stats");
-
-                if (!_showSelectHeroineList)
-                {
-                    var visibleGirls = GetCurrentVisibleGirls();
-
-                    for (var index = 0; index < visibleGirls.Length; index++)
-                    {
-                        var girl = visibleGirls[index];
-                        if (GUILayout.Button($"Select current #{index} - {girl.Name}"))
-                            _currentVisibleGirl = girl;
-                    }
-
-                    var anyHeroines = _gameMgr.HeroineList != null && _gameMgr.HeroineList.Count > 0;
-                    if (anyHeroines)
-                    {
-                        if (GUILayout.Button("Select from heroine list"))
-                            _showSelectHeroineList = true;
-                    }
-
-                    if (_currentVisibleGirl != null)
-                    {
-                        GUILayout.Space(6);
-                        DrawHeroineCheats(_currentVisibleGirl);
-                    }
-                    else
-                    {
-                        GUILayout.Label("Select a girl to access her stats");
-                    }
-
-                    if (anyHeroines)
-                    {
-                        GUILayout.BeginVertical(GUI.skin.box);
-                        {
-                            GUILayout.Label("These affect ALL heroines");
-                            if (GUILayout.Button("Make everyone friendly"))
-                            {
-                                foreach (var h in Game.Instance.HeroineList)
-                                {
-                                    h.favor = 100;
-                                    h.anger = 0;
-                                    h.isAnger = false;
-                                }
-                            }
-                            if (GUILayout.Button("Make everyone lovers"))
-                            {
-                                foreach (var h in Game.Instance.HeroineList)
-                                {
-                                    h.anger = 0;
-                                    h.isAnger = false;
-                                    h.favor = 100;
-                                    h.lewdness = 100;
-                                    h.intimacy = 100;
-                                    h.isGirlfriend = true;
-                                    h.confessed = true;
-                                }
-                            }
-                            if (GUILayout.Button("Make everyone club members"))
-                            {
-                                foreach (var h in Game.Instance.HeroineList)
-                                {
-                                    if (!h.isTeacher)
-                                        h.isStaff = true;
-                                }
-                            }
-                            if (GUILayout.Button("Make everyone virgins"))
-                            {
-                                foreach (var h in Game.Instance.HeroineList)
-                                    MakeVirgin(h);
-                            }
-                            if (GUILayout.Button("Make everyone inexperienced"))
-                            {
-                                foreach (var h in Game.Instance.HeroineList)
-                                    MakeInexperienced(h);
-                            }
-                            if (GUILayout.Button("Make everyone experienced"))
-                            {
-                                foreach (var h in Game.Instance.HeroineList)
-                                    MakeExperienced(h);
-                            }
-                            if (GUILayout.Button("Make everyone perverted"))
-                            {
-                                foreach (var h in Game.Instance.HeroineList)
-                                    MakeHorny(h);
-                            }
-                            if (GUILayout.Button("Clear everyone's desires"))
-                            {
-                                foreach (var h in Game.Instance.HeroineList)
-                                {
-                                    for (int i = 0; i < 31; i++)
-                                        Game.Instance.actScene.actCtrl.SetDesire(i, h, 0);
-                                }
-                            }
-                            if (GUILayout.Button("Everyone desires masturbation"))
-                            {
-                                foreach (var h in Game.Instance.HeroineList)
-                                    Game.Instance.actScene.actCtrl.SetDesire(4, h, 100);
-                            }
-                            if (GUILayout.Button("Everyone desires lesbian"))
-                            {
-                                foreach (var h in Game.Instance.HeroineList)
-                                {
-                                    Game.Instance.actScene.actCtrl.SetDesire(26, h, 100);
-                                    Game.Instance.actScene.actCtrl.SetDesire(27, h, 100);
-                                }
-                            }
-                        }
-                        GUILayout.EndVertical();
-                    }
+                    _showSelectHeroineList = false;
                 }
                 else
                 {
-                    if (_gameMgr.HeroineList == null || _gameMgr.HeroineList.Count == 0)
-                    {
-                        _showSelectHeroineList = false;
-                    }
-                    else
-                    {
-                        GUILayout.Label("Select one of the heroines to continue");
+                    GUILayout.Label("Select one of the heroines to continue");
 
-                        for (var index = 0; index < _gameMgr.HeroineList.Count; index++)
+                    for (var index = 0; index < _gameMgr.HeroineList.Count; index++)
+                    {
+                        var heroine = _gameMgr.HeroineList[index];
+                        if (GUILayout.Button($"Select #{index} - {heroine.Name}"))
                         {
-                            var heroine = _gameMgr.HeroineList[index];
-                            if (GUILayout.Button($"Select #{index} - {heroine.Name}"))
-                            {
-                                _currentVisibleGirl = heroine;
-                                _showSelectHeroineList = false;
-                            }
+                            _currentVisibleGirl = heroine;
+                            _showSelectHeroineList = false;
                         }
                     }
                 }
             }
-            GUILayout.EndVertical();
         }
 
-        private void DrawHeroineCheats(SaveData.Heroine currentAdvGirl)
+        private static void DrawHeroineCheats(SaveData.Heroine currentAdvGirl, CheatToolsWindow cheatToolsWindow)
         {
             GUILayout.BeginVertical();
             {
@@ -568,19 +482,19 @@ namespace CheatTools
                 if (GUILayout.Button("Navigate to heroine's GameObject"))
                 {
                     if (currentAdvGirl.transform != null)
-                        _editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
+                        cheatToolsWindow.Editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
                     else
                         CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
                 }
 
                 if (GUILayout.Button("Open Heroine in inspector"))
                 {
-                    _editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name), true);
+                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name), true);
                 }
 
                 if (GUILayout.Button("Inspect extended data"))
                 {
-                    _editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.charFile), "ExtData for " + currentAdvGirl.Name), true);
+                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.charFile), "ExtData for " + currentAdvGirl.Name), true);
                 }
             }
             GUILayout.EndVertical();
@@ -628,124 +542,115 @@ namespace CheatTools
                 girl.massageExps[i] = amount;
         }
 
-        private void DrawPlayerCheats()
+        private static void DrawPlayerCheats(CheatToolsWindow cheatToolsWindow)
         {
-            GUILayout.BeginVertical(GUI.skin.box);
+            GUILayout.Label("Player stats");
+
+            GUILayout.BeginHorizontal();
             {
-                if (_gameMgr == null || _gameMgr.saveData.isOpening)
+                GUILayout.Label("STR: " + _gameMgr.Player.physical, GUILayout.Width(60));
+                _gameMgr.Player.physical = (int)GUILayout.HorizontalSlider(_gameMgr.Player.physical, 0, 100);
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Label("Start the game to see player cheats");
+                    GUILayout.Label("INT: " + _gameMgr.Player.intellect, GUILayout.Width(60));
+                    _gameMgr.Player.intellect = (int)GUILayout.HorizontalSlider(_gameMgr.Player.intellect, 0, 100);
                 }
-                else
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Label("Player stats");
+                    GUILayout.Label("H: " + _gameMgr.Player.hentai, GUILayout.Width(60));
+                    _gameMgr.Player.hentai = (int)GUILayout.HorizontalSlider(_gameMgr.Player.hentai, 0, 100);
+                }
+                GUILayout.EndHorizontal();
 
-                    GUILayout.BeginHorizontal();
+                var cycle = Object.FindObjectsOfType<Cycle>().FirstOrDefault();
+                if (cycle != null)
+                {
+                    if (cycle.timerVisible)
                     {
-                        GUILayout.Label("STR: " + _gameMgr.Player.physical, GUILayout.Width(60));
-                        _gameMgr.Player.physical = (int)GUILayout.HorizontalSlider(_gameMgr.Player.physical, 0, 100);
-                        GUILayout.EndHorizontal();
                         GUILayout.BeginHorizontal();
                         {
-                            GUILayout.Label("INT: " + _gameMgr.Player.intellect, GUILayout.Width(60));
-                            _gameMgr.Player.intellect = (int)GUILayout.HorizontalSlider(_gameMgr.Player.intellect, 0, 100);
+                            GUILayout.Label("Time: " + cycle.timer.ToString("N1"), GUILayout.Width(65));
+                            var newVal = GUILayout.HorizontalSlider(cycle.timer, 0, Cycle.TIME_LIMIT);
+                            if (Math.Abs(newVal - cycle.timer) > 0.09)
+                            {
+                                typeof(Cycle)
+                                    .GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)
+                                    ?.SetValue(cycle, newVal);
+                            }
                         }
                         GUILayout.EndHorizontal();
-                        GUILayout.BeginHorizontal();
-                        {
-                            GUILayout.Label("H: " + _gameMgr.Player.hentai, GUILayout.Width(60));
-                            _gameMgr.Player.hentai = (int)GUILayout.HorizontalSlider(_gameMgr.Player.hentai, 0, 100);
-                        }
-                        GUILayout.EndHorizontal();
-
-                        var cycle = Object.FindObjectsOfType<Cycle>().FirstOrDefault();
-                        if (cycle != null)
-                        {
-                            if (cycle.timerVisible)
-                            {
-                                GUILayout.BeginHorizontal();
-                                {
-                                    GUILayout.Label("Time: " + cycle.timer.ToString("N1"), GUILayout.Width(65));
-                                    var newVal = GUILayout.HorizontalSlider(cycle.timer, 0, Cycle.TIME_LIMIT);
-                                    if (Math.Abs(newVal - cycle.timer) > 0.09)
-                                    {
-                                        typeof(Cycle)
-                                            .GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)
-                                            ?.SetValue(cycle, newVal);
-                                    }
-                                }
-                                GUILayout.EndHorizontal();
-                            }
-
-                            GUILayout.BeginHorizontal();
-                            {
-                                GUILayout.Label("Day of the week: " + cycle.nowWeek);
-                                if (GUILayout.Button("Next"))
-                                    cycle.Change(cycle.nowWeek.Next());
-                            }
-                            GUILayout.EndHorizontal();
-                        }
                     }
 
                     GUILayout.BeginHorizontal();
                     {
-                        GUILayout.Label("Academy Name: ", GUILayout.ExpandWidth(false));
-                        _gameMgr.saveData.accademyName = GUILayout.TextField(_gameMgr.saveData.accademyName, GUILayout.ExpandWidth(true));
+                        GUILayout.Label("Day of the week: " + cycle.nowWeek);
+                        if (GUILayout.Button("Next"))
+                            cycle.Change(cycle.nowWeek.Next());
                     }
                     GUILayout.EndHorizontal();
+                }
+            }
 
-                    GUILayout.BeginHorizontal();
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.Label("Academy Name: ", GUILayout.ExpandWidth(false));
+                _gameMgr.saveData.accademyName =
+                    GUILayout.TextField(_gameMgr.saveData.accademyName, GUILayout.ExpandWidth(true));
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.Label("Player Name: ", GUILayout.ExpandWidth(false));
+                _gameMgr.Player.parameter.lastname = GUILayout.TextField(_gameMgr.Player.parameter.lastname);
+                _gameMgr.Player.parameter.firstname = GUILayout.TextField(_gameMgr.Player.parameter.firstname);
+            }
+            GUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Add 10000 club points (+1 level)"))
+                _gameMgr.saveData.clubReport.comAdd += 10000;
+
+            if (GUILayout.Button("Stop shame reactions in bathrooms"))
+            {
+                var actionMap = Object.FindObjectOfType<ActionMap>();
+                if (actionMap != null)
+                {
+                    foreach (var param in actionMap.infoDic.Values)
                     {
-                        GUILayout.Label("Player Name: ", GUILayout.ExpandWidth(false));
-                        _gameMgr.Player.parameter.lastname = GUILayout.TextField(_gameMgr.Player.parameter.lastname);
-                        _gameMgr.Player.parameter.firstname = GUILayout.TextField(_gameMgr.Player.parameter.firstname);
-                    }
-                    GUILayout.EndHorizontal();
-
-                    if (GUILayout.Button("Add 10000 club points (+1 level)"))
-                        _gameMgr.saveData.clubReport.comAdd += 10000;
-
-                    if (GUILayout.Button("Stop shame reactions in bathrooms"))
-                    {
-                        var actionMap = Object.FindObjectOfType<ActionMap>();
-                        if (actionMap != null)
+                        if (param.isWarning)
                         {
-                            foreach (var param in actionMap.infoDic.Values)
-                            {
-                                if (param.isWarning)
-                                {
-                                    param.isWarning = false;
-                                    CheatToolsPlugin.Logger.Log(LogLevel.Message, "Disabling shame reactions on map: " + param.MapName);
-                                }
-                            }
+                            param.isWarning = false;
+                            CheatToolsPlugin.Logger.Log(LogLevel.Message,
+                                "Disabling shame reactions on map: " + param.MapName);
                         }
-                    }
-
-                    GUI.changed = false;
-                    var playerIsNoticeable = _playerEnterExitTrigger == null || _playerEnterExitTrigger.enabled;
-                    playerIsNoticeable = !GUILayout.Toggle(!playerIsNoticeable, "Make player unnoticeable");
-                    if (GUI.changed)
-                    {
-                        var actionMap = Object.FindObjectOfType<ActionScene>();
-                        if (actionMap != null)
-                        {
-                            _playerEnterExitTrigger = actionMap.Player.noticeArea;
-                            _playerEnterExitTrigger.enabled = playerIsNoticeable;
-                        }
-                    }
-
-                    CheatToolsPlugin.NoclipMode = GUILayout.Toggle(CheatToolsPlugin.NoclipMode, "Enable player noclip");
-
-                    if (GUILayout.Button("Open player data in inspector"))
-                    {
-                        _editor.Inspector.Push(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"), true);
                     }
                 }
             }
-            GUILayout.EndVertical();
+
+            GUI.changed = false;
+            var playerIsNoticeable = _playerEnterExitTrigger == null || _playerEnterExitTrigger.enabled;
+            playerIsNoticeable = !GUILayout.Toggle(!playerIsNoticeable, "Make player unnoticeable");
+            if (GUI.changed)
+            {
+                var actionMap = Object.FindObjectOfType<ActionScene>();
+                if (actionMap != null)
+                {
+                    _playerEnterExitTrigger = actionMap.Player.noticeArea;
+                    _playerEnterExitTrigger.enabled = playerIsNoticeable;
+                }
+            }
+
+            NoclipFeature.NoclipMode = GUILayout.Toggle(NoclipFeature.NoclipMode, "Enable player noclip");
+
+            if (GUILayout.Button("Open player data in inspector"))
+            {
+                cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"), true);
+            }
         }
 
-        private SaveData.Heroine[] GetCurrentVisibleGirls()
+        private static SaveData.Heroine[] GetCurrentVisibleGirls()
         {
             if (_talkScene != null)
             {
@@ -773,31 +678,9 @@ namespace CheatTools
             return new SaveData.Heroine[0];
         }
 
-        private string GetHExpText(SaveData.Heroine currentAdvGirl)
+        private static string GetHExpText(SaveData.Heroine currentAdvGirl)
         {
             return ((HExperienceKindEng)currentAdvGirl.HExperience).ToString();
-        }
-
-        public void DisplayCheatWindow()
-        {
-            if (!Show) return;
-
-            var skinBack = GUI.skin;
-            GUI.skin = InterfaceMaker.CustomSkin;
-
-            _cheatWindowRect = GUILayout.Window(591, _cheatWindowRect, CheatWindowContents, _mainWindowTitle);
-
-            InterfaceMaker.EatInputInRect(_cheatWindowRect);
-            GUI.skin = skinBack;
-        }
-
-        private void SetWindowSizes()
-        {
-            int w = Screen.width, h = Screen.height;
-            _screenRect = new Rect(ScreenOffset, ScreenOffset, w - ScreenOffset * 2, h - ScreenOffset * 2);
-
-            const int cheatWindowHeight = 500;
-            _cheatWindowRect = new Rect(_screenRect.xMin, _screenRect.yMax - cheatWindowHeight, 270, cheatWindowHeight);
         }
     }
 }

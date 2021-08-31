@@ -5,6 +5,7 @@ using Shared;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
+[assembly: AssemblyDescription("In-game trainer/debugging plugin")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("https://github.com/ManlyMarco/IllusionCheatTools")]
 [assembly: AssemblyCopyright("Copyright ©  2020")]
