@@ -608,7 +608,10 @@ namespace CheatTools
             GUILayout.EndHorizontal();
 
             if (GUILayout.Button("Add 100 Koikatsu points"))
+            {
                 Game.saveData.totalKoikatsuPoint += 100;
+                Game.saveData.player.koikatsuPoint += 100;
+            }
 
             if (GUILayout.Button("Stop shame reactions in bathrooms"))
             {
