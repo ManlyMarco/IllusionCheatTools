@@ -10,6 +10,9 @@ namespace CheatTools
 {
     [BepInPlugin(Metadata.GUID, "Cheat Tools", Version)]
     [BepInDependency(RuntimeUnityEditorCore.GUID, RuntimeUnityEditorCore.Version)]
+#if KK || KKS || AI
+    [BepInDependency(KKAPI.KoikatuAPI.GUID, KKAPI.KoikatuAPI.VersionConst)]
+#endif
     [HelpURL("https://github.com/ManlyMarco/IllusionCheatTools")]
     public partial class CheatToolsPlugin : BaseUnityPlugin
     {
