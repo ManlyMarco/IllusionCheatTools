@@ -25,11 +25,14 @@ namespace CheatTools
 
         internal static new ManualLogSource Logger;
 
-        private IEnumerator Start()
+        public CheatToolsPlugin()
         {
             Logger = base.Logger;
             _showCheatWindow = Config.Bind("Hotkeys", "Toggle cheat window", new KeyboardShortcut(KeyCode.Pause));
-            
+        }
+
+        private IEnumerator Start()
+        {
             // Wait for runtime editor to init
             yield return null;
 

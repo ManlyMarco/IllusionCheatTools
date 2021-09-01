@@ -61,7 +61,7 @@ namespace CheatTools
                 };
             };
             
-            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _studioInstance != null && _gameMgr == null || _gameMgr.saveData.isOpening, DrawPlayerCheats, "Start the game to see player cheats"));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _studioInstance == null && _gameMgr != null && !_gameMgr.saveData.isOpening, DrawPlayerCheats, "Start the game to see player cheats"));
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _hFlag != null, DrawHSceneCheats, null));
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _gameMgr != null, DrawGirlCheatMenu, null));
 

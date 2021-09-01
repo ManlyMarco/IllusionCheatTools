@@ -61,8 +61,8 @@ namespace CheatTools
 
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _map != null && _map.Player != null && _map.Player.PlayerData != null, DrawPlayerCheats, "Start the game to see player cheats"));
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _map != null && _map.Simulator != null, DrawEnviroControls, null));
-            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _hScene == null, DrawHSceneCheats, null));
-            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _map == null, DrawGirlCheatMenu, null));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _hScene != null, DrawHSceneCheats, null));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _map != null, DrawGirlCheatMenu, null));
 
             CheatToolsWindow.Cheats.Add(CheatEntry.CreateOpenInInspectorButtons(() => _openInInspectorButtons));
         }
