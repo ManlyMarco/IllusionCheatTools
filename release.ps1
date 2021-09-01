@@ -1,4 +1,4 @@
-$array = @("KK_CheatTools", "AI_CheatTools", "HS2_CheatTools")
+$array = @("KK_CheatTools", "AI_CheatTools", "HS2_CheatTools", "KKS_CheatTools")
 
 if ($PSScriptRoot -match '.+?\\bin\\?') {
     $dir = $PSScriptRoot + "\"
@@ -10,8 +10,6 @@ else {
 $out = $dir + "BepInEx\plugins\" 
 
 
-New-Item -ItemType Directory -Force -Path ($dir + "out\")
-
 foreach ($element in $array) {
 
 Remove-Item -Force -Path ($out + "*") -ErrorAction SilentlyContinue
@@ -22,7 +20,7 @@ Copy-Item -Path ($dir + $element + ".xml") -Destination $out -ErrorAction Silent
 
 $ver = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($dir + $element + ".dll").FileVersion.ToString()
 
-Compress-Archive -Path ($dir + "BepInEx") -Force -CompressionLevel "Optimal" -DestinationPath ($dir + "out\" + $element + "_" + $ver + ".zip")
+Compress-Archive -Path ($dir + "BepInEx") -Force -CompressionLevel "Optimal" -DestinationPath ($dir + $element + "_" + $ver + ".zip")
 
 }
 
