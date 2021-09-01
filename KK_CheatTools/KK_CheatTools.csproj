@@ -62,12 +62,8 @@
       <HintPath>..\packages\IllusionModdingAPI.KKAPI.1.20.3\lib\net35\KKAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="RuntimeUnityEditor.Bepin5">
-      <HintPath>..\..\RuntimeUnityEditor\bin\BepInEx\plugins\RuntimeUnityEditor\RuntimeUnityEditor.Bepin5.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="RuntimeUnityEditor.Core">
-      <HintPath>..\..\RuntimeUnityEditor\bin\BepInEx\plugins\RuntimeUnityEditor\RuntimeUnityEditor.Core.dll</HintPath>
+    <Reference Include="RuntimeUnityEditor.Core, Version=2.4.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RuntimeUnityEditor.Core.2.4.0\lib\net35\RuntimeUnityEditor.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
@@ -108,9 +104,11 @@
     <Error Condition="!Exists('..\packages\IllusionLibs.Koikatu.UnityEngine.5.6.2.4\build\IllusionLibs.Koikatu.UnityEngine.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.Koikatu.UnityEngine.5.6.2.4\build\IllusionLibs.Koikatu.UnityEngine.targets'))" />
     <Error Condition="!Exists('..\packages\IllusionLibs.Koikatu.UnityEngine.UI.5.6.2.4\build\IllusionLibs.Koikatu.UnityEngine.UI.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.Koikatu.UnityEngine.UI.5.6.2.4\build\IllusionLibs.Koikatu.UnityEngine.UI.targets'))" />
     <Error Condition="!Exists('..\packages\IllusionLibs.BepInEx.Harmony.2.5.4\build\IllusionLibs.BepInEx.Harmony.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\IllusionLibs.BepInEx.Harmony.2.5.4\build\IllusionLibs.BepInEx.Harmony.targets'))" />
+    <Error Condition="!Exists('..\packages\ILRepack.Lib.MSBuild.Task.2.0.16.1\build\ILRepack.Lib.MSBuild.Task.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\ILRepack.Lib.MSBuild.Task.2.0.16.1\build\ILRepack.Lib.MSBuild.Task.targets'))" />
   </Target>
   <Import Project="..\packages\IllusionLibs.Koikatu.Assembly-CSharp-firstpass.2019.4.27.4\build\IllusionLibs.Koikatu.Assembly-CSharp-firstpass.targets" Condition="Exists('..\packages\IllusionLibs.Koikatu.Assembly-CSharp-firstpass.2019.4.27.4\build\IllusionLibs.Koikatu.Assembly-CSharp-firstpass.targets')" />
   <Import Project="..\packages\IllusionLibs.Koikatu.UnityEngine.5.6.2.4\build\IllusionLibs.Koikatu.UnityEngine.targets" Condition="Exists('..\packages\IllusionLibs.Koikatu.UnityEngine.5.6.2.4\build\IllusionLibs.Koikatu.UnityEngine.targets')" />
   <Import Project="..\packages\IllusionLibs.Koikatu.UnityEngine.UI.5.6.2.4\build\IllusionLibs.Koikatu.UnityEngine.UI.targets" Condition="Exists('..\packages\IllusionLibs.Koikatu.UnityEngine.UI.5.6.2.4\build\IllusionLibs.Koikatu.UnityEngine.UI.targets')" />
   <Import Project="..\packages\IllusionLibs.BepInEx.Harmony.2.5.4\build\IllusionLibs.BepInEx.Harmony.targets" Condition="Exists('..\packages\IllusionLibs.BepInEx.Harmony.2.5.4\build\IllusionLibs.BepInEx.Harmony.targets')" />
+  <Import Project="..\packages\ILRepack.Lib.MSBuild.Task.2.0.16.1\build\ILRepack.Lib.MSBuild.Task.targets" Condition="Exists('..\packages\ILRepack.Lib.MSBuild.Task.2.0.16.1\build\ILRepack.Lib.MSBuild.Task.targets')" />
 </Project>

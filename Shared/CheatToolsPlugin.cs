@@ -2,7 +2,6 @@
 using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using RuntimeUnityEditor.Bepin5;
 using RuntimeUnityEditor.Core;
 using Shared;
 using UnityEngine;
@@ -10,7 +9,7 @@ using UnityEngine;
 namespace CheatTools
 {
     [BepInPlugin(Metadata.GUID, "Cheat Tools", Version)]
-    [BepInDependency(RuntimeUnityEditorCore.GUID, "2.0")]
+    [BepInDependency(RuntimeUnityEditorCore.GUID, RuntimeUnityEditorCore.Version)]
     [HelpURL("https://github.com/ManlyMarco/IllusionCheatTools")]
     public partial class CheatToolsPlugin : BaseUnityPlugin
     {
@@ -31,7 +30,7 @@ namespace CheatTools
             // Wait for runtime editor to init
             yield return null;
 
-            _runtimeUnityEditorCore = RuntimeUnityEditor5.Instance;
+            _runtimeUnityEditorCore = RuntimeUnityEditorCore.Instance;
 
             if (_runtimeUnityEditorCore == null)
             {
