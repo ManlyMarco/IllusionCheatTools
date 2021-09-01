@@ -81,7 +81,7 @@ namespace CheatTools
             }
             GUILayout.EndScrollView();
 
-            GUI.DragWindow();
+            _cheatWindowRect = RuntimeUnityEditor.Core.Utils.IMGUIUtils.DragOrResize(id, _cheatWindowRect);
         }
 
         public void DisplayCheatWindow()
