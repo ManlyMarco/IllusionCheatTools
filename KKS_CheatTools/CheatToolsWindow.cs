@@ -342,8 +342,7 @@ namespace CheatTools
                 if (GUILayout.Button("Reset conversation time"))
                     currentAdvGirl.talkTime = currentAdvGirl.talkTimeMax;
 
-                //todo desires
-                /*if (ActionScene.initialized && ActionScene.instance != null)
+                if (ActionScene.initialized && ActionScene.instance != null)
                 {
                     var actCtrl = ActionScene.instance.actCtrl;
                     
@@ -416,7 +415,7 @@ namespace CheatTools
                     }
                 }
 
-                GUILayout.Space(8);*/
+                GUILayout.Space(8);
 
                 // 危険日 is risky, 安全日 is safe. Only change when user clicks to avoid messing with the value unnecessarily
                 GUI.changed = false;
