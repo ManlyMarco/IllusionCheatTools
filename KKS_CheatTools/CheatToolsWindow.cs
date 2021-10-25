@@ -66,6 +66,14 @@ namespace CheatTools
             1003,
         };
 
+        private static readonly string[] _relationNames = new[]
+        {
+            "Casual",
+            "Friend",
+            "Lover",
+            "Bonded",
+        };
+
         public static void InitializeCheats()
         {
             CheatToolsWindow.OnShown = window =>
@@ -287,19 +295,25 @@ namespace CheatTools
         {
             GUILayout.BeginVertical();
             {
-                GUILayout.Label("Selected girl name: " + currentAdvGirl.Name);
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label("Selected girl name: ");
+                    GUILayout.Label(currentAdvGirl.Name);
+                    GUILayout.FlexibleSpace();
+                }
+                GUILayout.EndHorizontal();
 
                 GUILayout.BeginVertical();
                 {
                     GUILayout.BeginHorizontal();
                     {
-                        GUILayout.Label("Favor: " + currentAdvGirl.favor, GUILayout.Width(60));
+                        GUILayout.Label("Favor: " + currentAdvGirl.favor, GUILayout.Width(70));
                         currentAdvGirl.favor = (int)GUILayout.HorizontalSlider(currentAdvGirl.favor, 0, currentAdvGirl.isGirlfriend ? 150 : 100);
                     }
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal();
                     {
-                        GUILayout.Label("Lewd: " + currentAdvGirl.lewdness, GUILayout.Width(60));
+                        GUILayout.Label("Lewd: " + currentAdvGirl.lewdness, GUILayout.Width(70));
                         currentAdvGirl.lewdness = (int)GUILayout.HorizontalSlider(currentAdvGirl.lewdness, 0, 100);
                     }
                     GUILayout.EndHorizontal();
@@ -345,13 +359,13 @@ namespace CheatTools
                 if (ActionScene.initialized && ActionScene.instance != null)
                 {
                     var actCtrl = ActionScene.instance.actCtrl;
-                    
+
                     var sortedDesires = Enum.GetValues(typeof(DesireEng)).Cast<DesireEng>()
                         .Select(i => new { id = i, value = actCtrl.GetDesire((int)i, currentAdvGirl) })
                         .Where(x => x.value > 5)
                         .OrderByDescending(x => x.value)
                         .Take(8);
-                    
+
                     var any = false;
                     foreach (var desire in sortedDesires)
                     {
@@ -371,12 +385,12 @@ namespace CheatTools
                         GUILayout.EndHorizontal();
                     }
                     if (!any) GUILayout.Label("Has no desires");
-                    
+
                     if (GUILayout.Button("Clear all desires"))
                     {
                         for (int i = 0; i < 31; i++) actCtrl.SetDesire(i, currentAdvGirl, 0);
                     }
-                    
+
                     GUILayout.BeginHorizontal();
                     {
                         GUILayout.Label("Set desire ", GUILayout.ExpandWidth(false));
@@ -436,42 +450,38 @@ namespace CheatTools
                 }
                 GUILayout.EndHorizontal();
 
+
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label("Desire to visit: ", GUILayout.ExpandWidth(false));
+                    GUI.changed = false;
+                    var newCount = GUILayout.TextField(currentAdvGirl.visitDesire.ToString(), GUILayout.ExpandWidth(true));
+                    if (GUI.changed && int.TryParse(newCount, out var newCountInt))
+                        currentAdvGirl.visitDesire = Mathf.Max(newCountInt, 0);
+                }
+                GUILayout.EndHorizontal();
+
+
                 //todo check new kks properties to add
                 //currentAdvGirl.isAnger = GUILayout.Toggle(currentAdvGirl.isAnger, "Is angry");
                 //currentAdvGirl.isDate = GUILayout.Toggle(currentAdvGirl.isDate, "Date promised");
                 //currentAdvGirl.isFirstGirlfriend = GUILayout.Toggle(currentAdvGirl.isFirstGirlfriend, "isFirstGirlfriend");
 
-                GUI.changed = false;
-                var newVal = GUILayout.Toggle(currentAdvGirl.talkEvent.Contains(0) || currentAdvGirl.talkEvent.Contains(1), "Had first meeting");
-                if (GUI.changed)
+                GUILayout.BeginHorizontal();
                 {
-                    if (newVal)
-                    {
-                        currentAdvGirl.talkEvent.Add(0);
-                        currentAdvGirl.talkEvent.Add(1);
-                    }
-                    else
-                    {
-                        currentAdvGirl.talkEvent.Remove(0);
-                        currentAdvGirl.talkEvent.Remove(1);
-                    }
+                    GUILayout.Label("Relationship level: ");
+                    GUILayout.Label(_relationNames[currentAdvGirl.relation]);
+                    GUILayout.FlexibleSpace();
                 }
+                GUILayout.EndHorizontal();
 
-                GUI.changed = false;
-                newVal = GUILayout.Toggle(currentAdvGirl.talkEvent.Contains(2), "Is a friend");
-                if (GUI.changed)
-                {
-                    if (newVal)
-                    {
-                        currentAdvGirl.talkEvent.Add(2);
-                    }
-                    else
-                    {
-                        currentAdvGirl.talkEvent.Remove(2);
-                    }
-                }
 
+                currentAdvGirl.isFriend = GUILayout.Toggle(currentAdvGirl.isFriend, "Is a friend");
                 currentAdvGirl.isGirlfriend = GUILayout.Toggle(currentAdvGirl.isGirlfriend, "Is a girlfriend");
+
+                currentAdvGirl.confessed = GUILayout.Toggle(currentAdvGirl.confessed, "Confessed");
+                currentAdvGirl.isLunch = GUILayout.Toggle(currentAdvGirl.isLunch, "Had first lunch");
+                currentAdvGirl.isDayH = GUILayout.Toggle(currentAdvGirl.isDayH, "Had H today (won't visit)");
 
                 currentAdvGirl.denial.kiss = GUILayout.Toggle(currentAdvGirl.denial.kiss, "Won't refuse kiss");
                 currentAdvGirl.denial.massage = GUILayout.Toggle(currentAdvGirl.denial.massage, "Won't refuse strong massage");
