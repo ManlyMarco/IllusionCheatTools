@@ -303,51 +303,35 @@ namespace CheatTools
                 }
                 GUILayout.EndHorizontal();
 
-                GUILayout.BeginVertical();
-                {
-                    GUILayout.BeginHorizontal();
-                    {
-                        GUILayout.Label("Favor: " + currentAdvGirl.favor, GUILayout.Width(70));
-                        currentAdvGirl.favor = (int)GUILayout.HorizontalSlider(currentAdvGirl.favor, 0, currentAdvGirl.isGirlfriend ? 150 : 100);
-                    }
-                    GUILayout.EndHorizontal();
-                    GUILayout.BeginHorizontal();
-                    {
-                        GUILayout.Label("Lewd: " + currentAdvGirl.lewdness, GUILayout.Width(70));
-                        currentAdvGirl.lewdness = (int)GUILayout.HorizontalSlider(currentAdvGirl.lewdness, 0, 100);
-                    }
-                    GUILayout.EndHorizontal();
-                }
-                GUILayout.EndVertical();
-
-                GUILayout.Space(4);
-
-                GUILayout.Label("Sex experience: " + GetHExpText(currentAdvGirl));
-                GUILayout.Label("Set to: (changes multiple stats)");
                 GUILayout.BeginHorizontal();
                 {
-                    if (GUILayout.Button("Virgin"))
-                        MakeVirgin(currentAdvGirl);
-                    if (GUILayout.Button("Inexp"))
-                        MakeInexperienced(currentAdvGirl);
-                    if (GUILayout.Button("Exp"))
-                        MakeExperienced(currentAdvGirl);
-                    if (GUILayout.Button("Horny"))
-                        MakeHorny(currentAdvGirl);
+                    GUILayout.Label("Relationship level: ");
+                    GUILayout.Label(_relationNames[currentAdvGirl.relation]);
+                    GUILayout.FlexibleSpace();
                 }
                 GUILayout.EndHorizontal();
 
-                GUILayout.Space(4);
-
-                GUILayout.Label("Set all touch experience");
                 GUILayout.BeginHorizontal();
                 {
-                    if (GUILayout.Button("0%"))
-                        SetGirlHExp(currentAdvGirl, 0f);
-                    if (GUILayout.Button("50%"))
-                        SetGirlHExp(currentAdvGirl, 50f);
-                    if (GUILayout.Button("100%"))
-                        SetGirlHExp(currentAdvGirl, 100f);
+                    GUILayout.Label("Favor: " + currentAdvGirl.favor, GUILayout.Width(70));
+                    currentAdvGirl.favor = (int)GUILayout.HorizontalSlider(currentAdvGirl.favor, 0, currentAdvGirl.isGirlfriend ? 150 : 100);
+                }
+                GUILayout.EndHorizontal();
+
+                currentAdvGirl.isFriend = GUILayout.Toggle(currentAdvGirl.isFriend, "Is a friend");
+                currentAdvGirl.isGirlfriend = GUILayout.Toggle(currentAdvGirl.isGirlfriend, "Is a girlfriend");
+
+                currentAdvGirl.confessed = GUILayout.Toggle(currentAdvGirl.confessed, "Confessed");
+                currentAdvGirl.isLunch = GUILayout.Toggle(currentAdvGirl.isLunch, "Had first lunch");
+                currentAdvGirl.isDayH = GUILayout.Toggle(currentAdvGirl.isDayH, "Had H today (won't visit)");
+
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label("Desire to visit: ", GUILayout.ExpandWidth(false));
+                    GUI.changed = false;
+                    var newCount = GUILayout.TextField(currentAdvGirl.visitDesire.ToString(), GUILayout.ExpandWidth(true));
+                    if (GUI.changed && int.TryParse(newCount, out var newCountInt))
+                        currentAdvGirl.visitDesire = Mathf.Max(newCountInt, 0);
                 }
                 GUILayout.EndHorizontal();
 
@@ -355,6 +339,13 @@ namespace CheatTools
 
                 if (GUILayout.Button("Reset conversation time"))
                     currentAdvGirl.talkTime = currentAdvGirl.talkTimeMax;
+
+                if (ActionScene.instance != null && currentAdvGirl.transform != null && GUILayout.Button("Follow me"))
+                {
+                    var npc = currentAdvGirl.transform.GetComponent<NPC>();
+                    if (npc) ActionScene.instance.Player.ChaserSet(npc);
+                    else CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, "Could not make heroine follow - NPC component not found");
+                }
 
                 if (ActionScene.initialized && ActionScene.instance != null)
                 {
@@ -431,6 +422,13 @@ namespace CheatTools
 
                 GUILayout.Space(8);
 
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label("Lewd: " + currentAdvGirl.lewdness, GUILayout.Width(70));
+                    currentAdvGirl.lewdness = (int)GUILayout.HorizontalSlider(currentAdvGirl.lewdness, 0, 100);
+                }
+                GUILayout.EndHorizontal();
+
                 // 危険日 is risky, 安全日 is safe. Only change when user clicks to avoid messing with the value unnecessarily
                 GUI.changed = false;
                 var isDangerousDay = GUILayout.Toggle(HFlag.GetMenstruation(currentAdvGirl.MenstruationDay) == HFlag.MenstruationType.危険日, "Is on a risky day");
@@ -450,38 +448,38 @@ namespace CheatTools
                 }
                 GUILayout.EndHorizontal();
 
+                GUILayout.Space(4);
 
+                GUILayout.Label("Sex experience: " + GetHExpText(currentAdvGirl));
+                GUILayout.Label("Set to: (changes multiple stats)");
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Label("Desire to visit: ", GUILayout.ExpandWidth(false));
-                    GUI.changed = false;
-                    var newCount = GUILayout.TextField(currentAdvGirl.visitDesire.ToString(), GUILayout.ExpandWidth(true));
-                    if (GUI.changed && int.TryParse(newCount, out var newCountInt))
-                        currentAdvGirl.visitDesire = Mathf.Max(newCountInt, 0);
+                    if (GUILayout.Button("Virgin"))
+                        MakeVirgin(currentAdvGirl);
+                    if (GUILayout.Button("Inexp"))
+                        MakeInexperienced(currentAdvGirl);
+                    if (GUILayout.Button("Exp"))
+                        MakeExperienced(currentAdvGirl);
+                    if (GUILayout.Button("Horny"))
+                        MakeHorny(currentAdvGirl);
                 }
                 GUILayout.EndHorizontal();
 
+                GUILayout.Space(4);
 
-                //todo check new kks properties to add
-                //currentAdvGirl.isAnger = GUILayout.Toggle(currentAdvGirl.isAnger, "Is angry");
-                //currentAdvGirl.isDate = GUILayout.Toggle(currentAdvGirl.isDate, "Date promised");
-                //currentAdvGirl.isFirstGirlfriend = GUILayout.Toggle(currentAdvGirl.isFirstGirlfriend, "isFirstGirlfriend");
-
+                GUILayout.Label("Set all touch experience");
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Label("Relationship level: ");
-                    GUILayout.Label(_relationNames[currentAdvGirl.relation]);
-                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button("0%"))
+                        SetGirlHExp(currentAdvGirl, 0f);
+                    if (GUILayout.Button("50%"))
+                        SetGirlHExp(currentAdvGirl, 50f);
+                    if (GUILayout.Button("100%"))
+                        SetGirlHExp(currentAdvGirl, 100f);
                 }
                 GUILayout.EndHorizontal();
 
-
-                currentAdvGirl.isFriend = GUILayout.Toggle(currentAdvGirl.isFriend, "Is a friend");
-                currentAdvGirl.isGirlfriend = GUILayout.Toggle(currentAdvGirl.isGirlfriend, "Is a girlfriend");
-
-                currentAdvGirl.confessed = GUILayout.Toggle(currentAdvGirl.confessed, "Confessed");
-                currentAdvGirl.isLunch = GUILayout.Toggle(currentAdvGirl.isLunch, "Had first lunch");
-                currentAdvGirl.isDayH = GUILayout.Toggle(currentAdvGirl.isDayH, "Had H today (won't visit)");
+                GUILayout.Space(4);
 
                 currentAdvGirl.denial.kiss = GUILayout.Toggle(currentAdvGirl.denial.kiss, "Won't refuse kiss");
                 currentAdvGirl.denial.massage = GUILayout.Toggle(currentAdvGirl.denial.massage, "Won't refuse strong massage");
@@ -489,12 +487,7 @@ namespace CheatTools
                 currentAdvGirl.denial.aibu = GUILayout.Toggle(currentAdvGirl.denial.aibu, "Won't refuse vibrator");
                 currentAdvGirl.denial.notCondom = GUILayout.Toggle(currentAdvGirl.denial.notCondom, "Insert w/o condom OK");
 
-                if (ActionScene.instance != null && currentAdvGirl.transform != null && GUILayout.Button("Follow me"))
-                {
-                    var npc = currentAdvGirl.transform.GetComponent<NPC>();
-                    if (npc) ActionScene.instance.Player.ChaserSet(npc);
-                    else CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, "Could not make heroine follow - NPC component not found");
-                }
+                GUILayout.Space(4);
 
                 if (GUILayout.Button("Navigate to heroine's GameObject"))
                 {
