@@ -550,6 +550,9 @@ namespace CheatTools
                 girl.hAreaExps[i] = amount;
             for (var i = 0; i < girl.massageExps.Length; i++)
                 girl.massageExps[i] = amount;
+            
+            // Global exp added in KKS
+            girl.hExp = amount;
         }
 
         private static void DrawPlayerCheats(CheatToolsWindow cheatToolsWindow)
