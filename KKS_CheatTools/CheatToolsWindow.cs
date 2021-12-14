@@ -10,6 +10,7 @@ using Illusion.Game;
 using Manager;
 using RuntimeUnityEditor.Core.Inspector.Entries;
 using RuntimeUnityEditor.Core.Utils;
+using SaveData;
 using UnityEngine;
 using LogLevel = BepInEx.Logging.LogLevel;
 using Object = UnityEngine.Object;
@@ -306,7 +307,7 @@ namespace CheatTools
                 GUILayout.BeginHorizontal();
                 {
                     GUILayout.Label("Relationship level: ");
-                    GUILayout.Label(_relationNames[currentAdvGirl.relation]);
+                    GUILayout.Label(_relationNames[GetRelationSafe(currentAdvGirl)]);
                     GUILayout.FlexibleSpace();
                 }
                 GUILayout.EndHorizontal();
@@ -550,7 +551,7 @@ namespace CheatTools
                 girl.hAreaExps[i] = amount;
             for (var i = 0; i < girl.massageExps.Length; i++)
                 girl.massageExps[i] = amount;
-            
+
             // Global exp added in KKS
             girl.hExp = amount;
         }
@@ -698,6 +699,25 @@ namespace CheatTools
         private static string GetHExpText(SaveData.Heroine currentAdvGirl)
         {
             return ((HExperienceKindEng)currentAdvGirl.HExperience).ToString();
+        }
+
+        private static int GetRelationSafe(Heroine heroine)
+        {
+
+            if (heroine.isGirlfriend)
+            {
+                // This check crashes outside of main game because it needs an instance
+                // todo turn this into an universal fix?
+                if (heroine.favor >= 150)
+                    return 3;
+                return 2;
+            }
+            else
+            {
+                if (heroine.isFriend)
+                    return 1;
+                return 0;
+            }
         }
     }
 }
