@@ -2,30 +2,45 @@
 using System.Collections.Generic;
 using System.Reflection;
 using RuntimeUnityEditor.Core;
+using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
-using RuntimeUnityEditor.Core.UI;
+using RuntimeUnityEditor.Core.Utils.Abstractions;
 using UnityEngine;
 
 namespace CheatTools
 {
-    public class CheatToolsWindow
+    public sealed class CheatToolsWindow : Window<CheatToolsWindow>
     {
-        private const int ScreenOffset = 20;
-
         public readonly RuntimeUnityEditorCore Editor;
 
-        private readonly string _mainWindowTitle;
         private Vector2 _cheatsScrollPos;
-        private Rect _cheatWindowRect;
-        private Rect _screenRect;
-        private bool _show;
 
         public static readonly List<CheatEntry> Cheats = new List<CheatEntry>();
+
+        protected override void Initialize(InitSettings initSettings)
+        {
+            OnInitialize?.Invoke(this);
+            Enabled = true;
+        }
+
+        protected override void VisibleChanged(bool visible)
+        {
+            base.VisibleChanged(visible);
+            if (visible)
+                OnShown?.Invoke(this);
+        }
+
+        protected override Rect GetDefaultWindowRect(Rect screenRect)
+        {
+            const int cheatWindowHeight = 500;
+            return new Rect(screenRect.xMin, screenRect.yMax - cheatWindowHeight, 270, cheatWindowHeight);
+        }
 
         public CheatToolsWindow(RuntimeUnityEditorCore editor)
         {
             Editor = editor ?? throw new ArgumentNullException(nameof(editor));
-            _mainWindowTitle = "Cheat Tools " + Assembly.GetExecutingAssembly().GetName().Version;
+            Title = "Cheat Tools " + Assembly.GetExecutingAssembly().GetName().Version;
+            DisplayName = "Cheat Tools";
 
             Cheats.Add(new CheatEntry(window => true, DrawTimeControls, null));
         }
@@ -42,25 +57,10 @@ namespace CheatTools
             GUILayout.EndHorizontal();
         }
 
-        public bool Show
-        {
-            get => _show;
-            set
-            {
-                _show = value;
-                Editor.Show = value;
+        public static event Action<CheatToolsWindow> OnInitialize;
+        public static event Action<CheatToolsWindow> OnShown;
 
-                if (value)
-                {
-                    SetWindowSizes();
-                    OnShown(this);
-                }
-            }
-        }
-
-        public static Action<CheatToolsWindow> OnShown { get; set; }
-
-        private void CheatWindowContents(int id)
+        protected override void DrawContents()
         {
             _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
             {
@@ -80,30 +80,6 @@ namespace CheatTools
                 }
             }
             GUILayout.EndScrollView();
-
-            _cheatWindowRect = RuntimeUnityEditor.Core.Utils.IMGUIUtils.DragOrResize(id, _cheatWindowRect);
-        }
-
-        public void DisplayCheatWindow()
-        {
-            if (!Show) return;
-
-            var skinBack = GUI.skin;
-            GUI.skin = InterfaceMaker.CustomSkin;
-
-            _cheatWindowRect = GUILayout.Window(591, _cheatWindowRect, CheatWindowContents, _mainWindowTitle);
-
-            InterfaceMaker.EatInputInRect(_cheatWindowRect);
-            GUI.skin = skinBack;
-        }
-
-        private void SetWindowSizes()
-        {
-            int w = Screen.width, h = Screen.height;
-            _screenRect = new Rect(ScreenOffset, ScreenOffset, w - ScreenOffset * 2, h - ScreenOffset * 2);
-
-            const int cheatWindowHeight = 500;
-            _cheatWindowRect = new Rect(_screenRect.xMin, _screenRect.yMax - cheatWindowHeight, 270, cheatWindowHeight);
         }
     }
 
@@ -131,11 +107,11 @@ namespace CheatTools
                     if (GUILayout.Button(obj.Value))
                     {
                         if (obj.Key is Type t)
-                            window.Editor.Inspector.Push(new StaticStackEntry(t, obj.Value), true);
+                            Inspector.Instance.Push(new StaticStackEntry(t, obj.Value), true);
                         else if (obj.Key is Func<object> f)
-                            window.Editor.Inspector.Push(new InstanceStackEntry(f(), obj.Value), true);
+                            Inspector.Instance.Push(new InstanceStackEntry(f(), obj.Value), true);
                         else
-                            window.Editor.Inspector.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
+                            Inspector.Instance.Push(new InstanceStackEntry(obj.Key, obj.Value), true);
                     }
                 }
             }

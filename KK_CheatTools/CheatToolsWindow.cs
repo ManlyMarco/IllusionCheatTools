@@ -36,7 +36,7 @@ namespace CheatTools
 
         public static void InitializeCheats()
         {
-            CheatToolsWindow.OnShown = window =>
+            CheatToolsWindow.OnInitialize += window =>
             {
                 _hFlag = Object.FindObjectOfType<HFlag>();
                 _talkScene = Object.FindObjectOfType<TalkScene>();
@@ -47,17 +47,21 @@ namespace CheatTools
                 _sceneInstance = Scene.Instance;
                 _gameMgr = Game.Instance;
 
-                _openInInspectorButtons = new[]
+                CheatToolsWindow.OnShown += _ =>
                 {
-                    new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.HeroineList.Count > 0 ? (Func<object>) (() => _gameMgr.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x))) : null, "Heroine list"),
-                    new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
-                    new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
-                    new KeyValuePair<object, string>(_communicationInstance, "Manager.Communication.Instance"),
-                    new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
-                    new KeyValuePair<object, string>(_hFlag, "HFlag"),
-                    new KeyValuePair<object, string>(_talkScene, "TalkScene"),
-                    new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                    new KeyValuePair<object, string>((Func<object>) EditorUtilities.GetRootGoScanner, "Root Objects")
+                    _openInInspectorButtons = new[]
+                    {
+                        new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.HeroineList.Count > 0 ? (Func<object>)(() => _gameMgr.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x))) : null,
+                                                         "Heroine list"),
+                        new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
+                        new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
+                        new KeyValuePair<object, string>(_communicationInstance, "Manager.Communication.Instance"),
+                        new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
+                        new KeyValuePair<object, string>(_hFlag, "HFlag"),
+                        new KeyValuePair<object, string>(_talkScene, "TalkScene"),
+                        new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
+                        new KeyValuePair<object, string>((Func<object>)EditorUtilities.GetRootGoScanner, "Root Objects")
+                    };
                 };
             };
             

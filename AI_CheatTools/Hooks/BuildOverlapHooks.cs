@@ -21,7 +21,7 @@ namespace CheatTools
                         _hInstance = Harmony.CreateAndPatchAll(typeof(BuildOverlapHooks));
                     else
                     {
-                        _hInstance.UnpatchAll(_hInstance.Id);
+                        _hInstance.UnpatchSelf();
                         _hInstance = null;
                     }
                 }

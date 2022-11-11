@@ -31,7 +31,7 @@ namespace CheatTools
 
         public static void InitializeCheats()
         {
-            CheatToolsWindow.OnShown = window =>
+            CheatToolsWindow.OnInitialize += window =>
             {
                 _studioInstance = Studio.Studio.IsInstance() ? Studio.Studio.Instance : null;
                 _soundInstance = Manager.Sound.instance;
@@ -40,19 +40,23 @@ namespace CheatTools
                 _baseMap = BaseMap.instance;
                 _hScene = HSceneFlagCtrl.IsInstance() ? HSceneFlagCtrl.Instance : null;
 
-                _openInInspectorButtons = new[]
+                CheatToolsWindow.OnShown += _ =>
                 {
-                    new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.heroineList.Count > 0 ? (Func<object>) (() => _gameMgr.heroineList.Select(x => new ReadonlyCacheEntry(GetHeroineName(x), x))) : null, "Heroine list"),
-                    new KeyValuePair<object, string>(ADVManager.IsInstance() ? ADVManager.Instance : null, "Manager.ADVManager.Instance"),
-                    new KeyValuePair<object, string>(_baseMap, "Manager.BaseMap.instance"),
-                    new KeyValuePair<object, string>(Character.IsInstance() ? Character.Instance : null, "Manager.Character.Instance"),
-                    new KeyValuePair<object, string>(typeof(Manager.Config), "Manager.Config"),
-                    new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
-                    new KeyValuePair<object, string>(GameSystem.IsInstance() ? GameSystem.Instance : null, "Manager.GameSystem.Instance"),
-                    new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.instance"),
-                    new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.instance"),
-                    new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                    new KeyValuePair<object, string>((Func<object>) EditorUtilities.GetRootGoScanner, "Root Objects")
+                    _openInInspectorButtons = new[]
+                    {
+                        new KeyValuePair<object, string>(
+                            _gameMgr != null && _gameMgr.heroineList.Count > 0 ? (Func<object>)(() => _gameMgr.heroineList.Select(x => new ReadonlyCacheEntry(GetHeroineName(x), x))) : null, "Heroine list"),
+                        new KeyValuePair<object, string>(ADVManager.IsInstance() ? ADVManager.Instance : null, "Manager.ADVManager.Instance"),
+                        new KeyValuePair<object, string>(_baseMap, "Manager.BaseMap.instance"),
+                        new KeyValuePair<object, string>(Character.IsInstance() ? Character.Instance : null, "Manager.Character.Instance"),
+                        new KeyValuePair<object, string>(typeof(Manager.Config), "Manager.Config"),
+                        new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
+                        new KeyValuePair<object, string>(GameSystem.IsInstance() ? GameSystem.Instance : null, "Manager.GameSystem.Instance"),
+                        new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.instance"),
+                        new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.instance"),
+                        new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
+                        new KeyValuePair<object, string>((Func<object>)EditorUtilities.GetRootGoScanner, "Root Objects")
+                    };
                 };
             };
 

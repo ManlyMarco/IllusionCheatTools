@@ -21,7 +21,7 @@ namespace CheatTools
                         _hInstance = Harmony.CreateAndPatchAll(typeof(FishingHackHooks));
                     else
                     {
-                        _hInstance.UnpatchAll(_hInstance.Id);
+                        _hInstance.UnpatchSelf();
                         _hInstance = null;
                     }
                 }

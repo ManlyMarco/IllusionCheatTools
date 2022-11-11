@@ -41,7 +41,7 @@ namespace CheatTools
                     }
                     else
                     {
-                        _hInstance.UnpatchAll(_hInstance.Id);
+                        _hInstance.UnpatchSelf();
                         _hInstance = null;
                     }
                 }
