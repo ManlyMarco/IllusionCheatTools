@@ -38,7 +38,7 @@ namespace CheatTools
 
         public static void InitializeCheats()
         {
-            CheatToolsWindow.OnInitialize += window =>
+            CheatToolsWindow.OnShown += _ =>
             {
                 _hFlag = Object.FindObjectOfType<HFlag>();
                 _talkScene = Object.FindObjectOfType<TalkScene>();
@@ -49,24 +49,20 @@ namespace CheatTools
                 _sceneInstance = Scene.Instance;
                 _gameMgr = Game.Instance;
 
-                CheatToolsWindow.OnShown += _ =>
+                _openInInspectorButtons = new[]
                 {
-                    _openInInspectorButtons = new[]
-                    {
-                        new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.HeroineList.Count > 0 ? (Func<object>)(() => _gameMgr.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x))) : null,
-                                                         "Heroine list"),
-                        new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
-                        new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
-                        new KeyValuePair<object, string>(_communicationInstance, "Manager.Communication.Instance"),
-                        new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
-                        new KeyValuePair<object, string>(_hFlag, "HFlag"),
-                        new KeyValuePair<object, string>(_talkScene, "TalkScene"),
-                        new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                        new KeyValuePair<object, string>((Func<object>)EditorUtilities.GetRootGoScanner, "Root Objects")
-                    };
+                    new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.HeroineList.Count > 0 ? (Func<object>)(() => _gameMgr.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x))) : null, "Heroine list"),
+                    new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
+                    new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
+                    new KeyValuePair<object, string>(_communicationInstance, "Manager.Communication.Instance"),
+                    new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
+                    new KeyValuePair<object, string>(_hFlag, "HFlag"),
+                    new KeyValuePair<object, string>(_talkScene, "TalkScene"),
+                    new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
+                    new KeyValuePair<object, string>((Func<object>)EditorUtilities.GetRootGoScanner, "Root Objects")
                 };
             };
-            
+
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _studioInstance == null && _gameMgr != null && !_gameMgr.saveData.isOpening, DrawPlayerCheats, "Start the game to see player cheats"));
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _hFlag != null, DrawHSceneCheats, null));
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _gameMgr != null, DrawGirlCheatMenu, null));
