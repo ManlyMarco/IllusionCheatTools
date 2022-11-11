@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using ActionGame;
 using ActionGame.Chara;
-using ADV;
 using Illusion.Component;
 using Illusion.Game;
 using Manager;
+using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
+using RuntimeUnityEditor.Core.ObjectTree;
 using RuntimeUnityEditor.Core.Utils;
 using SaveData;
 using UnityEngine;
@@ -19,7 +19,7 @@ namespace CheatTools
 {
     public static class CheatToolsWindowInit
     {
-        private static SaveData.Heroine _currentVisibleGirl;
+        private static Heroine _currentVisibleGirl;
         private static bool _showSelectHeroineList;
 
         private static HFlag _hFlag;
@@ -35,8 +35,7 @@ namespace CheatTools
         private static string _setdesireValue;
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
 
-        private static readonly string[] _prayerNames = new[]
-        {
+        private static readonly string[] _prayerNames = {
             "Nothing",
             "Topic drop bonus",
             "Find more topics?",
@@ -51,8 +50,7 @@ namespace CheatTools
             "Ask for sex bonus",
         };
 
-        private static readonly int[] _prayerIds = new[]
-        {
+        private static readonly int[] _prayerIds = {
             0,
             1,
             2,
@@ -67,8 +65,7 @@ namespace CheatTools
             1003,
         };
 
-        private static readonly string[] _relationNames = new[]
-        {
+        private static readonly string[] _relationNames = {
             "Casual",
             "Friend",
             "Lover",
@@ -182,7 +179,7 @@ namespace CheatTools
                 if (_currentVisibleGirl != null)
                 {
                     GUILayout.Space(6);
-                    DrawHeroineCheats(_currentVisibleGirl, cheatToolsWindow);
+                    DrawHeroineCheats(_currentVisibleGirl);
                 }
                 else
                 {
@@ -296,7 +293,7 @@ namespace CheatTools
             }
         }
 
-        private static void DrawHeroineCheats(SaveData.Heroine currentAdvGirl, CheatToolsWindow cheatToolsWindow)
+        private static void DrawHeroineCheats(Heroine currentAdvGirl)
         {
             GUILayout.BeginVertical();
             {
@@ -497,25 +494,25 @@ namespace CheatTools
                 if (GUILayout.Button("Navigate to heroine's GameObject"))
                 {
                     if (currentAdvGirl.transform != null)
-                        cheatToolsWindow.Editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
+                        ObjectTreeViewer.Instance.SelectAndShowObject(currentAdvGirl.transform);
                     else
                         CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
                 }
 
                 if (GUILayout.Button("Open Heroine in inspector"))
                 {
-                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name), true);
                 }
 
                 if (GUILayout.Button("Inspect extended data"))
                 {
-                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.charFile), "ExtData for " + currentAdvGirl.Name), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.charFile), "ExtData for " + currentAdvGirl.Name), true);
                 }
             }
             GUILayout.EndVertical();
         }
 
-        private static void MakeHorny(SaveData.Heroine currentAdvGirl)
+        private static void MakeHorny(Heroine currentAdvGirl)
         {
             currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
             currentAdvGirl.isVirgin = false;
@@ -523,7 +520,7 @@ namespace CheatTools
             currentAdvGirl.lewdness = 100;
         }
 
-        private static void MakeExperienced(SaveData.Heroine currentAdvGirl)
+        private static void MakeExperienced(Heroine currentAdvGirl)
         {
             currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
             currentAdvGirl.isVirgin = false;
@@ -531,7 +528,7 @@ namespace CheatTools
             currentAdvGirl.lewdness = Mathf.Min(99, currentAdvGirl.lewdness);
         }
 
-        private static void MakeInexperienced(SaveData.Heroine currentAdvGirl)
+        private static void MakeInexperienced(Heroine currentAdvGirl)
         {
             currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
             currentAdvGirl.isVirgin = false;
@@ -539,14 +536,14 @@ namespace CheatTools
             SetGirlHExp(currentAdvGirl, 0);
         }
 
-        private static void MakeVirgin(SaveData.Heroine currentAdvGirl)
+        private static void MakeVirgin(Heroine currentAdvGirl)
         {
             currentAdvGirl.hCount = 0;
             currentAdvGirl.isVirgin = true;
             SetGirlHExp(currentAdvGirl, 0);
         }
 
-        private static void SetGirlHExp(SaveData.Heroine girl, float amount)
+        private static void SetGirlHExp(Heroine girl, float amount)
         {
             girl.houshiExp = amount;
             girl.countKokanH = amount;
@@ -653,7 +650,7 @@ namespace CheatTools
 
             if (GUILayout.Button("Open player data in inspector"))
             {
-                cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(Game.saveData.player, "Player data"), true);
+                Inspector.Instance.Push(new InstanceStackEntry(Game.saveData.player, "Player data"), true);
             }
 
             GUILayout.BeginVertical(GUI.skin.box);
@@ -672,7 +669,7 @@ namespace CheatTools
             GUILayout.EndVertical();
         }
 
-        private static SaveData.Heroine[] GetCurrentVisibleGirls()
+        private static Heroine[] GetCurrentVisibleGirls()
         {
             if (_talkScene != null)
             {
@@ -697,10 +694,10 @@ namespace CheatTools
                     return new[] { s.targetHeroine };
             }
 
-            return new SaveData.Heroine[0];
+            return Array.Empty<Heroine>();
         }
 
-        private static string GetHExpText(SaveData.Heroine currentAdvGirl)
+        private static string GetHExpText(Heroine currentAdvGirl)
         {
             return ((HExperienceKindEng)currentAdvGirl.HExperience).ToString();
         }
@@ -711,7 +708,7 @@ namespace CheatTools
             if (heroine.isGirlfriend)
             {
                 // This check crashes outside of main game because it needs an instance
-                // todo turn this into an universal fix?
+                // todo turn this into a universal fix?
                 if (heroine.favor >= 150)
                     return 3;
                 return 2;

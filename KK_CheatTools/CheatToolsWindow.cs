@@ -7,7 +7,9 @@ using ActionGame.Chara;
 using Illusion.Component;
 using Illusion.Game;
 using Manager;
+using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
+using RuntimeUnityEditor.Core.ObjectTree;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
 using LogLevel = BepInEx.Logging.LogLevel;
@@ -159,7 +161,7 @@ namespace CheatTools
                 if (_currentVisibleGirl != null)
                 {
                     GUILayout.Space(6);
-                    DrawHeroineCheats(_currentVisibleGirl, cheatToolsWindow);
+                    DrawHeroineCheats(_currentVisibleGirl);
                 }
                 else
                 {
@@ -269,7 +271,7 @@ namespace CheatTools
             }
         }
 
-        private static void DrawHeroineCheats(SaveData.Heroine currentAdvGirl, CheatToolsWindow cheatToolsWindow)
+        private static void DrawHeroineCheats(SaveData.Heroine currentAdvGirl)
         {
             GUILayout.BeginVertical();
             {
@@ -486,19 +488,19 @@ namespace CheatTools
                 if (GUILayout.Button("Navigate to heroine's GameObject"))
                 {
                     if (currentAdvGirl.transform != null)
-                        cheatToolsWindow.Editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
+                        ObjectTreeViewer.Instance.SelectAndShowObject(currentAdvGirl.transform);
                     else
                         CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
                 }
 
                 if (GUILayout.Button("Open Heroine in inspector"))
                 {
-                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name), true);
                 }
 
                 if (GUILayout.Button("Inspect extended data"))
                 {
-                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.charFile), "ExtData for " + currentAdvGirl.Name), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.charFile), "ExtData for " + currentAdvGirl.Name), true);
                 }
             }
             GUILayout.EndVertical();
@@ -650,7 +652,7 @@ namespace CheatTools
 
             if (GUILayout.Button("Open player data in inspector"))
             {
-                cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"), true);
+                Inspector.Instance.Push(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"), true);
             }
         }
 

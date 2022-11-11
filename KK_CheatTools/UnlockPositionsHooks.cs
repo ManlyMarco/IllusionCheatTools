@@ -58,7 +58,7 @@ namespace CheatTools
             _fixUi = false;
             var oneFem = traverse.Field<HFlag>("flags").Value.lstHeroine.Count == 1;
             var peeping = traverse.Field<OpenHData.Data>("dataH").Value.peepCategory?.FirstOrDefault() != 0;
-            
+
             if (_isAnimListCreate)
                 traverse.Method("CreateAllAnimationList").GetValue();
 
@@ -86,16 +86,16 @@ namespace CheatTools
             return false;
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(HSprite), "CreateMotionList")]
+        [HarmonyPostfix, HarmonyPatch(typeof(HSprite), "CreateMotionList"), HarmonyWrapSafe]
         public static void CreateMotionListUnlockPatch(HSprite __instance, ref int _kind)
         {
             // todo move this list size fix to a fix plugin
             if (_fixUi && _kind == 2 && UnlockAll && __instance.menuActionSub.GetActive(5))
             {
                 var go = __instance.menuAction.GetObject(_kind);
-                var rectTransform = go.transform as RectTransform;
+                var rectTransform = (RectTransform)go.transform;
                 go = __instance.menuActionSub.GetObject(5);
-                var rectTransform2 = go.transform as RectTransform;
+                var rectTransform2 = (RectTransform)go.transform;
                 var anchoredPosition = rectTransform2.anchoredPosition;
                 anchoredPosition.y = rectTransform.anchoredPosition.y + 350f; // may cause issues with different resolutions, fuck it
                 rectTransform2.anchoredPosition = anchoredPosition;

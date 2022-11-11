@@ -5,7 +5,9 @@ using AIProject;
 using AIProject.Definitions;
 using AIProject.SaveData;
 using Manager;
+using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
+using RuntimeUnityEditor.Core.ObjectTree;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
 using Map = Manager.Map;
@@ -167,14 +169,14 @@ namespace CheatTools
             if (GUILayout.Button("Navigate to Player's GameObject"))
             {
                 if (_map.Player.transform != null)
-                    cheatToolsWindow.Editor.TreeViewer.SelectAndShowObject(_map.Player.transform);
+                    ObjectTreeViewer.Instance.SelectAndShowObject(_map.Player.transform);
                 else
                     CheatToolsPlugin.Logger.Log(BepInEx.Logging.LogLevel.Warning | BepInEx.Logging.LogLevel.Message,
                         "Player has no body assigned");
             }
 
             if (GUILayout.Button("Open Player in inspector"))
-                cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(_map.Player, "Player"), true);
+                Inspector.Instance.Push(new InstanceStackEntry(_map.Player, "Player"), true);
         }
 
         private static void DrawEnviroControls(CheatToolsWindow cheatToolsWindow)
@@ -252,7 +254,7 @@ namespace CheatTools
             GUILayout.EndHorizontal();
 
             if (GUILayout.Button("Open HScene Flags in inspector"))
-                cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(_hScene, "HSceneFlagCtrl"), true);
+                Inspector.Instance.Push(new InstanceStackEntry(_hScene, "HSceneFlagCtrl"), true);
         }
 
         private static void DrawGirlCheatMenu(CheatToolsWindow cheatToolsWindow)
@@ -270,12 +272,12 @@ namespace CheatTools
             GUILayout.Space(6);
 
             if (_currentVisibleGirl != null)
-                DrawSingleGirlCheats(_currentVisibleGirl, cheatToolsWindow);
+                DrawSingleGirlCheats(_currentVisibleGirl);
             else
                 GUILayout.Label("Select a heroine to access her stats");
         }
 
-        private static void DrawSingleGirlCheats(AgentActor currentAdvGirl, CheatToolsWindow cheatToolsWindow)
+        private static void DrawSingleGirlCheats(AgentActor currentAdvGirl)
         {
             GUILayout.BeginVertical(GUI.skin.box);
             {
@@ -359,17 +361,17 @@ namespace CheatTools
                 if (GUILayout.Button("Navigate to Actor's GameObject"))
                 {
                     if (currentAdvGirl.transform != null)
-                        cheatToolsWindow.Editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
+                        ObjectTreeViewer.Instance.SelectAndShowObject(currentAdvGirl.transform);
                     else
                         CheatToolsPlugin.Logger.Log(BepInEx.Logging.LogLevel.Warning | BepInEx.Logging.LogLevel.Message, "Actor has no body assigned");
                 }
 
                 if (GUILayout.Button("Open Actor in inspector"))
-                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Actor " + currentAdvGirl.CharaName), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvGirl, "Actor " + currentAdvGirl.CharaName), true);
 
                 if (GUILayout.Button("Inspect extended data"))
                 {
-                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.ChaControl?.chaFile), "ExtData for " + currentAdvGirl.CharaName), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.ChaControl?.chaFile), "ExtData for " + currentAdvGirl.CharaName), true);
                 }
             }
             GUILayout.EndVertical();

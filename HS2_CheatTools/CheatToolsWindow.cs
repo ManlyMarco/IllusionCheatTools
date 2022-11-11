@@ -4,7 +4,9 @@ using System.Linq;
 using Actor;
 using AIChara;
 using Manager;
+using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
+using RuntimeUnityEditor.Core.ObjectTree;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
 using LogLevel = BepInEx.Logging.LogLevel;
@@ -110,7 +112,7 @@ namespace CheatTools
             GUILayout.EndHorizontal();
 
             if (GUILayout.Button("Open HScene Flags in inspector"))
-                cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(_hScene, "HSceneFlagCtrl"), true);
+                Inspector.Instance.Push(new InstanceStackEntry(_hScene, "HSceneFlagCtrl"), true);
         }
 
         private static void DrawGirlCheatMenu(CheatToolsWindow cheatToolsWindow)
@@ -132,12 +134,12 @@ namespace CheatTools
             }
 
             if (_currentVisibleGirl != null)
-                DrawSingleGirlCheats(_currentVisibleGirl, cheatToolsWindow);
+                DrawSingleGirlCheats(_currentVisibleGirl);
             else
                 GUILayout.Label("Select a character to edit their stats");
         }
 
-        private static void DrawSingleGirlCheats(Heroine currentAdvGirl, CheatToolsWindow cheatToolsWindow)
+        private static void DrawSingleGirlCheats(Heroine currentAdvGirl)
         {
             GUILayout.BeginVertical(GUI.skin.box);
             {
@@ -240,7 +242,7 @@ namespace CheatTools
                         _onGirlStatsChanged(_currentVisibleGirl);
 
                     if (GUILayout.Button("View more stats and flags"))
-                        cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(gi2, "Heroine " + GetHeroineName(currentAdvGirl)), true);
+                        Inspector.Instance.Push(new InstanceStackEntry(gi2, "Heroine " + GetHeroineName(currentAdvGirl)), true);
                 }
 
                 GUILayout.Space(6);
@@ -248,17 +250,17 @@ namespace CheatTools
                 if (GUILayout.Button("Navigate to Heroine's GameObject"))
                 {
                     if (currentAdvGirl.transform != null)
-                        cheatToolsWindow.Editor.TreeViewer.SelectAndShowObject(currentAdvGirl.transform);
+                        ObjectTreeViewer.Instance.SelectAndShowObject(currentAdvGirl.transform);
                     else
                         CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, "Heroine has no body assigned");
                 }
 
                 if (GUILayout.Button("Open Heroine in inspector"))
-                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + GetHeroineName(currentAdvGirl)), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + GetHeroineName(currentAdvGirl)), true);
 
                 if (GUILayout.Button("Inspect extended data"))
                 {
-                    cheatToolsWindow.Editor.Inspector.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.chaFile), "ExtData for " + currentAdvGirl.Name), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.chaFile), "ExtData for " + currentAdvGirl.Name), true);
                 }
             }
             GUILayout.EndVertical();
