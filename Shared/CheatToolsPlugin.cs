@@ -15,9 +15,13 @@ namespace CheatTools
 
         internal static new ManualLogSource Logger;
 
-        private void Start()
+        public CheatToolsPlugin()
         {
             Logger = base.Logger;
+        }
+
+        private void Start()
+        {
             var runtimeUnityEditorCore = RuntimeUnityEditorCore.Instance;
             if (runtimeUnityEditorCore == null)
             {
