@@ -5,6 +5,7 @@ using RuntimeUnityEditor.Core.Inspector;
 
 namespace CheatTools
 {
+    [BepInDependency(KKAPI.KoikatuAPI.GUID, KKAPI.KoikatuAPI.VersionConst)]
     public partial class CheatToolsPlugin : BaseUnityPlugin
     {
         private void Awake()

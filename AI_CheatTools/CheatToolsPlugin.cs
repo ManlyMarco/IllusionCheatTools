@@ -9,6 +9,7 @@ using UnityEngine.AI;
 
 namespace CheatTools
 {
+    [BepInDependency(KKAPI.KoikatuAPI.GUID, KKAPI.KoikatuAPI.VersionConst)]
     public partial class CheatToolsPlugin : BaseUnityPlugin
     {
         internal static ConfigEntry<bool> BuildAnywhere;

@@ -1,4 +1,4 @@
-$array = @("KK_CheatTools", "AI_CheatTools", "HS2_CheatTools", "KKS_CheatTools")
+$array = @("KK_CheatTools", "AI_CheatTools", "HS2_CheatTools", "KKS_CheatTools", "KKLB_CheatTools")
 
 if ($PSScriptRoot -match '.+?\\bin\\?') {
     $dir = $PSScriptRoot + "\"
