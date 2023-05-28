@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using HarmonyLib;
 using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
 using RuntimeUnityEditor.Core.Utils;
@@ -18,14 +19,6 @@ namespace CheatTools
             {
                 _openInInspectorButtons = new[]
                 {
-                  //new KeyValuePair<object, string>(_gameMgr != null && _gameMgr.HeroineList.Count > 0 ? (Func<object>)(() => _gameMgr.HeroineList.Select(x => new ReadonlyCacheEntry(x.ChaName, x))) : null, "Heroine //list"),
-                  //new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
-                  //new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
-                  //new KeyValuePair<object, string>(_communicationInstance, "Manager.Communication.Instance"),
-                  //new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
-                  //new KeyValuePair<object, string>(_hFlag, "HFlag"),
-                  //new KeyValuePair<object, string>(_talkScene, "TalkScene"),
-                  //new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
                     new KeyValuePair<object, string>((Func<object>)(() => Game.Instance) , "Game.Instance"),
                     new KeyValuePair<object, string>((Func<object>)EditorUtilities.GetRootGoScanner, "Root Objects")
                 };
@@ -98,8 +91,12 @@ namespace CheatTools
                     }
                 }
                 EnsureNonzeroCount(gameStatus.listEndingCount);
-                EnsureNonzeroCount(gameStatus.listMiniGamePlayCount);
                 EnsureNonzeroCount(gameStatus.listMiniGameClearCount);
+                
+                // Doesn't exist in VR version, only NonVR
+                var tvf = Traverse.Create(gameStatus).Field("listMiniGamePlayCount");
+                if (tvf.FieldExists())
+                    EnsureNonzeroCount(tvf.GetValue<List<int>>());
 
                 gameStatus.SetSystemFlag(ID_SFlag.SFlag_End, true);
             }
