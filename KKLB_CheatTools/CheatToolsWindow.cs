@@ -12,6 +12,10 @@ namespace CheatTools
     public static class CheatToolsWindowInit
     {
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
+        private static bool _teleportUnlock;
+        private static bool _posTweakForce;
+        private static bool _posTweakUnlimited;
+        private static float _posTweakDistance = 0.1f;
 
         public static void InitializeCheats()
         {
@@ -24,11 +28,26 @@ namespace CheatTools
                 };
             };
 
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => Application.productName.Contains("VR"), DrawMoveTools, null));
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => Game.Instance?.PlayerStatus != null, DrawPlayerUnlocks, null));
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => Game.Instance?.GameStatus != null, DrawGlobalUnlocks, null));
 
             CheatToolsWindow.Cheats.Add(CheatEntry.CreateOpenInInspectorButtons(() => _openInInspectorButtons));
 
+            Harmony.CreateAndPatchAll(typeof(Hooks));
+        }
+
+        private static void DrawMoveTools(CheatToolsWindow window)
+        {
+            GUILayout.Label("VR move tools");
+
+            _posTweakForce = GUILayout.Toggle(_posTweakForce, "Always allow moving with thumbstick");
+            _posTweakUnlimited = GUILayout.Toggle(_posTweakUnlimited, "Unlimited thumbstick move");
+
+            GUILayout.Label($"Thumbstick move distance {_posTweakDistance:N2}");
+            _posTweakDistance = GUILayout.HorizontalSlider(_posTweakDistance, 0.1f, 2f);
+
+            _teleportUnlock = GUILayout.Toggle(_teleportUnlock, "Unlock teleport tool distance");
         }
 
         private static void DrawPlayerUnlocks(CheatToolsWindow window)
@@ -92,13 +111,40 @@ namespace CheatTools
                 }
                 EnsureNonzeroCount(gameStatus.listEndingCount);
                 EnsureNonzeroCount(gameStatus.listMiniGameClearCount);
-                
+
                 // Doesn't exist in VR version, only NonVR
                 var tvf = Traverse.Create(gameStatus).Field("listMiniGamePlayCount");
                 if (tvf.FieldExists())
                     EnsureNonzeroCount(tvf.GetValue<List<int>>());
 
                 gameStatus.SetSystemFlag(ID_SFlag.SFlag_End, true);
+            }
+        }
+
+        private static class Hooks
+        {
+            [HarmonyPrefix]
+            [HarmonyPatch(typeof(LocomotionTeleport), "AimCollisionTest")]
+            private static void AimHook(ref Vector3 end)
+            {
+                if (_teleportUnlock)
+                    end = Vector3.positiveInfinity;
+            }
+
+            [HarmonyPrefix]
+            [HarmonyPatch(typeof(CameraPosTweak), nameof(CameraPosTweak.Update))]
+            private static void PosTweakHook(CameraPosTweak __instance)
+            {
+                if (_posTweakForce)
+                    __instance.canPosTweak = true;
+
+                if (_posTweakUnlimited)
+                {
+                    __instance.sayuuNum = 0;
+                    __instance.zengoNum = 0;
+                }
+
+                __instance.distance = _posTweakDistance;
             }
         }
     }
