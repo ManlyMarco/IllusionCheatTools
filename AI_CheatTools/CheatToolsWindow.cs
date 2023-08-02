@@ -28,6 +28,7 @@ namespace CheatTools
         private static HSceneFlagCtrl _hScene;
         private static string _gameTimeText;
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
+        private static bool _expandDesires, _expandSkills;
 
         public static void Initialize()
         {
@@ -283,65 +284,122 @@ namespace CheatTools
 
                 if (currentAdvGirl.ChaControl != null && currentAdvGirl.ChaControl.fileGameInfo != null)
                 {
-                    GUILayout.Label("Status");
-
-                    GUILayout.BeginHorizontal();
+                    GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        GUILayout.Label($"Love phase: {currentAdvGirl.ChaControl.fileGameInfo.phase + 1} / 4");
-                        if (GUILayout.Button("-1")) currentAdvGirl.SetPhase(Mathf.Max(0, currentAdvGirl.ChaControl.fileGameInfo.phase - 1));
-                        if (GUILayout.Button("+1")) currentAdvGirl.SetPhase(Mathf.Min(3, currentAdvGirl.ChaControl.fileGameInfo.phase + 1));
-                    }
-                    GUILayout.EndHorizontal();
+                        GUILayout.Label("Status");
 
-                    GUILayout.BeginHorizontal();
-                    {
-                        var sickness = AIProject.Definitions.Sickness.TagTable.FirstOrDefault(x => x.Value == currentAdvGirl.AgentData.SickState.ID).Key;
-                        GUILayout.Label($"Sickness: {sickness ?? "None"}", GUILayout.ExpandWidth(true));
-                        if (GUILayout.Button("Heal", GUILayout.ExpandWidth(false)) && currentAdvGirl.AgentData.SickState.ID > -1)
+                        GUILayout.BeginHorizontal();
                         {
-                            currentAdvGirl.HealSickBySleep();
-                            currentAdvGirl.AgentData.SickState.OverwritableID = -1;
-                            currentAdvGirl.AgentData.WeaknessMotivation = 0;
+                            GUILayout.Label($"Love phase: {currentAdvGirl.ChaControl.fileGameInfo.phase + 1} / 4");
+                            if (GUILayout.Button("-1")) currentAdvGirl.SetPhase(Mathf.Max(0, currentAdvGirl.ChaControl.fileGameInfo.phase - 1));
+                            if (GUILayout.Button("+1")) currentAdvGirl.SetPhase(Mathf.Min(3, currentAdvGirl.ChaControl.fileGameInfo.phase + 1));
                         }
-                    }
-                    GUILayout.EndHorizontal();
+                        GUILayout.EndHorizontal();
 
-                    foreach (Status.Type statusValue in Enum.GetValues(typeof(Status.Type)))
-                    {
-                        if (currentAdvGirl.AgentData.StatsTable.ContainsKey((int)statusValue))
+                        GUILayout.BeginHorizontal();
                         {
-                            GUILayout.BeginHorizontal();
+                            var sickness = AIProject.Definitions.Sickness.TagTable.FirstOrDefault(x => x.Value == currentAdvGirl.AgentData.SickState.ID).Key;
+                            GUILayout.Label($"Sickness: {sickness ?? "None"}", GUILayout.ExpandWidth(true));
+                            if (GUILayout.Button("Heal", GUILayout.ExpandWidth(false)) && currentAdvGirl.AgentData.SickState.ID > -1)
                             {
-                                var status = Mathf.RoundToInt(currentAdvGirl.AgentData.StatsTable[(int)statusValue]);
-                                GUILayout.Label(statusValue + ": " + status, GUILayout.Width(120));
-                                var newStatus = Mathf.RoundToInt(GUILayout.HorizontalSlider(status, 0, (int)statusValue == 5 ? 150 : 100));
-                                if (newStatus != status)
-                                    currentAdvGirl.AgentData.StatsTable[(int)statusValue] = newStatus;
+                                currentAdvGirl.HealSickBySleep();
+                                currentAdvGirl.AgentData.SickState.OverwritableID = -1;
+                                currentAdvGirl.AgentData.WeaknessMotivation = 0;
                             }
-                            GUILayout.EndHorizontal();
                         }
-                    }
-                    GUILayout.Space(6);
+                        GUILayout.EndHorizontal();
 
-                    GUILayout.Label("Flavor skills");
-                    foreach (FlavorSkill.Type typeValue in Enum.GetValues(typeof(FlavorSkill.Type)))
-                    {
-                        if (currentAdvGirl.ChaControl.fileGameInfo.flavorState.ContainsKey((int)typeValue))
+                        foreach (Status.Type statusValue in Enum.GetValues(typeof(Status.Type)))
                         {
-                            GUILayout.BeginHorizontal();
+                            if (currentAdvGirl.AgentData.StatsTable.ContainsKey((int)statusValue))
                             {
-                                GUILayout.Label(typeValue + ": ", GUILayout.Width(120));
-                                GUI.changed = false;
-                                var flavorSkill = currentAdvGirl.GetFlavorSkill(typeValue);
-                                var textField = GUILayout.TextField(flavorSkill.ToString());
-                                if (GUI.changed && int.TryParse(textField, out var newSkill) && newSkill != flavorSkill)
-                                    currentAdvGirl.SetFlavorSkill(typeValue, newSkill);
-                                GUI.changed = false;
+                                GUILayout.BeginHorizontal();
+                                {
+                                    var status = Mathf.RoundToInt(currentAdvGirl.AgentData.StatsTable[(int)statusValue]);
+                                    GUILayout.Label(statusValue + ": " + status, GUILayout.Width(120));
+                                    var newStatus = Mathf.RoundToInt(GUILayout.HorizontalSlider(status, 0, (int)statusValue == 5 ? 150 : 100));
+                                    if (newStatus != status)
+                                        currentAdvGirl.AgentData.StatsTable[(int)statusValue] = newStatus;
+                                }
+                                GUILayout.EndHorizontal();
                             }
-                            GUILayout.EndHorizontal();
                         }
                     }
-                    GUILayout.Space(6);
+                    GUILayout.EndVertical();
+
+                    GUILayout.BeginVertical(GUI.skin.box);
+                    {
+                        _expandDesires = GUILayout.Toggle(_expandDesires, " Desires & Motivations");
+                        if (_expandDesires)
+                        {
+                            foreach (Desire.Type typeValue in Enum.GetValues(typeof(Desire.Type)))
+                            {
+                                var desireKey = Desire.GetDesireKey(typeValue);
+                                var desire = currentAdvGirl.GetDesire(desireKey);
+                                var motivation = currentAdvGirl.GetMotivation(desireKey);
+                                if (desire.HasValue || motivation.HasValue)
+                                {
+                                    GUILayout.BeginHorizontal();
+                                    {
+                                        GUILayout.Label(typeValue + ": ", GUILayout.ExpandWidth(true));
+                                        GUI.changed = false;
+
+                                        if (desire.HasValue)
+                                        {
+                                            var textFieldDesire = GUILayout.TextField($"{desire.Value:F2}", GUILayout.Width(60));
+                                            if (GUI.changed && float.TryParse(textFieldDesire, out var newDesire) && Mathf.Abs(newDesire - desire.Value) >= 0.01f)
+                                                currentAdvGirl.SetDesire(desireKey, newDesire);
+                                            GUI.changed = false;
+                                        }
+                                        else
+                                        {
+                                            GUILayout.Label("---", GUILayout.Width(60));
+                                        }
+
+                                        if (motivation.HasValue)
+                                        {
+                                            var textFieldMotivation = GUILayout.TextField($"{motivation.Value:F2}", GUILayout.Width(60));
+                                            if (GUI.changed && float.TryParse(textFieldMotivation, out var newMotivation) && Mathf.Abs(newMotivation - motivation.Value) >= 0.01f)
+                                                currentAdvGirl.SetMotivation(desireKey, newMotivation);
+                                            GUI.changed = false;
+                                        }
+                                        else
+                                        {
+                                            GUILayout.Label("---", GUILayout.Width(60));
+                                        }
+                                    }
+                                    GUILayout.EndHorizontal();
+                                }
+                            }
+                        }
+                    }
+                    GUILayout.EndVertical();
+
+                    GUILayout.BeginVertical(GUI.skin.box);
+                    {
+                        _expandSkills = GUILayout.Toggle(_expandSkills, " Flavor skills");
+                        if (_expandSkills)
+                        {
+                            foreach (FlavorSkill.Type typeValue in Enum.GetValues(typeof(FlavorSkill.Type)))
+                            {
+                                if (currentAdvGirl.ChaControl.fileGameInfo.flavorState.ContainsKey((int)typeValue))
+                                {
+                                    GUILayout.BeginHorizontal();
+                                    {
+                                        GUILayout.Label(typeValue + ": ", GUILayout.Width(120));
+                                        GUI.changed = false;
+                                        var flavorSkill = currentAdvGirl.GetFlavorSkill(typeValue);
+                                        var textField = GUILayout.TextField(flavorSkill.ToString());
+                                        if (GUI.changed && int.TryParse(textField, out var newSkill) && newSkill != flavorSkill)
+                                            currentAdvGirl.SetFlavorSkill(typeValue, newSkill);
+                                        GUI.changed = false;
+                                    }
+                                    GUILayout.EndHorizontal();
+                                }
+                            }
+                        }
+                    }
+                    GUILayout.EndVertical();
                 }
 
                 if (currentAdvGirl.AgentData.TalkMotivation >= currentAdvGirl.AgentData.StatsTable[5])
