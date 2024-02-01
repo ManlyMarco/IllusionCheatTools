@@ -1,4 +1,5 @@
-﻿using BepInEx;
+﻿#if !IL2CPP
+using BepInEx;
 using BepInEx.Logging;
 using RuntimeUnityEditor.Core;
 using Shared;
@@ -39,3 +40,4 @@ namespace CheatTools
         }
     }
 }
+#endif
