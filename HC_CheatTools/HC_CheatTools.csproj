@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>CheatTools</RootNamespace>
+    <Nullable>warnings</Nullable>
+
+    <OutputPath>..\bin</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+
+    <DebugType>embedded</DebugType>
+    <WarningLevel>9999</WarningLevel>
+
+    <DefineConstants>$(DefineConstants);EC;IL2CPP</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.682" />
+    <PackageReference Include="IllusionLibs.HoneyCome.Assembly-CSharp" Version="2023.99.12.15" />
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <Delete Files="$(OutputPath)\HC_CheatTools.deps.json" />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="RuntimeUnityEditor.Core.IL2CPP">
+      <HintPath>..\..\RuntimeUnityEditor\bin\IL2CPP\RuntimeUnityEditor.Core.IL2CPP.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Import Project="..\Shared\Shared.projitems" Label="Shared" />
+
+</Project>
