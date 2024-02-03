@@ -8,13 +8,14 @@ using UnityEngine;
 
 namespace CheatTools
 {
-    [BepInPlugin(GUID, "Cheat Tools", Version)]
+    [BepInPlugin(GUID, DisplayName, Version)]
     [BepInDependency(RuntimeUnityEditorCore.GUID, RuntimeUnityEditorCore.Version)]
 #if !KKLB
     [BepInDependency(KKAPI.KoikatuAPI.GUID, KKAPI.KoikatuAPI.VersionConst)]
 #endif
     public sealed class CheatToolsPlugin : BaseUnityPlugin
     {
+        public const string DisplayName = Metadata.DisplayName;
         public const string GUID = Metadata.GUID;
         public const string Version = Metadata.Version;
 

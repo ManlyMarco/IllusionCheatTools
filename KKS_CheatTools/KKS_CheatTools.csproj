@@ -162,13 +162,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CheatToolsWindowInit.cs" />
+    <Compile Include="CheatToolsWindowInit.KKS.cs" />
     <Compile Include="DesireEng.cs" />
     <Compile Include="HExperienceKindEng.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="..\Shared\Shared.projitems" Label="Shared" />
   <Import Project="..\Shared_Noclip\Shared_Noclip.projitems" Label="Shared" />

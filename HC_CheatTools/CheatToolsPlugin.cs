@@ -6,11 +6,13 @@ using Shared;
 
 namespace CheatTools
 {
-    [BepInPlugin(Metadata.GUID, "Cheat Tools", Version)]
+    [BepInPlugin(GUID, DisplayName, Version)]
     [BepInDependency(RuntimeUnityEditorCore.GUID, RuntimeUnityEditorCore.Version)]
     [BepInProcess("HoneyCome")]
     public class CheatToolsPlugin : BasePlugin
     {
+        public const string DisplayName = Metadata.DisplayName;
+        public const string GUID = Metadata.GUID;
         public const string Version = Metadata.Version;
 
         internal static new ManualLogSource Logger;

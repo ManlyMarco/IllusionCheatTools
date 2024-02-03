@@ -122,17 +122,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CheatToolsWindowInit.cs" />
+    <Compile Include="CheatToolsWindowInit.AI.cs" />
     <Compile Include="Hooks\BuildAnywhereHooks.cs" />
     <Compile Include="Hooks\BuildOverlapHooks.cs" />
     <Compile Include="Hooks\FishingHackHooks.cs" />
     <Compile Include="Hooks\UnlockCraftingHooks.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
   <Import Project="..\Shared\Shared.projitems" Label="Shared" />
   <Import Project="..\Shared_Noclip\Shared_Noclip.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

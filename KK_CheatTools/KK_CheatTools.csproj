@@ -106,17 +106,19 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CheatToolsWindowInit.cs" />
+    <Compile Include="CheatToolsWindowInit.KK.cs" />
     <Compile Include="DesireEng.cs" />
     <Compile Include="HExperienceKindEng.cs" />
     <Compile Include="UnlockPositionsHooks.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\KoikatuCompatibilityAnalyzer.1.1.0\analyzers\dotnet\cs\KoikatuCompatibilityAnalyzer.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="..\Shared\Shared.projitems" Label="Shared" />
   <Import Project="..\Shared_Noclip\Shared_Noclip.projitems" Label="Shared" />
