@@ -16,7 +16,7 @@ namespace CheatTools
         public static void InitializeNoclip(CheatToolsPlugin instance, Func<NavMeshAgent> getPlayerNavMeshAgent)
         {
             if (StudioAPI.InsideStudio) return;
-            
+
             _getPlayerNavMeshAgent = getPlayerNavMeshAgent ?? throw new ArgumentNullException(nameof(getPlayerNavMeshAgent));
 
             _noclip = instance.Config.Bind("Hotkeys", "Toggle player noclip", KeyboardShortcut.Empty);
@@ -30,9 +30,7 @@ namespace CheatTools
                 yield return null;
 
                 if (_noclip.Value.IsDown())
-                {
                     NoclipMode = !NoclipMode;
-                }
 
                 if (NoclipMode)
                 {

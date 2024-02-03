@@ -30,7 +30,7 @@ namespace CheatTools
         {
             return !string.IsNullOrEmpty(heroine.Name) ? heroine.Name : heroine.ChaName;
         }
-        
+
         public static void Initialize(CheatToolsPlugin instance)
         {
             ToStringConverter.AddConverter<Heroine>(GetHeroineName);
@@ -80,6 +80,7 @@ namespace CheatTools
                 foreach (var achievementKey in _gameMgr.saveData.achievement.Keys.ToList())
                     SaveData.SetAchievementAchieve(achievementKey);
             }
+
             if (GUILayout.Button("Unlock all perks", GUILayout.ExpandWidth(true)))
             {
                 foreach (var achievementKey in _gameMgr.saveData.achievementExchange.Keys.ToList())
@@ -144,7 +145,7 @@ namespace CheatTools
         {
             GUILayout.BeginVertical(GUI.skin.box);
             {
-                GUILayout.Label("Selected heroine name: " + (GetHeroineName(currentAdvGirl)));
+                GUILayout.Label("Selected heroine name: " + GetHeroineName(currentAdvGirl));
                 GUILayout.Space(6);
 
                 if (currentAdvGirl.chaCtrl != null && currentAdvGirl.chaCtrl.fileGameInfo2 != null)
@@ -156,7 +157,9 @@ namespace CheatTools
                     {
                         if (GUILayout.Button(state.ToString()))
                         {
-                            gi2.nowState = state; gi2.calcState = state; gi2.nowDrawState = state;
+                            gi2.nowState = state;
+                            gi2.calcState = state;
+                            gi2.nowDrawState = state;
                             gi2.Favor = state == ChaFileDefine.State.Favor ? 100 : Mathf.Min(gi2.Favor, 90);
                             gi2.Enjoyment = state == ChaFileDefine.State.Enjoyment ? 100 : Mathf.Min(gi2.Enjoyment, 90);
                             gi2.Aversion = state == ChaFileDefine.State.Aversion ? 100 : Mathf.Min(gi2.Aversion, 90);
@@ -166,6 +169,7 @@ namespace CheatTools
                             anyChanges = true;
                         }
                     }
+
                     GUILayout.BeginHorizontal();
                     {
                         GUILayout.Label("Current state: " + gi2.nowState);
@@ -207,6 +211,7 @@ namespace CheatTools
                         }
                         GUILayout.EndHorizontal();
                     }
+
                     void ShowSingleTextfield(string name, Action<int> set, Func<int> get)
                     {
                         GUILayout.BeginHorizontal();
@@ -236,7 +241,7 @@ namespace CheatTools
                     ShowSingleSlider(nameof(gi2.Tiredness), i => gi2.Tiredness = i, () => gi2.Tiredness);
                     ShowSingleSlider(nameof(gi2.Toilet), i => gi2.Toilet = i, () => gi2.Toilet);
                     ShowSingleSlider(nameof(gi2.Libido), i => gi2.Libido = i, () => gi2.Libido);
-
+                    
                     ShowSingleTextfield(nameof(gi2.hCount), i => { gi2.hCount = i; if (i == 0) gi2.firstHFlag = true; }, () => gi2.hCount);
 
                     if (anyChanges)
@@ -260,9 +265,7 @@ namespace CheatTools
                     Inspector.Instance.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + GetHeroineName(currentAdvGirl)), true);
 
                 if (GUILayout.Button("Inspect extended data"))
-                {
                     Inspector.Instance.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.chaFile), "ExtData for " + currentAdvGirl.Name), true);
-                }
             }
             GUILayout.EndVertical();
         }

@@ -18,7 +18,9 @@ namespace CheatTools
                 if (value != Enabled)
                 {
                     if (value)
+                    {
                         _hInstance = Harmony.CreateAndPatchAll(typeof(FishingHackHooks));
+                    }
                     else
                     {
                         _hInstance.UnpatchSelf();
@@ -29,12 +31,12 @@ namespace CheatTools
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(FishingManager), "CheckArrowInCircle")]
+        [HarmonyPatch(typeof(FishingManager), nameof(FishingManager.CheckArrowInCircle))]
         public static bool CheckPossible(FishingManager __instance, ref float ___fishHeartPoint)
         {
             ___fishHeartPoint = 0f;
             __instance.scene = FishingManager.FishingScene.Success;
-            AccessTools.Method(typeof(FishingManager), "SceneToSuccess").Invoke(__instance, null);
+            AccessTools.Method(typeof(FishingManager), nameof(FishingManager.SceneToSuccess)).Invoke(__instance, null);
             return false;
         }
     }

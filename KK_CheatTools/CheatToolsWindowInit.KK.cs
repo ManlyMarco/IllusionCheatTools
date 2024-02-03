@@ -110,12 +110,14 @@ namespace CheatTools
             {
                 // Vanilla positions don't seem to go above 60, modded positions are above 1000 usually
                 // 8 buckets might change in the future if game is updated with more h modes, check HSceneProc.lstAnimInfo for how many are needed
-                for (int i = 0; i < 10; i++) _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 9999));
+                for (var i = 0; i < 10; i++)
+                    _gameMgr.glSaveData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 9999));
             }
 
             if (GUILayout.Button("Unlock all wedding personalities"))
             {
-                foreach (var personalityId in Singleton<Voice>.Instance.voiceInfoList.Select(x => x.No).Where(x => x >= 0)) _gameMgr.weddingData.personality.Add(personalityId);
+                foreach (var personalityId in Singleton<Voice>.Instance.voiceInfoList.Select(x => x.No).Where(x => x >= 0))
+                    _gameMgr.weddingData.personality.Add(personalityId);
             }
 
             /* Doesn't work, need a list of items to put into glSaveData.clubContents from somewhere 
@@ -148,15 +150,12 @@ namespace CheatTools
 
             GUILayout.EndHorizontal();
 
-            if (_hSprite != null)
+            if (_hSprite != null && GUILayout.Button("Force quit H scene"))
             {
-                if (GUILayout.Button("Force quit H scene"))
-                {
-                    Utils.Sound.Play(SystemSE.cancel);
-                    _hSprite.flags.click = HFlag.ClickKind.end;
-                    _hSprite.flags.isHSceneEnd = true;
-                    _hSprite.flags.numEnd = 0;
-                }
+                Utils.Sound.Play(SystemSE.cancel);
+                _hSprite.flags.click = HFlag.ClickKind.end;
+                _hSprite.flags.isHSceneEnd = true;
+                _hSprite.flags.numEnd = 0;
             }
         }
 
@@ -206,6 +205,7 @@ namespace CheatTools
                                 h.isAnger = false;
                             }
                         }
+
                         if (GUILayout.Button("Make everyone lovers"))
                         {
                             foreach (var h in Game.Instance.HeroineList)
@@ -219,47 +219,53 @@ namespace CheatTools
                                 h.confessed = true;
                             }
                         }
+
                         if (GUILayout.Button("Make everyone club members"))
-                        {
                             foreach (var h in Game.Instance.HeroineList)
                             {
                                 if (!h.isTeacher)
                                     h.isStaff = true;
                             }
-                        }
+
                         if (GUILayout.Button("Make everyone virgins"))
                         {
                             foreach (var h in Game.Instance.HeroineList)
                                 MakeVirgin(h);
                         }
+
                         if (GUILayout.Button("Make everyone inexperienced"))
                         {
                             foreach (var h in Game.Instance.HeroineList)
                                 MakeInexperienced(h);
                         }
+
                         if (GUILayout.Button("Make everyone experienced"))
                         {
                             foreach (var h in Game.Instance.HeroineList)
                                 MakeExperienced(h);
                         }
+
                         if (GUILayout.Button("Make everyone perverted"))
                         {
                             foreach (var h in Game.Instance.HeroineList)
                                 MakeHorny(h);
                         }
+
                         if (GUILayout.Button("Clear everyone's desires"))
                         {
                             foreach (var h in Game.Instance.HeroineList)
                             {
-                                for (int i = 0; i < 31; i++)
+                                for (var i = 0; i < 31; i++)
                                     Game.Instance.actScene.actCtrl.SetDesire(i, h, 0);
                             }
                         }
+
                         if (GUILayout.Button("Everyone desires masturbation"))
                         {
                             foreach (var h in Game.Instance.HeroineList)
                                 Game.Instance.actScene.actCtrl.SetDesire(4, h, 100);
                         }
+
                         if (GUILayout.Button("Everyone desires lesbian"))
                         {
                             foreach (var h in Game.Instance.HeroineList)
@@ -370,10 +376,10 @@ namespace CheatTools
                 if (actCtrl != null)
                 {
                     var sortedDesires = Enum.GetValues(typeof(DesireEng)).Cast<DesireEng>()
-                        .Select(i => new { id = i, value = actCtrl.GetDesire((int)i, currentAdvGirl) })
-                        .Where(x => x.value > 5)
-                        .OrderByDescending(x => x.value)
-                        .Take(8);
+                                            .Select(i => new { id = i, value = actCtrl.GetDesire((int)i, currentAdvGirl) })
+                                            .Where(x => x.value > 5)
+                                            .OrderByDescending(x => x.value)
+                                            .Take(8);
 
                     var any = false;
                     foreach (var desire in sortedDesires)
@@ -383,6 +389,7 @@ namespace CheatTools
                             GUILayout.Label("Desires (and their strengths):\n");
                             any = true;
                         }
+
                         GUILayout.BeginHorizontal();
                         {
                             GUILayout.Label((int)desire.id + " " + desire.id);
@@ -393,11 +400,13 @@ namespace CheatTools
                         }
                         GUILayout.EndHorizontal();
                     }
+
                     if (!any) GUILayout.Label("Has no desires");
 
                     if (GUILayout.Button("Clear all desires"))
                     {
-                        for (int i = 0; i < 31; i++) actCtrl.SetDesire(i, currentAdvGirl, 0);
+                        for (var i = 0; i < 31; i++)
+                            actCtrl.SetDesire(i, currentAdvGirl, 0);
                     }
 
                     GUILayout.BeginHorizontal();
@@ -484,13 +493,9 @@ namespace CheatTools
                 if (GUI.changed)
                 {
                     if (newVal)
-                    {
                         currentAdvGirl.talkEvent.Add(2);
-                    }
                     else
-                    {
                         currentAdvGirl.talkEvent.Remove(2);
-                    }
                 }
 
                 currentAdvGirl.isGirlfriend = GUILayout.Toggle(currentAdvGirl.isGirlfriend, "Is a girlfriend");
@@ -518,14 +523,10 @@ namespace CheatTools
                 }
 
                 if (GUILayout.Button("Open Heroine in inspector"))
-                {
                     Inspector.Instance.Push(new InstanceStackEntry(currentAdvGirl, "Heroine " + currentAdvGirl.Name), true);
-                }
 
                 if (GUILayout.Button("Inspect extended data"))
-                {
                     Inspector.Instance.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.charFile), "ExtData for " + currentAdvGirl.Name), true);
-                }
             }
             GUILayout.EndVertical();
         }
@@ -653,7 +654,7 @@ namespace CheatTools
                         {
                             param.isWarning = false;
                             CheatToolsPlugin.Logger.Log(LogLevel.Message,
-                                "Disabling shame reactions on map: " + param.MapName);
+                                                        "Disabling shame reactions on map: " + param.MapName);
                         }
                     }
                 }
@@ -675,9 +676,7 @@ namespace CheatTools
             NoclipFeature.NoclipMode = GUILayout.Toggle(NoclipFeature.NoclipMode, "Enable player noclip");
 
             if (GUILayout.Button("Open player data in inspector"))
-            {
                 Inspector.Instance.Push(new InstanceStackEntry(_gameMgr.saveData.player, "Player data"), true);
-            }
         }
 
         private static SaveData.Heroine[] GetCurrentVisibleGirls()

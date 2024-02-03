@@ -36,7 +36,8 @@ namespace CheatTools
         private static string _setdesireValue;
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
 
-        private static readonly string[] _prayerNames = {
+        private static readonly string[] _prayerNames =
+        {
             "Nothing",
             "Topic drop bonus",
             "Find more topics?",
@@ -51,7 +52,8 @@ namespace CheatTools
             "Ask for sex bonus",
         };
 
-        private static readonly int[] _prayerIds = {
+        private static readonly int[] _prayerIds =
+        {
             0,
             1,
             2,
@@ -66,13 +68,14 @@ namespace CheatTools
             1003,
         };
 
-        private static readonly string[] _relationNames = {
+        private static readonly string[] _relationNames =
+        {
             "Casual",
             "Friend",
             "Lover",
             "Bonded",
         };
-        
+
         public static void Initialize(CheatToolsPlugin instance)
         {
             NoclipFeature.InitializeNoclip(instance, () =>
@@ -123,7 +126,7 @@ namespace CheatTools
             {
                 // Vanilla positions don't seem to go above 60, modded positions are above 1000 usually
                 // 8 buckets might change in the future if game is updated with more h modes, check HSceneProc.lstAnimInfo for how many are needed
-                for (int i = 0; i < 10; i++) Game.globalData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 9999));
+                for (var i = 0; i < 10; i++) Game.globalData.playHList[i] = new HashSet<int>(Enumerable.Range(0, 9999));
             }
         }
 
@@ -253,7 +256,7 @@ namespace CheatTools
                         {
                             foreach (var h in Game.HeroineList)
                             {
-                                for (int i = 0; i < 31; i++)
+                                for (var i = 0; i < 31; i++)
                                     ActionScene.instance.actCtrl.SetDesire(i, h, 0);
                             }
                         }
@@ -385,7 +388,8 @@ namespace CheatTools
 
                     if (GUILayout.Button("Clear all desires"))
                     {
-                        for (int i = 0; i < 31; i++) actCtrl.SetDesire(i, currentAdvGirl, 0);
+                        for (var i = 0; i < 31; i++)
+                            actCtrl.SetDesire(i, currentAdvGirl, 0);
                     }
 
                     GUILayout.BeginHorizontal();

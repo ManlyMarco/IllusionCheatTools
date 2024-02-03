@@ -20,7 +20,9 @@ namespace CheatTools
                 if (value != Enabled)
                 {
                     if (value)
+                    {
                         _hInstance = Harmony.CreateAndPatchAll(typeof(BuildAnywhereHooks));
+                    }
                     else
                     {
                         _hInstance.UnpatchSelf();
@@ -30,7 +32,7 @@ namespace CheatTools
             }
         }
 
-        [HarmonyPatch(typeof(GuideManager), "GridArea", MethodType.Getter)]
+        [HarmonyPatch(typeof(GuideManager), nameof(GuideManager.GridArea), MethodType.Getter)]
         [HarmonyPrefix]
         public static bool GetGridArea(ref Vector3 __result)
         {
@@ -38,7 +40,7 @@ namespace CheatTools
             return false;
         }
 
-        [HarmonyPatch(typeof(VirtualCameraController), "Update")]
+        [HarmonyPatch(typeof(VirtualCameraController), nameof(VirtualCameraController.Update))]
         [HarmonyPrefix]
         public static bool GetUpdate(ref VirtualCameraController __instance)
         {
@@ -47,7 +49,7 @@ namespace CheatTools
             return false;
         }
 
-        [HarmonyPatch(typeof(GuideRotation), "Round")]
+        [HarmonyPatch(typeof(GuideRotation), nameof(GuideRotation.Round))]
         [HarmonyPrefix]
         public static bool CustomRot(ref float __result, float _value)
         {

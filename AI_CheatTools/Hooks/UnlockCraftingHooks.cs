@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using AIProject;
 using AIProject.UI;
 using AIProject.UI.Viewer;
@@ -37,7 +38,7 @@ namespace CheatTools
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(CraftUI), "Possible")]
+        [HarmonyPatch(typeof(CraftUI), nameof(CraftUI.Possible))]
         public static bool CheckPossible(ref RecipeDataInfo[] __result, RecipeDataInfo[] info)
         {
             __result = info;
@@ -45,7 +46,7 @@ namespace CheatTools
         }
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(CraftViewer), "Possible")]
+        [HarmonyPatch(typeof(CraftViewer), nameof(CraftViewer.Possible))]
         public static bool CheckPossible(ref CraftItemNodeUI.Possible __result)
         {
             __result = new CraftItemNodeUI.Possible(false, true);
@@ -54,7 +55,7 @@ namespace CheatTools
 
         // How many of required items are available
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(RecipeItemNodeUI), "ItemCount", MethodType.Getter)]
+        [HarmonyPatch(typeof(RecipeItemNodeUI), nameof(RecipeItemNodeUI.ItemCount), MethodType.Getter)]
         public static bool GetCraftItemUIItemCount(ref int __result)
         {
             __result = 9999;
@@ -63,7 +64,7 @@ namespace CheatTools
 
         private static void LoadInfoCtor(Manager.Housing.LoadInfo __instance)
         {
-            __instance.requiredMaterials = new Manager.Housing.RequiredMaterial[0];
+            __instance.requiredMaterials = Array.Empty<Manager.Housing.RequiredMaterial>();
         }
     }
 }
