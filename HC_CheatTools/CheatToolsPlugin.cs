@@ -1,37 +1,37 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using BepInEx.Unity.IL2CPP;
-using CheatTools;
 using RuntimeUnityEditor.Core;
 using Shared;
-using UnityEngine;
 
-namespace CheatTools;
-
-[BepInPlugin(Metadata.GUID, "Cheat Tools", Version)]
-[BepInDependency(RuntimeUnityEditorCore.GUID, RuntimeUnityEditorCore.Version)]
-public class CheatToolsPlugin : BasePlugin
+namespace CheatTools
 {
-    public const string Version = Metadata.Version;
-
-    internal static new ManualLogSource Logger;
-
-    public CheatToolsPlugin()
+    [BepInPlugin(Metadata.GUID, "Cheat Tools", Version)]
+    [BepInDependency(RuntimeUnityEditorCore.GUID, RuntimeUnityEditorCore.Version)]
+    [BepInProcess("HoneyCome")]
+    public class CheatToolsPlugin : BasePlugin
     {
-        Logger = base.Log;
-    }
+        public const string Version = Metadata.Version;
 
-    public override void Load()
-    {
-        var runtimeUnityEditorCore = RuntimeUnityEditorCore.Instance;
-        if (runtimeUnityEditorCore == null)
+        internal static new ManualLogSource Logger;
+
+        public CheatToolsPlugin()
         {
-            Logger.Log(LogLevel.Error | LogLevel.Message, "Failed to get RuntimeUnityEditor! Make sure you don't have multiple versions of it installed!");
-            return;
+            Logger = base.Log;
         }
 
-        CheatToolsWindowInit.InitializeCheats();
+        public override void Load()
+        {
+            var runtimeUnityEditorCore = RuntimeUnityEditorCore.Instance;
+            if (runtimeUnityEditorCore == null)
+            {
+                Logger.Log(LogLevel.Error | LogLevel.Message, "Failed to get RuntimeUnityEditor! Make sure you don't have multiple versions of it installed!");
+                return;
+            }
 
-        runtimeUnityEditorCore.AddFeature(new CheatToolsWindow(runtimeUnityEditorCore));
+            CheatToolsWindowInit.InitializeCheats();
+
+            runtimeUnityEditorCore.AddFeature(new CheatToolsWindow(runtimeUnityEditorCore));
+        }
     }
 }
