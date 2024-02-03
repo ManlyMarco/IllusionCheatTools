@@ -32,16 +32,16 @@ namespace CheatTools
             }
         }
 
-        [HarmonyPatch(typeof(GuideManager), nameof(GuideManager.GridArea), MethodType.Getter)]
         [HarmonyPrefix]
+        [HarmonyPatch(typeof(GuideManager), nameof(GuideManager.GridArea), MethodType.Getter)]
         public static bool GetGridArea(ref Vector3 __result)
         {
             __result = new Vector3(15000f, 15000f, 15000f);
             return false;
         }
 
-        [HarmonyPatch(typeof(VirtualCameraController), nameof(VirtualCameraController.Update))]
         [HarmonyPrefix]
+        [HarmonyPatch(typeof(VirtualCameraController), nameof(VirtualCameraController.Update))]
         public static bool GetUpdate(ref VirtualCameraController __instance)
         {
             __instance.isLimitPos = false;
@@ -49,8 +49,8 @@ namespace CheatTools
             return false;
         }
 
-        [HarmonyPatch(typeof(GuideRotation), nameof(GuideRotation.Round))]
         [HarmonyPrefix]
+        [HarmonyPatch(typeof(GuideRotation), nameof(GuideRotation.Round))]
         public static bool CustomRot(ref float __result, float _value)
         {
             var flag = _value < 0f;
