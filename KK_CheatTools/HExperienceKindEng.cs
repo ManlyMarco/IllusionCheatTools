@@ -5,6 +5,6 @@
         FirstTime = 0,
         Inexperienced = 1,
         Experienced = 2,
-        Perverted = 3,
+        Perverted = 3
     };
 }

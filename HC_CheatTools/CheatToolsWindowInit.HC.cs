@@ -14,7 +14,7 @@ namespace CheatTools
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
         private static Human _currentVisibleGirl;
 
-        public static void InitializeCheats()
+        public static void Initialize(CheatToolsPlugin instance)
         {
             CheatToolsWindow.OnShown += _ =>
             {
@@ -29,7 +29,7 @@ namespace CheatTools
                     new KeyValuePair<object, string>((object)Manager.Scene._instance ?? typeof(Manager.Scene), "Manager.Scene"),
                     new KeyValuePair<object, string>((object)Manager.Sound._instance ?? typeof(Manager.Sound), "Manager.Sound"),
                     new KeyValuePair<object, string>(typeof(Manager.GameSystem), "Manager.GameSystem"),
-                    new KeyValuePair<object, string>(typeof(Manager.Map), "Manager.Map"),
+                    new KeyValuePair<object, string>(typeof(Manager.Map), "Manager.Map")
                 };
             };
 
@@ -54,6 +54,7 @@ namespace CheatTools
                 foreach (var achievementKey in achievementKeys)
                     HC.SaveData.SaveData.UnlockAchievement(achievementKey);
             }
+
             if (GUILayout.Button("Unlock all perks", GUILayout.ExpandWidth(true)))
             {
                 var achievementKeys = new List<int>();
@@ -102,10 +103,12 @@ namespace CheatTools
             if (GUILayout.Button("Open HScene Flags in inspector"))
                 Inspector.Instance.Push(new InstanceStackEntry(hScene, "HSceneFlagCtrl"), true);
         }
+
         internal static string GetHeroineName(Human heroine)
         {
             return !string.IsNullOrEmpty(heroine.fileParam?.fullname) ? heroine.fileParam.fullname : heroine.name;
         }
+
         private static void DrawGirlCheatMenu(CheatToolsWindow cheatToolsWindow)
         {
             GUILayout.Label("Character status editor");
@@ -132,7 +135,7 @@ namespace CheatTools
         {
             GUILayout.BeginVertical(GUI.skin.box);
             {
-                GUILayout.Label("Selected heroine name: " + (GetHeroineName(currentAdvGirl)));
+                GUILayout.Label("Selected heroine name: " + GetHeroineName(currentAdvGirl));
                 GUILayout.Space(6);
 
                 var gi = currentAdvGirl.fileGameInfo;
@@ -144,7 +147,9 @@ namespace CheatTools
                     {
                         if (GUILayout.Button(state.ToString()))
                         {
-                            gi.nowState = state; gi.calcState = state; gi.nowDrawState = state;
+                            gi.nowState = state;
+                            gi.calcState = state;
+                            gi.nowDrawState = state;
                             gi.Favor = state == ChaFileDefine.State.Favor ? 100 : Mathf.Min(gi.Favor, 90);
                             gi.Enjoyment = state == ChaFileDefine.State.Enjoyment ? 100 : Mathf.Min(gi.Enjoyment, 90);
                             gi.Aversion = state == ChaFileDefine.State.Aversion ? 100 : Mathf.Min(gi.Aversion, 90);
@@ -154,6 +159,7 @@ namespace CheatTools
                             anyChanges = true;
                         }
                     }
+
                     GUILayout.BeginHorizontal();
                     {
                         GUILayout.Label("Current state: " + gi.nowState);
@@ -195,6 +201,7 @@ namespace CheatTools
                         }
                         GUILayout.EndHorizontal();
                     }
+
                     void ShowSingleTextfield(string name, Action<int> set, Func<int> get)
                     {
                         GUILayout.BeginHorizontal();

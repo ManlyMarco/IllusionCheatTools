@@ -55,7 +55,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="ExtensibleSaveFormat, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ExtensibleSaveFormat.Koikatu.16.4.0\lib\net35\ExtensibleSaveFormat.dll</HintPath>
+      <HintPath>..\packages\ExtensibleSaveFormat.Koikatu.18.2.0\lib\net35\ExtensibleSaveFormat.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="KKAPI, Version=1.29.1.0, Culture=neutral, processorArchitecture=MSIL">
@@ -106,12 +106,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CheatToolsPlugin.cs" />
-    <Compile Include="CheatToolsWindow.cs" />
+    <Compile Include="CheatToolsWindowInit.KK.cs" />
     <Compile Include="DesireEng.cs" />
     <Compile Include="HExperienceKindEng.cs" />
     <Compile Include="UnlockPositionsHooks.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

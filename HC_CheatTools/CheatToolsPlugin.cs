@@ -6,11 +6,13 @@ using Shared;
 
 namespace CheatTools
 {
-    [BepInPlugin(Metadata.GUID, "Cheat Tools", Version)]
+    [BepInPlugin(GUID, DisplayName, Version)]
     [BepInDependency(RuntimeUnityEditorCore.GUID, RuntimeUnityEditorCore.Version)]
-    [BepInProcess("HoneyCome")]
+    [BepInProcess("HoneyCome")] // Studio is missing some important classes, so we can't run in it
     public class CheatToolsPlugin : BasePlugin
     {
+        public const string DisplayName = Metadata.DisplayName;
+        public const string GUID = Metadata.GUID;
         public const string Version = Metadata.Version;
 
         internal static new ManualLogSource Logger;
@@ -22,14 +24,14 @@ namespace CheatTools
 
         public override void Load()
         {
+            CheatToolsWindowInit.Initialize(this);
+
             var runtimeUnityEditorCore = RuntimeUnityEditorCore.Instance;
             if (runtimeUnityEditorCore == null)
             {
                 Logger.Log(LogLevel.Error | LogLevel.Message, "Failed to get RuntimeUnityEditor! Make sure you don't have multiple versions of it installed!");
                 return;
             }
-
-            CheatToolsWindowInit.InitializeCheats();
 
             runtimeUnityEditorCore.AddFeature(new CheatToolsWindow(runtimeUnityEditorCore));
         }

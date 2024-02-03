@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace CheatTools
 {
-    public static class CheatToolsWindowInit
+    public static partial class CheatToolsWindowInit
     {
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
         private static bool _teleportUnlock;
@@ -17,13 +17,13 @@ namespace CheatTools
         private static bool _posTweakUnlimited;
         private static float _posTweakDistance = 0.1f;
 
-        public static void InitializeCheats()
+        public static void Initialize(CheatToolsPlugin instance)
         {
             CheatToolsWindow.OnShown += _ =>
             {
                 _openInInspectorButtons = new[]
                 {
-                    new KeyValuePair<object, string>((Func<object>)(() => Game.Instance) , "Game.Instance"),
+                    new KeyValuePair<object, string>((Func<object>)(() => Game.Instance), "Game.Instance"),
                     new KeyValuePair<object, string>((Func<object>)EditorUtilities.GetRootGoScanner, "Root Objects")
                 };
             };
@@ -71,9 +71,7 @@ namespace CheatTools
             GUILayout.EndHorizontal();
 
             if (GUILayout.Button("Open advanced options"))
-            {
                 Inspector.Instance.Push(new InstanceStackEntry(playerStatus, "PlayerStatus"), true);
-            }
         }
 
         private static void DrawGlobalUnlocks(CheatToolsWindow window)
@@ -85,7 +83,7 @@ namespace CheatTools
             if (GUILayout.Button("Unlock all chapters"))
             {
                 var chapterClear = gameStatus.Chapter_Clear;
-                for (int i = 0; i < chapterClear.Length; i++)
+                for (var i = 0; i < chapterClear.Length; i++)
                     chapterClear[i] = true;
             }
 
@@ -93,22 +91,24 @@ namespace CheatTools
             {
                 var partsUnlock = gameStatus.Parts_Unlock;
                 var partsNew = gameStatus.Parts_New;
-                for (int i = 0; i < partsUnlock.Length; i++)
+                for (var i = 0; i < partsUnlock.Length; i++)
                 {
                     partsNew[i] = !partsUnlock[i];
                     partsUnlock[i] = true;
                 }
             }
+
             if (GUILayout.Button("Mark all endings and games as seen"))
             {
                 void EnsureNonzeroCount(List<int> list)
                 {
-                    for (int i = 0; i < list.Count; i++)
+                    for (var i = 0; i < list.Count; i++)
                     {
                         if (list[i] == 0)
                             list[i] = 1;
                     }
                 }
+
                 EnsureNonzeroCount(gameStatus.listEndingCount);
                 EnsureNonzeroCount(gameStatus.listMiniGameClearCount);
 
@@ -118,33 +118,6 @@ namespace CheatTools
                     EnsureNonzeroCount(tvf.GetValue<List<int>>());
 
                 gameStatus.SetSystemFlag(ID_SFlag.SFlag_End, true);
-            }
-        }
-
-        private static class Hooks
-        {
-            [HarmonyPrefix]
-            [HarmonyPatch(typeof(LocomotionTeleport), "AimCollisionTest")]
-            private static void AimHook(ref Vector3 end)
-            {
-                if (_teleportUnlock)
-                    end = Vector3.positiveInfinity;
-            }
-
-            [HarmonyPrefix]
-            [HarmonyPatch(typeof(CameraPosTweak), nameof(CameraPosTweak.Update))]
-            private static void PosTweakHook(CameraPosTweak __instance)
-            {
-                if (_posTweakForce)
-                    __instance.canPosTweak = true;
-
-                if (_posTweakUnlimited)
-                {
-                    __instance.sayuuNum = 0;
-                    __instance.zengoNum = 0;
-                }
-
-                __instance.distance = _posTweakDistance;
             }
         }
     }

@@ -1,15 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AIChara;
 using AIProject;
 using AIProject.Definitions;
 using AIProject.SaveData;
+using BepInEx.Configuration;
 using Manager;
 using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
 using RuntimeUnityEditor.Core.ObjectTree;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
+using UnityEngine.AI;
 using Map = Manager.Map;
 using Resources = Manager.Resources;
 
@@ -30,8 +33,34 @@ namespace CheatTools
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
         private static bool _expandDesires, _expandSkills;
 
-        public static void Initialize()
+        internal static ConfigEntry<bool> BuildAnywhere;
+        internal static ConfigEntry<bool> BuildOverlap;
+
+        public static void Initialize(CheatToolsPlugin instance)
         {
+            var config = instance.Config;
+
+            BuildAnywhere = config.Bind("Cheats", "Allow building anywhere", false);
+            BuildAnywhere.SettingChanged += (sender, args) => BuildAnywhereHooks.Enabled = BuildAnywhere.Value;
+            BuildAnywhereHooks.Enabled = BuildAnywhere.Value;
+
+            BuildOverlap = config.Bind("Cheats", "Allow building overlap", false);
+            BuildOverlap.SettingChanged += (sender, args) => BuildOverlapHooks.Enabled = BuildOverlap.Value;
+            BuildOverlapHooks.Enabled = BuildOverlap.Value;
+
+            NoclipFeature.InitializeNoclip(instance, () =>
+            {
+                if (!Map.IsInstance()) return null;
+                if (Map.Instance.Player == null) return null;
+                if (Map.Instance.Player.Controller == null) return null;
+                return Map.Instance.Player.Controller.GetComponent<NavMeshAgent>();
+            });
+
+            ToStringConverter.AddConverter<AgentActor>(heroine => !string.IsNullOrEmpty(heroine.CharaName) ? heroine.CharaName : heroine.name);
+            ToStringConverter.AddConverter<AgentData>(d => $"AgentData - {d.CharaFileName} | {d.NowCoordinateFileName}");
+            ToStringConverter.AddConverter<ChaFile>(d => $"ChaFile - {d.charaFileName ?? "Unknown"} ({d.parameter?.fullname ?? "Unknown"})");
+            ToStringConverter.AddConverter<ChaControl>(d => $"{d} - {d.chaFile?.parameter?.fullname ?? d.chaFile?.charaFileName ?? "Unknown"}");
+
             CheatToolsWindow.OnShown += _ =>
             {
                 _studioInstance = Studio.Studio.IsInstance() ? Studio.Studio.Instance : null;
@@ -51,7 +80,7 @@ namespace CheatTools
                     new KeyValuePair<object, string>(AnimalManager.IsInstance() ? AnimalManager.Instance : null, "Manager.AnimalManager.Instance"),
                     new KeyValuePair<object, string>(_map, "Manager.Map.Instance"),
                     new KeyValuePair<object, string>(Character.IsInstance() ? Character.Instance : null, "Manager.Character.Instance"),
-                    new KeyValuePair<object, string>(Config.IsInstance() ? Config.Instance : null, "Manager.Config.Instance"),
+                    new KeyValuePair<object, string>(Manager.Config.IsInstance() ? Manager.Config.Instance : null, "Manager.Config.Instance"),
                     new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
                     new KeyValuePair<object, string>(Manager.Housing.IsInstance() ? Manager.Housing.Instance : null, "Manager.Housing.Instance"),
                     new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
@@ -104,8 +133,8 @@ namespace CheatTools
             UnlockCraftingHooks.Enabled = GUILayout.Toggle(UnlockCraftingHooks.Enabled, "Enable free crafting");
             NoclipFeature.NoclipMode = GUILayout.Toggle(NoclipFeature.NoclipMode, "Enable player noclip");
 
-            CheatToolsPlugin.BuildAnywhere.Value = GUILayout.Toggle(CheatToolsPlugin.BuildAnywhere.Value, "Allow building anywhere");
-            CheatToolsPlugin.BuildOverlap.Value = GUILayout.Toggle(CheatToolsPlugin.BuildOverlap.Value, "Allow building items to overlap");
+            BuildAnywhere.Value = GUILayout.Toggle(BuildAnywhere.Value, "Allow building anywhere");
+            BuildOverlap.Value = GUILayout.Toggle(BuildOverlap.Value, "Allow building items to overlap");
 
             if (_resources != null)
             {

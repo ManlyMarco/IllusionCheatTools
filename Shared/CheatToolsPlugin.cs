@@ -1,4 +1,5 @@
-﻿#if !IL2CPP
+﻿#if !HC //!IL2CPP
+using System;
 using BepInEx;
 using BepInEx.Logging;
 using RuntimeUnityEditor.Core;
@@ -7,21 +8,41 @@ using UnityEngine;
 
 namespace CheatTools
 {
-    [BepInPlugin(Metadata.GUID, "Cheat Tools", Version)]
+    [BepInPlugin(GUID, DisplayName, Version)]
     [BepInDependency(RuntimeUnityEditorCore.GUID, RuntimeUnityEditorCore.Version)]
-    public partial class CheatToolsPlugin : BaseUnityPlugin
+#if !KKLB
+    [BepInDependency(KKAPI.KoikatuAPI.GUID, KKAPI.KoikatuAPI.VersionConst)]
+#endif
+    public sealed class CheatToolsPlugin : BaseUnityPlugin
     {
+        public const string DisplayName = Metadata.DisplayName;
+        public const string GUID = Metadata.GUID;
         public const string Version = Metadata.Version;
 
         internal static new ManualLogSource Logger;
 
-        public CheatToolsPlugin()
+        private bool _initialized;
+
+        private void Awake()
         {
             Logger = base.Logger;
+
+            try
+            {
+                CheatToolsWindowInit.Initialize(this);
+                _initialized = true;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError("Failed to initialize: " + e);
+                enabled = false;
+            }
         }
 
         private void Start()
         {
+            if(!_initialized) return;
+
             var runtimeUnityEditorCore = RuntimeUnityEditorCore.Instance;
             if (runtimeUnityEditorCore == null)
             {

@@ -33,6 +33,7 @@
         AskPlayerToTalk = 28,
         AskPlayerForH = 29,
         FidgetingWaiting = 30,
+
         // New in KKS
         TakeBath = 31,
         TakeBreak = 32,
@@ -49,6 +50,6 @@
         SplashingWaterPartner = 43,
         Vacation = 44,
         Outdoors = 45,
-        Curiosity = 46,
+        Curiosity = 46
     }
 }

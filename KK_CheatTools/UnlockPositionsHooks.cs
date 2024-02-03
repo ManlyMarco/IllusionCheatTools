@@ -67,12 +67,11 @@ namespace CheatTools
 
             var categorys = traverse.Field<List<int>>("categorys").Value;
 
-            for (int i = 0; i < lstAnimInfo.Length; i++)
+            for (var i = 0; i < lstAnimInfo.Length; i++)
             {
                 lstUseAnimInfo[i] = new List<HSceneProc.AnimationListInfo>();
                 if (_list == -1 || i == _list)
-                {
-                    for (int j = 0; j < lstAnimInfo[i].Count; j++)
+                    for (var j = 0; j < lstAnimInfo[i].Count; j++)
                     {
                         if ((UnlockAll && oneFem && !peeping) || lstAnimInfo[i][j].lstCategory.Any(c => categorys.Contains(c.category)))
                         {
@@ -80,13 +79,14 @@ namespace CheatTools
                             lstUseAnimInfo[i].Add(lstAnimInfo[i][j]);
                         }
                     }
-                }
             }
 
             return false;
         }
 
-        [HarmonyPostfix, HarmonyPatch(typeof(HSprite), "CreateMotionList"), HarmonyWrapSafe]
+        [HarmonyPostfix]
+        [HarmonyWrapSafe]
+        [HarmonyPatch(typeof(HSprite), nameof(HSprite.CreateMotionList))]
         public static void CreateMotionListUnlockPatch(HSprite __instance, ref int _kind)
         {
             // todo move this list size fix to a fix plugin

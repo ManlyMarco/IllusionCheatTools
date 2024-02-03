@@ -17,8 +17,8 @@ namespace CheatTools
             private static Timer _cardSaveTimer;
             private static int _lastEntryNo;
 
-            [HarmonyPatch(typeof(LobbyParameterUI), "SetParameter", typeof(ChaFileControl), typeof(int), typeof(int))]
             [HarmonyPostfix]
+            [HarmonyPatch(typeof(LobbyParameterUI), nameof(LobbyParameterUI.SetParameter), typeof(ChaFileControl), typeof(int), typeof(int))]
             public static void CharSelected(int _entryNo)
             {
                 _cardSaveTimer?.Stop();
@@ -49,7 +49,7 @@ namespace CheatTools
                         }
                         else
                         {
-                            Console.WriteLine("wtf " + new StackTrace());
+                            CheatToolsPlugin.Logger.LogWarning("wtf " + new StackTrace());
                         }
                     };
                 }
@@ -74,9 +74,8 @@ namespace CheatTools
                 }
             }
 
-            [HarmonyPatch(typeof(LobbyParameterUI), "SetParameter", typeof(GameCharaFileInfo), typeof(int),
-                typeof(int))]
             [HarmonyPostfix]
+            [HarmonyPatch(typeof(LobbyParameterUI), nameof(LobbyParameterUI.SetParameter), typeof(GameCharaFileInfo), typeof(int), typeof(int))]
             public static void CharSelected2(int _entryNo)
             {
                 CharSelected(_entryNo);

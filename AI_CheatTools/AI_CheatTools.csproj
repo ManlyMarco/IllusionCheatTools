@@ -47,7 +47,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="AI_ExtensibleSaveFormat, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\ExtensibleSaveFormat.AIGirl.16.4.0\lib\net46\AI_ExtensibleSaveFormat.dll</HintPath>
+      <HintPath>..\packages\ExtensibleSaveFormat.AIGirl.18.2.0\lib\net46\AI_ExtensibleSaveFormat.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -122,18 +122,15 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CheatToolsPlugin.cs" />
-    <Compile Include="CheatToolsWindow.cs" />
+    <Compile Include="CheatToolsWindowInit.AI.cs" />
     <Compile Include="Hooks\BuildAnywhereHooks.cs" />
     <Compile Include="Hooks\BuildOverlapHooks.cs" />
     <Compile Include="Hooks\FishingHackHooks.cs" />
     <Compile Include="Hooks\UnlockCraftingHooks.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="..\Shared\Shared.projitems" Label="Shared" />
   <Import Project="..\Shared_Noclip\Shared_Noclip.projitems" Label="Shared" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
