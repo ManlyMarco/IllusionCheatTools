@@ -13,7 +13,7 @@
     <DebugType>embedded</DebugType>
     <WarningLevel>9999</WarningLevel>
 
-    <DefineConstants>$(DefineConstants);EC;IL2CPP</DefineConstants>
+    <DefineConstants>$(DefineConstants);HC;IL2CPP</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>

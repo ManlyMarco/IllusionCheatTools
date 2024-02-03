@@ -106,8 +106,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CheatToolsPlugin.cs" />
-    <Compile Include="CheatToolsWindow.cs" />
+    <Compile Include="CheatToolsWindowInit.cs" />
     <Compile Include="DesireEng.cs" />
     <Compile Include="HExperienceKindEng.cs" />
     <Compile Include="UnlockPositionsHooks.cs" />

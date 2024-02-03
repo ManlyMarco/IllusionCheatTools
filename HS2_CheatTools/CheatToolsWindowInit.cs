@@ -15,8 +15,8 @@ namespace CheatTools
 {
     public static partial class CheatToolsWindowInit
     {
-        internal static Heroine _currentVisibleGirl;
-        internal static Action<Heroine> _onGirlStatsChanged;
+        private static Heroine _currentVisibleGirl;
+        private static Action<Heroine> _onGirlStatsChanged;
 
         private static Studio.Studio _studioInstance;
         private static Manager.Sound _soundInstance;
@@ -26,13 +26,17 @@ namespace CheatTools
         private static HSceneFlagCtrl _hScene;
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
 
-        internal static string GetHeroineName(Heroine heroine)
+        private static string GetHeroineName(Heroine heroine)
         {
             return !string.IsNullOrEmpty(heroine.Name) ? heroine.Name : heroine.ChaName;
         }
-
-        public static void InitializeCheats()
+        
+        public static void Initialize(CheatToolsPlugin instance)
         {
+            ToStringConverter.AddConverter<Heroine>(GetHeroineName);
+            ToStringConverter.AddConverter<ChaFile>(d => $"ChaFile - {d.charaFileName ?? "Unknown"} ({d.parameter?.fullname ?? "Unknown"})");
+            ToStringConverter.AddConverter<ChaControl>(d => $"{d} - {d.chaFile?.parameter?.fullname ?? d.chaFile?.charaFileName ?? "Unknown"}");
+
             CheatToolsWindow.OnShown += _ =>
             {
                 _studioInstance = Studio.Studio.IsInstance() ? Studio.Studio.Instance : null;

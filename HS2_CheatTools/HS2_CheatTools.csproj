@@ -128,8 +128,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CheatToolsPlugin.cs" />
-    <Compile Include="CheatToolsWindow.cs" />
+    <Compile Include="CheatToolsWindowInit.cs" />
     <Compile Include="Hooks.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

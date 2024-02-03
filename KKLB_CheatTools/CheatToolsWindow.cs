@@ -9,15 +9,15 @@ using UnityEngine;
 
 namespace CheatTools
 {
-    public static class CheatToolsWindowInit
+    public static partial class CheatToolsWindowInit
     {
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
         private static bool _teleportUnlock;
         private static bool _posTweakForce;
         private static bool _posTweakUnlimited;
         private static float _posTweakDistance = 0.1f;
-
-        public static void InitializeCheats()
+        
+        public static void Initialize(CheatToolsPlugin instance)
         {
             CheatToolsWindow.OnShown += _ =>
             {
@@ -118,33 +118,6 @@ namespace CheatTools
                     EnsureNonzeroCount(tvf.GetValue<List<int>>());
 
                 gameStatus.SetSystemFlag(ID_SFlag.SFlag_End, true);
-            }
-        }
-
-        private static class Hooks
-        {
-            [HarmonyPrefix]
-            [HarmonyPatch(typeof(LocomotionTeleport), "AimCollisionTest")]
-            private static void AimHook(ref Vector3 end)
-            {
-                if (_teleportUnlock)
-                    end = Vector3.positiveInfinity;
-            }
-
-            [HarmonyPrefix]
-            [HarmonyPatch(typeof(CameraPosTweak), nameof(CameraPosTweak.Update))]
-            private static void PosTweakHook(CameraPosTweak __instance)
-            {
-                if (_posTweakForce)
-                    __instance.canPosTweak = true;
-
-                if (_posTweakUnlimited)
-                {
-                    __instance.sayuuNum = 0;
-                    __instance.zengoNum = 0;
-                }
-
-                __instance.distance = _posTweakDistance;
             }
         }
     }

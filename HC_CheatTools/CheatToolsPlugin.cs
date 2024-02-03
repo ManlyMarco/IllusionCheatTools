@@ -22,14 +22,14 @@ namespace CheatTools
 
         public override void Load()
         {
+            CheatToolsWindowInit.Initialize(this);
+
             var runtimeUnityEditorCore = RuntimeUnityEditorCore.Instance;
             if (runtimeUnityEditorCore == null)
             {
                 Logger.Log(LogLevel.Error | LogLevel.Message, "Failed to get RuntimeUnityEditor! Make sure you don't have multiple versions of it installed!");
                 return;
             }
-
-            CheatToolsWindowInit.InitializeCheats();
 
             runtimeUnityEditorCore.AddFeature(new CheatToolsWindow(runtimeUnityEditorCore));
         }

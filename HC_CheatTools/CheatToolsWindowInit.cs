@@ -13,8 +13,8 @@ namespace CheatTools
     {
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
         private static Human _currentVisibleGirl;
-
-        public static void InitializeCheats()
+        
+        public static void Initialize(CheatToolsPlugin instance)
         {
             CheatToolsWindow.OnShown += _ =>
             {
