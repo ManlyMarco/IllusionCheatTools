@@ -8,7 +8,7 @@ namespace CheatTools
 {
     [BepInPlugin(GUID, DisplayName, Version)]
     [BepInDependency(RuntimeUnityEditorCore.GUID, RuntimeUnityEditorCore.Version)]
-    [BepInProcess("HoneyCome")]
+    [BepInProcess("HoneyCome")] // Studio is missing some important classes, so we can't run in it
     public class CheatToolsPlugin : BasePlugin
     {
         public const string DisplayName = Metadata.DisplayName;
