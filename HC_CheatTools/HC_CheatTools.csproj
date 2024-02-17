@@ -22,7 +22,7 @@
 	</ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-		<Delete Files="$(OutputPath)\HC_CheatTools.deps.json" />
+		<Delete Files="$(OutputPath)\$(AssemblyName).deps.json" />
 	</Target>
 
 	<ItemGroup>

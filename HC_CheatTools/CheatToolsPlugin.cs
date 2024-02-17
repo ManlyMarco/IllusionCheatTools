@@ -7,7 +7,7 @@ using Shared;
 namespace CheatTools
 {
     [BepInPlugin(GUID, DisplayName, Version)]
-    [BepInDependency(RuntimeUnityEditorCore.GUID, RuntimeUnityEditorCore.Version)]
+    [BepInDependency(RuntimeUnityEditorCore.GUID, ">=" + RuntimeUnityEditorCore.Version)]
     [BepInProcess("HoneyCome")] // Studio is missing some important classes, so we can't run in it
     public class CheatToolsPlugin : BasePlugin
     {
