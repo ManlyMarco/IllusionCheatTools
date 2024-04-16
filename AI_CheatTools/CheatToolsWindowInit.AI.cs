@@ -48,13 +48,7 @@ namespace CheatTools
             BuildOverlap.SettingChanged += (sender, args) => BuildOverlapHooks.Enabled = BuildOverlap.Value;
             BuildOverlapHooks.Enabled = BuildOverlap.Value;
 
-            NoclipFeature.InitializeNoclip(instance, () =>
-            {
-                if (!Map.IsInstance()) return null;
-                if (Map.Instance.Player == null) return null;
-                if (Map.Instance.Player.Controller == null) return null;
-                return Map.Instance.Player.Controller.GetComponent<NavMeshAgent>();
-            });
+            NoclipFeature.InitializeNoclip(instance);
 
             ToStringConverter.AddConverter<AgentActor>(heroine => !string.IsNullOrEmpty(heroine.CharaName) ? heroine.CharaName : heroine.name);
             ToStringConverter.AddConverter<AgentData>(d => $"AgentData - {d.CharaFileName} | {d.NowCoordinateFileName}");

@@ -56,15 +56,7 @@ namespace CheatTools
             ToStringConverter.AddConverter<SaveData.Heroine>(heroine => !string.IsNullOrEmpty(heroine.Name) ? heroine.Name : heroine.nickname);
             ToStringConverter.AddConverter<SaveData.CharaData.Params.Data>(d => $"[{d.key} | {d.value}]");
 
-            NoclipFeature.InitializeNoclip(instance, () =>
-            {
-                if (!Game.IsInstance()) return null;
-                var player = Game.Instance.Player;
-                if (player == null) return null;
-                var playerTransform = player.transform;
-                if (playerTransform == null) return null;
-                return playerTransform.GetComponent<NavMeshAgent>();
-            });
+            NoclipFeature.InitializeNoclip(instance);
 
             CheatToolsWindow.OnShown += _ =>
             {

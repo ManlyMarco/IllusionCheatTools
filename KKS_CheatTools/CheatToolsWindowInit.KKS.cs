@@ -78,12 +78,7 @@ namespace CheatTools
 
         public static void Initialize(CheatToolsPlugin instance)
         {
-            NoclipFeature.InitializeNoclip(instance, () =>
-            {
-                if (Game.Player == null) return null;
-                if (Game.Player.transform == null) return null;
-                return Game.Player.transform.GetComponent<NavMeshAgent>();
-            });
+            NoclipFeature.InitializeNoclip(instance);
 
             CheatToolsWindow.OnShown += _ =>
             {
