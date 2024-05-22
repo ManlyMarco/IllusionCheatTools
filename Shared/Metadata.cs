@@ -4,6 +4,6 @@
     {
         public const string DisplayName = "Cheat Tools";
         public const string GUID = "CheatTools";
-        public const string Version = "3.3.1.1";
+        public const string Version = "3.3.2";
     }
 }
