@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.5.33424.131
+VisualStudioVersion = 17.8.34309.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KK_CheatTools", "KK_CheatTools\KK_CheatTools.csproj", "{4C489DBC-B8FC-4B0C-BA9C-023AFCD2896A}"
 EndProject
@@ -17,7 +17,9 @@ Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Shared_Noclip", "Shared_Noc
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KKLB_CheatTools", "KKLB_CheatTools\KKLB_CheatTools.csproj", "{4E9BC084-8CEB-4531-A4BA-2013B0CEFBA0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HC_CheatTools", "HC_CheatTools\HC_CheatTools.csproj", "{1FF71793-D148-4417-B989-52B15CBF5ED8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HC_CheatTools", "HC_CheatTools\HC_CheatTools.csproj", "{1FF71793-D148-4417-B989-52B15CBF5ED8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SVS_CheatTools", "SVS_CheatTools\SVS_CheatTools.csproj", "{462E6000-BE07-4812-B5B9-524E3D517C2F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +51,10 @@ Global
 		{1FF71793-D148-4417-B989-52B15CBF5ED8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1FF71793-D148-4417-B989-52B15CBF5ED8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1FF71793-D148-4417-B989-52B15CBF5ED8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{462E6000-BE07-4812-B5B9-524E3D517C2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{462E6000-BE07-4812-B5B9-524E3D517C2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{462E6000-BE07-4812-B5B9-524E3D517C2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{462E6000-BE07-4812-B5B9-524E3D517C2F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -59,6 +65,7 @@ Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		Shared_Noclip\Shared_Noclip.projitems*{016ad588-15a9-4467-a9c4-a1cbd107562f}*SharedItemsImports = 13
 		Shared\Shared.projitems*{1ff71793-d148-4417-b989-52b15cbf5ed8}*SharedItemsImports = 5
+		Shared\Shared.projitems*{462e6000-be07-4812-b5b9-524e3d517c2f}*SharedItemsImports = 5
 		Shared\Shared.projitems*{4c489dbc-b8fc-4b0c-ba9c-023afcd2896a}*SharedItemsImports = 4
 		Shared_Noclip\Shared_Noclip.projitems*{4c489dbc-b8fc-4b0c-ba9c-023afcd2896a}*SharedItemsImports = 4
 		Shared\Shared.projitems*{4e9bc084-8ceb-4531-a4ba-2013b0cefba0}*SharedItemsImports = 4

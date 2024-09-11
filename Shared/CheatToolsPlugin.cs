@@ -1,4 +1,4 @@
-﻿#if !HC //!IL2CPP
+﻿#if !HC && !SVS
 using System;
 using BepInEx;
 using BepInEx.Logging;
