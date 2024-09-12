@@ -16,9 +16,17 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Reference Include="AstarPathfindingProject">
+		  <HintPath>F:\Games\SamabakeScramble\BepInEx\SamabakeScramble\interop\AstarPathfindingProject.dll</HintPath>
+		  <Private>False</Private>
+		</Reference>
 		<Reference Include="RuntimeUnityEditor.Core.IL2CPP">
 			<HintPath>..\lib\RuntimeUnityEditor.Core.IL2CPP.dll</HintPath>
 			<Private>False</Private>
+		</Reference>
+		<Reference Include="XUnity.AutoTranslator.Plugin.Core">
+		  <HintPath>..\lib\XUnity.AutoTranslator.Plugin.Core.dll</HintPath>
+		  <Private>False</Private>
 		</Reference>
 	</ItemGroup>
 
