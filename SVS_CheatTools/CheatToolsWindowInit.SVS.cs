@@ -21,6 +21,8 @@ namespace CheatTools
     {
         private static ImguiComboBoxSimple _belongingsDropdown;
         private static ImguiComboBoxSimple _individualityDropdown;
+        private static int _otherCharaListIndex;
+        private static ImguiComboBox _otherCharaDropdown = new();
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
         private static Actor _currentVisibleChara;
 
@@ -78,6 +80,7 @@ namespace CheatTools
             {
                 _belongingsDropdown?.DrawDropdownIfOpen();
                 _individualityDropdown?.DrawDropdownIfOpen();
+                _otherCharaDropdown?.DrawDropdownIfOpen();
             }, ""));
         }
 
@@ -195,14 +198,24 @@ namespace CheatTools
 
             GUILayout.Space(6);
 
-            if (_currentVisibleChara != null)
-                DrawSingleCharaCheats(_currentVisibleChara, cheatToolsWindow);
-            else
-                GUILayout.Label("Select a character to edit their stats");
+            try
+            {
+                if (_currentVisibleChara != null)
+                    DrawSingleCharaCheats(_currentVisibleChara, cheatToolsWindow);
+                else
+                    GUILayout.Label("Select a character to edit their stats");
+            }
+            catch (Exception e)
+            {
+                CheatToolsPlugin.Logger.LogError(e);
+                _currentVisibleChara = null;
+            }
         }
 
         private static void DrawSingleCharaCheats(Actor currentAdvChara, CheatToolsWindow cheatToolsWindow)
         {
+            var comboboxMaxY = (int)cheatToolsWindow.WindowRect.bottom - 30;
+
             GUILayout.BeginVertical(GUI.skin.box);
             {
                 GUILayout.Label("Selected chara name: " + GetCharaName(currentAdvChara));
@@ -211,85 +224,25 @@ namespace CheatTools
                 var gameParam = currentAdvChara.charFile.GameParameter;
                 if (gameParam != null)
                 {
-                    void DrawOne<T>(string name, Func<T> get, Action<T> set)
-                    {
-                        GUILayout.BeginHorizontal();
-                        {
-                            GUI.changed = false;
-                            var oldValue = get();
-                            GUILayout.Label(name + ": ");
-                            GUILayout.FlexibleSpace();
-                            var result = GUILayout.TextField(oldValue.ToString(), GUILayout.Width(50));
-                            if (GUI.changed)
-                            {
-                                var newValue = (T)Convert.ChangeType(result, typeof(T));
-                                if (!newValue.Equals(oldValue))
-                                    set(newValue);
-                            }
-                        }
-                        GUILayout.EndHorizontal();
-                    }
-                    void DrawByte(string name, Func<byte> get, Action<byte> set)
-                    {
-                        GUILayout.BeginHorizontal();
-                        {
-                            GUI.changed = false;
-                            GUILayout.Label(name + ": ");
-                            GUILayout.FlexibleSpace();
-                            var oldValue = get();
-                            var result = GUILayout.TextField(oldValue.ToString(), GUILayout.Width(50));
-                            if (GUI.changed && byte.TryParse(result, out var newValue) && !newValue.Equals(oldValue)) set(newValue);
-                        }
-                        GUILayout.EndHorizontal();
-                    }
-                    void DrawNums(string name, byte count, Func<byte> get, Action<byte> set)
-                    {
-                        GUILayout.BeginHorizontal();
-                        {
-                            GUI.changed = false;
-                            GUILayout.Label(name + ": ");
-                            GUILayout.FlexibleSpace();
-                            var oldValue = get();
+                    DrawUtils.DrawStrings("Job", new[] { "None", "Lifeguard", "Cafe", "Shrine" }, () => gameParam.job, b => gameParam.job = b);
+                    DrawUtils.DrawNums("Gayness", 5, () => gameParam.sexualTarget, b => gameParam.sexualTarget = b);
+                    DrawUtils.DrawNums(nameof(gameParam.lvChastity), 5, () => gameParam.lvChastity, b => gameParam.lvChastity = b);
+                    DrawUtils.DrawNums(nameof(gameParam.lvSociability), 5, () => gameParam.lvSociability, b => gameParam.lvSociability = b);
+                    DrawUtils.DrawNums(nameof(gameParam.lvTalk), 5, () => gameParam.lvTalk, b => gameParam.lvTalk = b);
+                    DrawUtils.DrawNums(nameof(gameParam.lvStudy), 5, () => gameParam.lvStudy, b => gameParam.lvStudy = b);
+                    DrawUtils.DrawNums(nameof(gameParam.lvLiving), 5, () => gameParam.lvLiving, b => gameParam.lvLiving = b);
+                    DrawUtils.DrawNums(nameof(gameParam.lvPhysical), 5, () => gameParam.lvPhysical, b => gameParam.lvPhysical = b);
+                    DrawUtils.DrawNums("Fighting style", 3, () => gameParam.lvDefeat, b => gameParam.lvDefeat = b);
 
-                            for (byte i = 0; i < count; i++)
-                            {
-                                if (oldValue == i) GUI.color = Color.green;
-                                if (GUILayout.Button((i + 1).ToString(), IMGUIUtils.LayoutOptionsExpandWidthFalse)) set(i);
-                                GUI.color = Color.white;
-                            }
-                        }
-                        GUILayout.EndHorizontal();
-                    }
-                    void DrawBool(string name, Func<bool> get, Action<bool> set)
-                    {
-                        GUILayout.BeginHorizontal();
-                        {
-                            GUI.changed = false;
-                            var result = GUILayout.Toggle(get(), name);
-                            if (GUI.changed) set(result);
-                        }
-                        GUILayout.EndHorizontal();
-                    }
+                    DrawUtils.DrawBool(nameof(gameParam.isVirgin), () => gameParam.isVirgin, b => gameParam.isVirgin = b);
+                    DrawUtils.DrawBool(nameof(gameParam.isAnalVirgin), () => gameParam.isAnalVirgin, b => gameParam.isAnalVirgin = b);
+                    DrawUtils.DrawBool(nameof(gameParam.isMaleVirgin), () => gameParam.isMaleVirgin, b => gameParam.isMaleVirgin = b);
+                    DrawUtils.DrawBool(nameof(gameParam.isMaleAnalVirgin), () => gameParam.isMaleAnalVirgin, b => gameParam.isMaleAnalVirgin = b);
 
-                    gameParam.job = (byte)GUILayout.SelectionGrid(gameParam.job, new[] { "None", "Lifeguard", "Cafe", "Shrine" }, 1);
-                    DrawByte("Gayness", () => gameParam.sexualTarget, b => gameParam.sexualTarget = b);
-                    DrawNums(nameof(gameParam.lvChastity), 5, () => gameParam.lvChastity, b => gameParam.lvChastity = b);
-                    DrawNums(nameof(gameParam.lvSociability), 5, () => gameParam.lvSociability, b => gameParam.lvSociability = b);
-                    DrawNums(nameof(gameParam.lvTalk), 5, () => gameParam.lvTalk, b => gameParam.lvTalk = b);
-                    DrawNums(nameof(gameParam.lvStudy), 5, () => gameParam.lvStudy, b => gameParam.lvStudy = b);
-                    DrawNums(nameof(gameParam.lvLiving), 5, () => gameParam.lvLiving, b => gameParam.lvLiving = b);
-                    DrawNums(nameof(gameParam.lvPhysical), 5, () => gameParam.lvPhysical, b => gameParam.lvPhysical = b);
-                    DrawNums("Fighting style", 3, () => gameParam.lvDefeat, b => gameParam.lvDefeat = b);
-
-                    DrawBool(nameof(gameParam.isVirgin), () => gameParam.isVirgin, b => gameParam.isVirgin = b);
-                    DrawBool(nameof(gameParam.isAnalVirgin), () => gameParam.isAnalVirgin, b => gameParam.isAnalVirgin = b);
-                    DrawBool(nameof(gameParam.isMaleVirgin), () => gameParam.isMaleVirgin, b => gameParam.isMaleVirgin = b);
-                    DrawBool(nameof(gameParam.isMaleAnalVirgin), () => gameParam.isMaleAnalVirgin, b => gameParam.isMaleAnalVirgin = b);
+                    GUILayout.Space(6);
 
                     if (_belongingsDropdown != null)
                     {
-                        GUILayout.Space(6);
-
                         GUILayout.BeginVertical(GUI.skin.box);
 
                         GUILayout.Label("Items owned:");
@@ -315,7 +268,7 @@ namespace CheatTools
 
                         GUILayout.BeginHorizontal();
                         {
-                            _belongingsDropdown.Show((int)cheatToolsWindow.WindowRect.bottom - 30);
+                            _belongingsDropdown.Show(comboboxMaxY);
                             if (GUILayout.Button("GIVE", IMGUIUtils.LayoutOptionsExpandWidthFalse))
                             {
                                 if (!gameParam.belongings.Contains(_belongingsDropdown.Index))
@@ -325,11 +278,12 @@ namespace CheatTools
                         GUILayout.EndHorizontal();
 
                         GUILayout.EndVertical();
+
+                        GUILayout.Space(6);
                     }
 
                     if (_individualityDropdown != null)
                     {
-                        GUILayout.Space(6);
 
                         GUILayout.BeginVertical(GUI.skin.box);
 
@@ -358,7 +312,7 @@ namespace CheatTools
 
                         GUILayout.BeginHorizontal();
                         {
-                            _individualityDropdown.Show((int)cheatToolsWindow.WindowRect.bottom - 30);
+                            _individualityDropdown.Show(comboboxMaxY);
                             if (GUILayout.Button(new GUIContent("ADD", null, "If you add more than 2 traits they will work in-game, but will be removed after you save/load the game or the character."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
                             {
                                 var selectedTraitIndex = _individualityDropdown.ContentsIndexes[_individualityDropdown.Index];
@@ -370,30 +324,70 @@ namespace CheatTools
                         }
                         GUILayout.EndHorizontal();
 
+                        //todo if(GUILayout.Button("Make everyone evil"))
+
                         GUILayout.EndVertical();
                     }
 
                     //todo currentAdvChara.charFile.GameParameter.preferenceH
-
-                    if (GUILayout.Button("Inspect GameParameter"))
-                        Inspector.Instance.Push(new InstanceStackEntry(gameParam, "GameParameter " + GetCharaName(currentAdvChara)), true);
+                    GUILayout.Space(6);
                 }
-
 
                 var charasGameParam = currentAdvChara.charasGameParam;
                 if (charasGameParam != null)
                 {
-                    GUILayout.Space(6);
-
                     //todo charasGameParam.menstruations
                     //todo charasGameParam.sensitivity
-                    //charasGameParam.sensitivity.tableFavorabiliry
 
-                    if (GUILayout.Button("Inspect charasGameParam"))
-                        Inspector.Instance.Push(new InstanceStackEntry(charasGameParam, "charasGameParam " + GetCharaName(currentAdvChara)), true);
+                    // DarkSoldier27: Ok I figure it out:
+                    // 0:LOVE
+                    // 1:FRIEND
+                    // 2:INDIFFERENT
+                    // 3:DISLIKE
+                    // values go from 0 to 30, reaching 30 increase a favorability point in longSensitivityCounts <- this is what determined their status, the max value for this one is also 30
+                    // and yeah reaching below 0 reduce a point
+
+                    GUILayout.BeginVertical(GUI.skin.box);
+                    {
+                        GUILayout.BeginHorizontal();
+
+                        GUILayout.Label("Edit relationship with: ");
+
+                        var targets = Manager.Game.saveData.Charas.AsManagedEnumerable().Select(x => x.Value).Where(x => x != null && !x.Equals(currentAdvChara)).ToArray();
+
+                        _otherCharaListIndex = Math.Clamp(_otherCharaListIndex, -1, targets.Length - 1);
+
+                        GUI.changed = false;
+                        var result = GUILayout.Toggle(_otherCharaListIndex == -1, "Everyone");
+                        if (GUI.changed)
+                            _otherCharaListIndex = result ? -1 : 0;
+
+                        GUILayout.EndHorizontal();
+
+                        if (_otherCharaListIndex >= 0)
+                        {
+                            _otherCharaListIndex = _otherCharaDropdown.Show(_otherCharaListIndex, targets.Select(x => new GUIContent(GetCharaName(x))).ToArray(), comboboxMaxY);
+                            targets = new[] { targets[_otherCharaListIndex] };
+                        }
+
+                        GUILayout.Label("WARNING: Save-Load the game after editing or changes will be lost!");
+
+                        DrawSingleRankEditor(SensitivityKind.Love, currentAdvChara, targets);
+                        DrawSingleRankEditor(SensitivityKind.Friend, currentAdvChara, targets);
+                        DrawSingleRankEditor(SensitivityKind.Distant, currentAdvChara, targets);
+                        DrawSingleRankEditor(SensitivityKind.Dislike, currentAdvChara, targets);
+                    }
+                    GUILayout.EndVertical();
+
+                    GUILayout.Space(6);
                 }
 
-                GUILayout.Space(6);
+
+                if (gameParam != null && GUILayout.Button("Inspect GameParameter"))
+                    Inspector.Instance.Push(new InstanceStackEntry(gameParam, "GameParam " + GetCharaName(currentAdvChara)), true);
+
+                if (charasGameParam != null && GUILayout.Button("Inspect CharactersGameParameter"))
+                    Inspector.Instance.Push(new InstanceStackEntry(charasGameParam, "CharaGameParam " + GetCharaName(currentAdvChara)), true);
 
                 if (GUILayout.Button("Navigate to Character's GameObject"))
                 {
@@ -412,6 +406,91 @@ namespace CheatTools
                 //}
             }
             GUILayout.EndVertical();
+        }
+        private static void DrawSingleRankEditor(SensitivityKind kind, Actor targetChara, IList<Actor> affectedCharas)
+        {
+            var targetCharaSensitivity = targetChara.charasGameParam.sensitivity;
+
+            GUILayout.BeginHorizontal();
+            {
+                GUILayout.Label(kind + ":", GUILayout.Width(45));
+
+                GUILayout.Label(new GUIContent("to", null, "Current character's feelings towards the target character selected in the dropdown above.\nRanks: 0 - Low, 1 - Medium, 2 - High, 3 - Max"));
+
+                if (affectedCharas.Count == 1)
+                {
+                    var rank = targetCharaSensitivity.tableFavorabiliry[GetActorId(affectedCharas[0])].ranks[(int)kind];
+                    GUILayout.Label(((int)rank).ToString());
+                }
+
+                if (GUILayout.Button("+1")) OnOutgoing(1);
+                if (GUILayout.Button("-1")) OnOutgoing(-1);
+
+                GUILayout.Label(new GUIContent("from", null, "The target character's feelings towards current character."));
+
+                if (affectedCharas.Count == 1)
+                {
+                    var rank = affectedCharas[0].charasGameParam.sensitivity.tableFavorabiliry[GetActorId(targetChara)].ranks[(int)kind];
+                    GUILayout.Label(((int)rank).ToString());
+                }
+
+                if (GUILayout.Button("+1")) OnIncoming(1);
+                if (GUILayout.Button("-1")) OnIncoming(-1);
+            }
+            GUILayout.EndHorizontal();
+            return;
+
+            void OnOutgoing(int amount)
+            {
+                var targetIds = affectedCharas.Select(GetActorId).ToArray();
+                foreach (var tabkvp in targetCharaSensitivity.tableFavorabiliry)
+                {
+                    if (targetIds.Contains(tabkvp.Key))
+                    {
+                        ChangeRank(tabkvp.Value, kind, amount);
+
+                        // All of these overwrite everything we just changed
+                        // todo: need to find some way to update relationship status across the game without having to save/load
+                        //targetCharaSensitivity.CalcFavorState(tabkvp.Value);
+                        //targetCharaSensitivity.LongStockCalc(tabkvp.Value);
+                        //targetCharaSensitivity.CalcHighvFavorability();
+                    }
+                }
+            }
+            void OnIncoming(int amount)
+            {
+                var ourId = GetActorId(targetChara);
+                foreach (var charaKvp in affectedCharas)
+                {
+                    var otherSensitivity = charaKvp.charasGameParam.sensitivity;
+                    var favorabiliryInfo = otherSensitivity.tableFavorabiliry[ourId];
+                    ChangeRank(favorabiliryInfo, kind, amount);
+
+                    //otherSensitivity.CalcFavorState(favorabiliryInfo);
+                    //otherSensitivity.LongStockCalc(favorabiliryInfo);
+                    //otherSensitivity.CalcHighvFavorability();
+                }
+            }
+            void ChangeRank(SensitivityParameter.FavorabiliryInfo favorabiliryInfo, SensitivityKind kind, int amount)
+            {
+                var newRank = (SensitivityParameter.Rank)Mathf.Clamp((int)(favorabiliryInfo.ranks[(int)kind] + amount), 0, (int)SensitivityParameter.Rank.MAX);
+                favorabiliryInfo.ranks[(int)kind] = newRank;
+
+                favorabiliryInfo.longSensitivityCounts[(int)kind] = 10 * (int)newRank;
+            }
+        }
+
+        private static int GetActorId(Actor currentAdvChara)
+        {
+            return Manager.Game.Charas.AsManagedEnumerable().Single(x => x.Value.Equals(currentAdvChara)).Key;
+        }
+
+        private enum SensitivityKind
+        {
+            Love = 0,
+            Friend = 1,
+            Distant = 2,
+            Dislike = 3
         }
 
         private static class Hooks
@@ -489,6 +568,90 @@ namespace CheatTools
             }
 
             #endregion
+        }
+    }
+
+    /// <summary>
+    /// GUILayout.SelectionGrid is broken, doesn't show anything
+    /// </summary>
+    internal static class DrawUtils
+    {
+        public static void DrawOne<T>(string name, Func<T> get, Action<T> set)
+        {
+            GUILayout.BeginHorizontal();
+            {
+                GUI.changed = false;
+                var oldValue = get();
+                GUILayout.Label(name + ": ");
+                GUILayout.FlexibleSpace();
+                var result = GUILayout.TextField(oldValue.ToString(), GUILayout.Width(50));
+                if (GUI.changed)
+                {
+                    var newValue = (T)Convert.ChangeType(result, typeof(T));
+                    if (!newValue.Equals(oldValue))
+                        set(newValue);
+                }
+            }
+            GUILayout.EndHorizontal();
+        }
+        public static void DrawByte(string name, Func<byte> get, Action<byte> set)
+        {
+            GUILayout.BeginHorizontal();
+            {
+                GUI.changed = false;
+                GUILayout.Label(name + ": ");
+                GUILayout.FlexibleSpace();
+                var oldValue = get();
+                var result = GUILayout.TextField(oldValue.ToString(), GUILayout.Width(50));
+                if (GUI.changed && byte.TryParse(result, out var newValue) && !newValue.Equals(oldValue)) set(newValue);
+            }
+            GUILayout.EndHorizontal();
+        }
+        public static void DrawNums(string name, byte count, Func<byte> get, Action<byte> set)
+        {
+            GUILayout.BeginHorizontal();
+            {
+                GUI.changed = false;
+                GUILayout.Label(name + ": ");
+                GUILayout.FlexibleSpace();
+                var oldValue = get();
+
+                for (byte i = 0; i < count; i++)
+                {
+                    if (oldValue == i) GUI.color = Color.green;
+                    if (GUILayout.Button((i + 1).ToString(), IMGUIUtils.LayoutOptionsExpandWidthFalse)) set(i);
+                    GUI.color = Color.white;
+                }
+            }
+            GUILayout.EndHorizontal();
+        }
+        public static void DrawStrings(string name, string[] strings, Func<byte> get, Action<byte> set)
+        {
+            GUILayout.BeginHorizontal();
+            {
+                GUI.changed = false;
+                GUILayout.Label(name + ": ");
+                GUILayout.FlexibleSpace();
+                var oldValue = get();
+
+                for (byte i = 0; i < strings.Length; i++)
+                {
+                    if (oldValue == i) GUI.color = Color.green;
+                    if (GUILayout.Button(strings[i], IMGUIUtils.LayoutOptionsExpandWidthFalse)) set(i);
+                    GUI.color = Color.white;
+                }
+            }
+            GUILayout.EndHorizontal();
+        }
+        public static void DrawBool(string name, Func<bool> get, Action<bool> set)
+        {
+            GUILayout.BeginHorizontal();
+            {
+                GUI.changed = false;
+                var result = GUILayout.Toggle(get(), name);
+                if (GUI.changed) set(result);
+            }
+            GUILayout.EndHorizontal();
         }
     }
 }
