@@ -27,7 +27,7 @@
 
 	<ItemGroup>
 		<Reference Include="RuntimeUnityEditor.Core.IL2CPP">
-			<HintPath>..\..\RuntimeUnityEditor\bin\IL2CPP\RuntimeUnityEditor.Core.IL2CPP.dll</HintPath>
+			<HintPath>..\lib\RuntimeUnityEditor.Core.IL2CPP.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 	</ItemGroup>
