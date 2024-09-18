@@ -2,25 +2,25 @@
 using System.Collections.Generic;
 using System.Linq;
 using BepInEx.Logging;
+using Character;
 using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
-using Pathfinding;
 using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
 using RuntimeUnityEditor.Core.ObjectTree;
 using RuntimeUnityEditor.Core.Utils;
 using SaveData;
-using SV;
+using SaveData.Extension;
 using UnityEngine;
 using UnityEngine.UI;
-using Random = Il2CppSystem.Random;
 
 namespace CheatTools
 {
     public static class CheatToolsWindowInit
     {
         private static ImguiComboBoxSimple _belongingsDropdown;
-        private static ImguiComboBoxSimple _individualityDropdown;
+        private static ImguiComboBoxSimple _traitsDropdown;
+        private static ImguiComboBoxSimple _hPreferenceDropdown;
         private static int _otherCharaListIndex;
         private static ImguiComboBox _otherCharaDropdown = new();
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
@@ -54,16 +54,29 @@ namespace CheatTools
                         TranslationHelper.TranslateAsync(_belongingsDropdown.Contents[iCopy].text, s => _belongingsDropdown.Contents[iCopy].text = s);
                     }
                 }
-                if (_individualityDropdown == null)
+                if (_traitsDropdown == null)
                 {
                     var guiContents = Manager.Game.IndividualityInfoTable.AsManagedEnumerable().ToDictionary(x => x.Value.ID, x => new GUIContent(x.Value.Name, null, x.Value.Information)).OrderBy(x => x.Key).ToList();
-                    _individualityDropdown = new ImguiComboBoxSimple(guiContents.Select(x => x.Value).ToArray());
-                    _individualityDropdown.ContentsIndexes = guiContents.Select(x => x.Key).ToArray();
-                    for (var i = 0; i < _individualityDropdown.Contents.Length; i++)
+                    _traitsDropdown = new ImguiComboBoxSimple(guiContents.Select(x => x.Value).ToArray());
+                    _traitsDropdown.ContentsIndexes = guiContents.Select(x => x.Key).ToArray();
+                    for (var i = 0; i < _traitsDropdown.Contents.Length; i++)
                     {
                         var iCopy = i;
-                        TranslationHelper.TranslateAsync(_individualityDropdown.Contents[iCopy].text, s => _individualityDropdown.Contents[iCopy].text = s);
-                        TranslationHelper.TranslateAsync(_individualityDropdown.Contents[iCopy].tooltip, s => _individualityDropdown.Contents[iCopy].tooltip = s);
+                        TranslationHelper.TranslateAsync(_traitsDropdown.Contents[iCopy].text, s => _traitsDropdown.Contents[iCopy].text = s);
+                        TranslationHelper.TranslateAsync(_traitsDropdown.Contents[iCopy].tooltip, s => _traitsDropdown.Contents[iCopy].tooltip = s);
+                    }
+                }
+
+                if (_hPreferenceDropdown == null)
+                {
+                    var guiContents = Manager.Game.PreferenceHInfoTable.AsManagedEnumerable().ToDictionary(x => x.Key, x => new GUIContent(x.Value)).OrderBy(x => x.Key).ToList();
+                    _hPreferenceDropdown = new ImguiComboBoxSimple(guiContents.Select(x => x.Value).ToArray());
+                    _hPreferenceDropdown.ContentsIndexes = guiContents.Select(x => x.Key).ToArray();
+                    for (var i = 0; i < _hPreferenceDropdown.Contents.Length; i++)
+                    {
+                        var iCopy = i;
+                        TranslationHelper.TranslateAsync(_hPreferenceDropdown.Contents[iCopy].text, s => _hPreferenceDropdown.Contents[iCopy].text = s);
+                        //TranslationHelper.TranslateAsync(_hPreferenceDropdown.Contents[iCopy].tooltip, s => _hPreferenceDropdown.Contents[iCopy].tooltip = s);
                     }
                 }
             };
@@ -79,16 +92,49 @@ namespace CheatTools
             CheatToolsWindow.Cheats.Add(new CheatEntry(_ => true, _ =>
             {
                 _belongingsDropdown?.DrawDropdownIfOpen();
-                _individualityDropdown?.DrawDropdownIfOpen();
+                _traitsDropdown?.DrawDropdownIfOpen();
+                _hPreferenceDropdown?.DrawDropdownIfOpen();
                 _otherCharaDropdown?.DrawDropdownIfOpen();
             }, ""));
         }
 
-        private static string GetCharaName(Actor chara)
+        private static string GetCharaName(this Actor chara)
         {
             var fullname = chara?.charFile?.Parameter?.fullname;
             return !string.IsNullOrEmpty(fullname) ? fullname : chara?.chaCtrl?.name ?? chara?.ToString();
         }
+        private static int GetActorId(this Actor currentAdvChara)
+        {
+            return Manager.Game.Charas.AsManagedEnumerable().Single(x => x.Value.Equals(currentAdvChara)).Key;
+        }
+
+        private static IEnumerable<KeyValuePair<int, Actor>> GetVisibleCharas()
+        {
+            if (SV.H.HScene.Active())
+            {
+                // HScene.Actors contains copies of the actors. Couldn't find a better way to get the originals
+                return SV.H.HScene._instance.Actors.Select(GetMainActorInstance).Where(x => x.Value != null);
+            }
+
+            var talkManager = Manager.TalkManager._instance;
+            if (talkManager != null && ADV.ADVManager._instance?.IsADV == true)
+            {
+                return new List<KeyValuePair<int, Actor>>
+                {
+                    // PlayerHi and Npc1-4 contain copies of the Actors
+                    GetMainActorInstance(talkManager.PlayerHi),
+                    GetMainActorInstance(talkManager.Npc1),
+                    GetMainActorInstance(talkManager.Npc2),
+                    GetMainActorInstance(talkManager.Npc3),
+                    GetMainActorInstance(talkManager.Npc4),
+                }.Where(x => x.Value != null);
+            }
+
+            return Manager.Game.saveData.Charas.AsManagedEnumerable().Where(x => x.Value != null);
+        }
+
+        private static KeyValuePair<int, Actor> GetMainActorInstance(this SV.H.HActor x) => x?.Actor.GetMainActorInstance() ?? default;
+        private static KeyValuePair<int, Actor> GetMainActorInstance(this Actor x) => x == null ? default : Manager.Game.Charas.AsManagedEnumerable().FirstOrDefault(y => x.charFile.About.dataID == y.Value.charFile.About.dataID);
 
         private static void DrawHSceneCheats(CheatToolsWindow cheatToolsWindow)
         {
@@ -96,39 +142,27 @@ namespace CheatTools
 
             GUILayout.Label("H scene controls");
 
-            GUILayout.BeginHorizontal();
-            var mainGauge = hScene.GaugeController?.MainUI;
-            if (mainGauge != null)
+            foreach (var actor in hScene.Actors)
             {
-                GUILayout.Label("Main Gauge: " + mainGauge.GaugeValue.ToString("F1"), GUILayout.Width(150));
-                mainGauge.GaugeValue = GUILayout.HorizontalSlider(mainGauge.GaugeValue, 0, 100);
-            }
-            GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label(actor.Name + " Gauge: " + actor.GaugeValue.ToString("N1"), GUILayout.Width(150));
+                    GUI.changed = false;
+                    var newValue = GUILayout.HorizontalSlider(actor.GaugeValue, 0, 100);
+                    if (GUI.changed)
+                        actor.SetGaugeValue(newValue);
 
-            GUILayout.BeginHorizontal();
-            var subGauge = hScene.GaugeController?.SubUI;
-            if (subGauge != null)
-            {
-                GUILayout.Label("Sub Gauge: " + subGauge.GaugeValue.ToString("F1"), GUILayout.Width(150));
-                subGauge.GaugeValue = GUILayout.HorizontalSlider(subGauge.GaugeValue, 0, 100);
+                    // todo editing siru array doesn't cause updates
+                    //    for (int i = 0; i < hActor._siruLv.Length; i++)
+                    //    {
+                    //        GUILayout.BeginHorizontal();
+                    //        GUILayout.Label($"{(ChaFileDefine.SiruParts)i}: lv{hActor._siruLv[i]}", GUILayout.Width(150));
+                    //        hActor._siruLv[i] = (byte)GUILayout.HorizontalSlider(hActor._siruLv[i], 0, 6);
+                    //        GUILayout.EndHorizontal();
+                    //    }
+                }
+                GUILayout.EndHorizontal();
             }
-            GUILayout.EndHorizontal();
-
-            //foreach (var hActor in hScene.Actors)
-            //{
-            //    if (hActor?.Actor == null) continue;
-            //
-            //    GUILayout.Label($"#{hActor.Index} - {GetCharaName(hActor.Actor)}");
-            //
-            // todo editing siru array doesn't cause updates
-            //    for (int i = 0; i < hActor._siruLv.Length; i++)
-            //    {
-            //        GUILayout.BeginHorizontal();
-            //        GUILayout.Label($"{(ChaFileDefine.SiruParts)i}: lv{hActor._siruLv[i]}", GUILayout.Width(150));
-            //        hActor._siruLv[i] = (byte)GUILayout.HorizontalSlider(hActor._siruLv[i], 0, 6);
-            //        GUILayout.EndHorizontal();
-            //    }
-            //}
 
             if (GUILayout.Button("Open HScene in inspector"))
                 Inspector.Instance.Push(new InstanceStackEntry(hScene, "SV.H.HScene"), true);
@@ -136,7 +170,7 @@ namespace CheatTools
 
         private static void DrawGeneralCheats(CheatToolsWindow obj)
         {
-            Hooks.RiggedRng = GUILayout.Toggle(Hooks.RiggedRng, new GUIContent("Rigged RNG (success if above 0%)", null, "All actions with at least 1% chance will always succeed.\nWARNING: This will affect RNG across the game. NPCs will (probably) always succeed with their actions which will skew the simulation heavily. Some events might never happen or keep repeating until this is turned off."));
+            Hooks.RiggedRng = GUILayout.Toggle(Hooks.RiggedRng, new GUIContent("Rigged RNG (success if above 0%)", null, "All actions with at least 1% chance will always succeed. Must be activated BEFORE talking to a character.\nWARNING: This will affect RNG across the game. NPCs will (probably) always succeed with their actions which will skew the simulation heavily. Some events might never happen or keep repeating until this is turned off."));
 
             GUILayout.BeginHorizontal();
             {
@@ -162,27 +196,17 @@ namespace CheatTools
                     btn.interactable = true;
             }
             GUI.enabled = true;
-        }
 
-        private static IEnumerable<KeyValuePair<int, Actor>> GetVisibleCharas()
-        {
-            if (SV.H.HScene.Active())
-                return SV.H.HScene._instance.Actors.Select(x => new KeyValuePair<int, Actor>(x.Index, x.Actor));
 
-            var talkManager = Manager.TalkManager._instance;
-            if (talkManager != null && ADV.ADVManager._instance?.IsADV == true)
-            {
-                return new List<KeyValuePair<int, Actor>>
-                {
-                    new(0,talkManager.PlayerHi),
-                    new(1,talkManager.Npc1),
-                    new(2,talkManager.Npc2),
-                    new(3,talkManager.Npc3),
-                    new(4,talkManager.Npc4),
-                };
-            }
+            DrawUtils.DrawNums("Weekday", 7, () => (byte)Manager.Game.saveData.Week, b => Manager.Game.saveData.Week = b);
 
-            return Manager.Game.saveData.Charas.AsManagedEnumerable();
+            DrawUtils.DrawInt("Day count", () => Manager.Game.saveData.Day, i => Manager.Game.saveData.Day = i, "Total number of days passed in-game. Used for calculating menstruation status and probably other things.");
+
+            //GUILayout.BeginHorizontal();
+            //{
+            //    GUILayout.Label("asd: ");
+            //}
+            //GUILayout.EndHorizontal();
         }
 
         private static void DrawGirlCheatMenu(CheatToolsWindow cheatToolsWindow)
@@ -191,7 +215,6 @@ namespace CheatTools
 
             foreach (var chara in GetVisibleCharas())
             {
-                if (chara.Value == null) continue;
                 if (GUILayout.Button($"Select #{chara.Key} - {GetCharaName(chara.Value)}"))
                     _currentVisibleChara = chara.Value;
             }
@@ -218,7 +241,14 @@ namespace CheatTools
 
             GUILayout.BeginVertical(GUI.skin.box);
             {
-                GUILayout.Label("Selected chara name: " + GetCharaName(currentAdvChara));
+                GUILayout.BeginHorizontal();
+                {
+                    GUILayout.Label("Selected chara name: " + GetCharaName(currentAdvChara));
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button("_")) _currentVisibleChara = null;
+                }
+                GUILayout.EndHorizontal();
+
                 GUILayout.Space(6);
 
                 var gameParam = currentAdvChara.charFile.GameParameter;
@@ -241,114 +271,72 @@ namespace CheatTools
 
                     GUILayout.Space(6);
 
-                    if (_belongingsDropdown != null)
-                    {
-                        GUILayout.BeginVertical(GUI.skin.box);
-
-                        GUILayout.Label("Items owned:");
-                        var targetArr = gameParam.belongings;
-                        foreach (var gameParameterBelonging in targetArr)
-                        {
-                            GUILayout.BeginHorizontal();
-                            {
-                                if (gameParameterBelonging >= 0 && gameParameterBelonging < _belongingsDropdown.Contents.Length)
-                                    GUILayout.Label(_belongingsDropdown.Contents[gameParameterBelonging]);
-                                else
-                                    GUILayout.Label("Unknown item ID " + gameParameterBelonging);
-
-                                GUILayout.FlexibleSpace();
-                                if (GUILayout.Button("X", IMGUIUtils.LayoutOptionsExpandWidthFalse))
-                                {
-                                    gameParam.belongings = new Il2CppStructArray<int>(targetArr.Where(x => x != gameParameterBelonging).ToArray());
-                                }
-
-                            }
-                            GUILayout.EndHorizontal();
-                        }
-
-                        GUILayout.BeginHorizontal();
-                        {
-                            _belongingsDropdown.Show(comboboxMaxY);
-                            if (GUILayout.Button("GIVE", IMGUIUtils.LayoutOptionsExpandWidthFalse))
-                            {
-                                if (!gameParam.belongings.Contains(_belongingsDropdown.Index))
-                                    gameParam.belongings = new Il2CppStructArray<int>(targetArr.AddItem(_belongingsDropdown.Index).ToArray());
-                            }
-                        }
-                        GUILayout.EndHorizontal();
-
-                        GUILayout.EndVertical();
-
-                        GUILayout.Space(6);
-                    }
-
-                    if (_individualityDropdown != null)
-                    {
-
-                        GUILayout.BeginVertical(GUI.skin.box);
-
-                        GUILayout.Label("Traits:");
-                        var targetArr = gameParam.individuality.answer;
-                        foreach (var traitId in targetArr)
-                        {
-                            GUILayout.BeginHorizontal();
-                            {
-                                var index = Array.IndexOf(_individualityDropdown.ContentsIndexes, traitId);
-                                if (index >= 0)
-                                {
-                                    GUILayout.Label(_individualityDropdown.Contents[index]);
-                                }
-                                else
-                                    GUILayout.Label("Unknown trait ID " + traitId);
-
-                                GUILayout.FlexibleSpace();
-                                if (GUILayout.Button("X", IMGUIUtils.LayoutOptionsExpandWidthFalse))
-                                {
-                                    gameParam.individuality.Set(traitId, false);
-                                }
-                            }
-                            GUILayout.EndHorizontal();
-                        }
-
-                        GUILayout.BeginHorizontal();
-                        {
-                            _individualityDropdown.Show(comboboxMaxY);
-                            if (GUILayout.Button(new GUIContent("ADD", null, "If you add more than 2 traits they will work in-game, but will be removed after you save/load the game or the character."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
-                            {
-                                var selectedTraitIndex = _individualityDropdown.ContentsIndexes[_individualityDropdown.Index];
-                                if (gameParam.individuality.answer.Contains(-1))
-                                    gameParam.individuality.Set(selectedTraitIndex, true);
-                                else if (!gameParam.individuality.answer.Contains(selectedTraitIndex))
-                                    gameParam.individuality.answer = gameParam.individuality.answer.AddItem(selectedTraitIndex).ToArray();
-                            }
-                        }
-                        GUILayout.EndHorizontal();
-
-                        //todo if(GUILayout.Button("Make everyone evil"))
-
-                        GUILayout.EndVertical();
-                    }
-
-                    //todo currentAdvChara.charFile.GameParameter.preferenceH
-                    GUILayout.Space(6);
+                    DrawBelongingsPicker(gameParam, comboboxMaxY);
+                    DrawTargetAnswersPicker(_hPreferenceDropdown, "H Preference", gameParam, sv => sv.preferenceH, comboboxMaxY);
+                    DrawTargetAnswersPicker(_traitsDropdown, "Trait", gameParam, sv => sv.individuality, comboboxMaxY);
                 }
 
                 var charasGameParam = currentAdvChara.charasGameParam;
                 if (charasGameParam != null)
                 {
-                    //todo charasGameParam.menstruations
-                    //todo charasGameParam.sensitivity
+                    GUILayout.BeginVertical(GUI.skin.box);
+                    {
+                        var menstruationsLength = charasGameParam.menstruations.Length;
+                        var currentDayIndex = Manager.Game.saveData.Day % menstruationsLength;
 
-                    // DarkSoldier27: Ok I figure it out:
-                    // 0:LOVE
-                    // 1:FRIEND
-                    // 2:INDIFFERENT
-                    // 3:DISLIKE
-                    // values go from 0 to 30, reaching 30 increase a favorability point in longSensitivityCounts <- this is what determined their status, the max value for this one is also 30
-                    // and yeah reaching below 0 reduce a point
+                        GUILayout.BeginHorizontal();
+                        {
+                            GUILayout.Label("Menstruation: ");
+
+                            GUI.color = currentAdvChara.IsMenstruation(ActorExtensionH.Menstruation.Normal) ? Color.green : Color.white;
+                            if (GUILayout.Button("Normal")) SetMenstruationForDay(currentDayIndex, 0);
+                            GUI.color = currentAdvChara.IsMenstruation(ActorExtensionH.Menstruation.Safe) ? Color.green : Color.white;
+                            if (GUILayout.Button("Safe")) SetMenstruationForDay(currentDayIndex, 1);
+                            GUI.color = currentAdvChara.IsMenstruation(ActorExtensionH.Menstruation.Danger) ? Color.green : Color.white;
+                            if (GUILayout.Button("Danger")) SetMenstruationForDay(currentDayIndex, 2);
+                            GUI.color = Color.white;
+                        }
+                        GUILayout.EndHorizontal();
+
+                        GUILayout.BeginHorizontal();
+                        {
+                            GUILayout.Label(menstruationsLength / 7 + "-weekly", GUILayout.Width(80));
+                            var mensUiItems = new GUIContent[] { new("N"), new("S"), new("D") };
+                            for (var i = 0; i < menstruationsLength; i++)
+                            {
+                                var mens = charasGameParam.menstruations[i];
+                                GUI.color = currentDayIndex == i ? Color.green : Color.white;
+                                if (GUILayout.Button(mensUiItems[mens]))
+                                    SetMenstruationForDay(i, (mens + 1) % 3);
+
+                                if (i == 6)
+                                {
+                                    GUI.color = Color.white;
+                                    GUILayout.EndHorizontal();
+                                    GUILayout.BeginHorizontal();
+                                    GUILayout.Label("schedule:", GUILayout.Width(80));
+                                }
+                            }
+                            GUI.color = Color.white;
+                        }
+                        GUILayout.EndHorizontal();
+
+                        void SetMenstruationForDay(int index, int newMens) => charasGameParam.menstruations[index] = newMens;
+
+                        GUILayout.Space(6);
+                    }
+                    GUILayout.EndVertical();
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
+                        // DarkSoldier27: Ok I figure it out:
+                        // 0:LOVE
+                        // 1:FRIEND
+                        // 2:INDIFFERENT
+                        // 3:DISLIKE
+                        // values go from 0 to 30, reaching 30 increase a favorability point in longSensitivityCounts <- this is what determined their status, the max value for this one is also 30
+                        // and yeah reaching below 0 reduce a point
+
                         GUILayout.BeginHorizontal();
 
                         GUILayout.Label("Edit relationship with: ");
@@ -370,7 +358,7 @@ namespace CheatTools
                             targets = new[] { targets[_otherCharaListIndex] };
                         }
 
-                        GUILayout.Label("WARNING: Save-Load the game after editing or changes will be lost!");
+                        GUILayout.Label("WARNING: BETA, settings may be reset by the game randomly. Save-Load the game after editing for best chance to make it work.");
 
                         DrawSingleRankEditor(SensitivityKind.Love, currentAdvChara, targets);
                         DrawSingleRankEditor(SensitivityKind.Friend, currentAdvChara, targets);
@@ -378,6 +366,8 @@ namespace CheatTools
                         DrawSingleRankEditor(SensitivityKind.Dislike, currentAdvChara, targets);
                     }
                     GUILayout.EndVertical();
+
+                    //todo charasGameParam.sensitivity, same deal as relationships with tables and stocks
 
                     GUILayout.Space(6);
                 }
@@ -407,6 +397,118 @@ namespace CheatTools
             }
             GUILayout.EndVertical();
         }
+
+        private static void DrawBelongingsPicker(HumanDataGameParameter_SV gameParam, int comboboxMaxY)
+        {
+            if (_belongingsDropdown == null) return;
+
+            GUILayout.BeginVertical(GUI.skin.box);
+
+            GUILayout.Label("Items owned:");
+            var targetArr = gameParam.belongings;
+            foreach (var gameParameterBelonging in targetArr)
+            {
+                GUILayout.BeginHorizontal();
+                {
+                    if (gameParameterBelonging >= 0 && gameParameterBelonging < _belongingsDropdown.Contents.Length)
+                        GUILayout.Label(_belongingsDropdown.Contents[gameParameterBelonging]);
+                    else
+                        GUILayout.Label("Unknown item ID " + gameParameterBelonging);
+
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button("X", IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                    {
+                        gameParam.belongings = new Il2CppStructArray<int>(targetArr.Where(x => x != gameParameterBelonging).ToArray());
+                    }
+
+                }
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.BeginHorizontal();
+            {
+                _belongingsDropdown.Show(comboboxMaxY);
+                if (GUILayout.Button("GIVE", IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                {
+                    if (!gameParam.belongings.Contains(_belongingsDropdown.Index))
+                        gameParam.belongings = new Il2CppStructArray<int>(targetArr.AddItem(_belongingsDropdown.Index).ToArray());
+                }
+                if (GUILayout.Button(new GUIContent("TO ALL", null, "Give this item to ALL characters if they don't already have it, including you."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                {
+                    foreach (var chara in Manager.Game.Charas.AsManagedEnumerable().Select(x => x.Value))
+                    {
+                        if (!chara.charFile.GameParameter.belongings.Contains(_belongingsDropdown.Index))
+                            chara.charFile.GameParameter.belongings = new Il2CppStructArray<int>(chara.charFile.GameParameter.belongings.AddItem(_belongingsDropdown.Index).ToArray());
+                    }
+                }
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.EndVertical();
+
+            GUILayout.Space(6);
+        }
+
+        private static void DrawTargetAnswersPicker(ImguiComboBoxSimple combobox, string name, HumanDataGameParameter_SV currentCharaData, Func<HumanDataGameParameter_SV, HumanDataGameParameter_SV.AnswerBase> targetAnswers, int comboboxMaxY)
+        {
+            if (combobox == null) return;
+
+            GUILayout.BeginVertical(GUI.skin.box);
+
+            GUILayout.Label(name + ":");
+            var answerBase = targetAnswers(currentCharaData);
+            var answerArr = answerBase.answer;
+            foreach (var traitId in answerArr)
+            {
+                GUILayout.BeginHorizontal();
+                {
+                    var index = Array.IndexOf(combobox.ContentsIndexes, traitId);
+                    if (index >= 0)
+                    {
+                        GUILayout.Label(combobox.Contents[index]);
+                    }
+                    else
+                        GUILayout.Label($"Unknown {name} ID {traitId}");
+
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button("X", IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                    {
+                        answerBase.Set(traitId, false);
+                    }
+                }
+                GUILayout.EndHorizontal();
+            }
+
+            GUILayout.BeginHorizontal();
+            {
+                combobox.Show(comboboxMaxY);
+                var selectedTraitIndex = combobox.ContentsIndexes[combobox.Index];
+
+                if (GUILayout.Button(new GUIContent("ADD", null, "If you add more than 2 entries they will work in-game, but will be removed after you save/load the game or the character."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                {
+                    SetAnswer(answerBase, selectedTraitIndex);
+                }
+                if (GUILayout.Button(new GUIContent("TO ALL", null, "Add this entry to ALL characters, including you."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                {
+                    foreach (var chara in Manager.Game.Charas.AsManagedEnumerable().Select(x => x.Value))
+                        SetAnswer(targetAnswers(chara.charFile.GameParameter), selectedTraitIndex);
+                }
+            }
+            GUILayout.EndHorizontal();
+
+            void SetAnswer(HumanDataGameParameter_SV.AnswerBase individuality, int id)
+            {
+                if (individuality.answer.Contains(-1))
+                    individuality.Set(id, true);
+                else if (!individuality.answer.Contains(id))
+                    individuality.answer = individuality.answer.AddItem(id).ToArray();
+            }
+
+            GUILayout.EndVertical();
+
+            GUILayout.Space(6);
+        }
+
         private static void DrawSingleRankEditor(SensitivityKind kind, Actor targetChara, IList<Actor> affectedCharas)
         {
             var targetCharaSensitivity = targetChara.charasGameParam.sensitivity;
@@ -471,187 +573,21 @@ namespace CheatTools
                     //otherSensitivity.CalcHighvFavorability();
                 }
             }
-            void ChangeRank(SensitivityParameter.FavorabiliryInfo favorabiliryInfo, SensitivityKind kind, int amount)
+            void ChangeRank(SensitivityParameter.FavorabiliryInfo favorabiliryInfo, SensitivityKind sensitivityKind, int amount)
             {
-                var newRank = (SensitivityParameter.Rank)Mathf.Clamp((int)(favorabiliryInfo.ranks[(int)kind] + amount), 0, (int)SensitivityParameter.Rank.MAX);
-                favorabiliryInfo.ranks[(int)kind] = newRank;
+                var newRank = (SensitivityParameter.Rank)Mathf.Clamp((int)(favorabiliryInfo.ranks[(int)sensitivityKind] + amount), 0, (int)SensitivityParameter.Rank.MAX);
+                favorabiliryInfo.ranks[(int)sensitivityKind] = newRank;
 
-                favorabiliryInfo.longSensitivityCounts[(int)kind] = 10 * (int)newRank;
+                favorabiliryInfo.longSensitivityCounts[(int)sensitivityKind] = 10 * (int)newRank;
             }
-        }
-
-        private static int GetActorId(Actor currentAdvChara)
-        {
-            return Manager.Game.Charas.AsManagedEnumerable().Single(x => x.Value.Equals(currentAdvChara)).Key;
-        }
-
-        private enum SensitivityKind
-        {
-            Love = 0,
-            Friend = 1,
-            Distant = 2,
-            Dislike = 3
-        }
-
-        private static class Hooks
-        {
-            #region Speedhack
-
-            [HarmonyPostfix]
-            [HarmonyPatch(typeof(AIBase), nameof(AIBase.FixedUpdate))]
-            private static void MovementSpeedOverride(AIBase __instance)
-            {
-                if (SpeedMode == SpeedModes.Normal || !__instance) return;
-
-                var rai = __instance.TryCast<SVRichAI>();
-                if (rai == null) return;
-
-                switch (SpeedMode)
-                {
-                    case SpeedModes.ReturnToNormal:
-                        rai.accelType = 0;
-                        rai.slowSpeed = 1;
-                        rai.maxSpeed = 6;
-                        rai.acceleration = 6;
-                        SpeedMode = SpeedModes.Normal;
-                        break;
-
-                    case SpeedModes.Fast:
-                        rai.accelType = 1;
-                        rai.slowSpeed = 10;
-                        rai.maxSpeed = 10;
-                        rai.acceleration = 10;
-                        break;
-                    case SpeedModes.Sanic:
-                        rai.accelType = 1;
-                        rai.slowSpeed = 100;
-                        rai.maxSpeed = 100;
-                        rai.acceleration = 100;
-                        break;
-
-                    case SpeedModes.Normal:
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
-
-            public enum SpeedModes
-            {
-                ReturnToNormal = -1,
-                Normal = 0,
-                Fast,
-                Sanic
-            }
-
-            public static SpeedModes SpeedMode;
-
-            #endregion
-
-            #region RNG manip
-
-            public static bool RiggedRng = false;
-
-            [HarmonyPostfix]
-            [HarmonyPatch(typeof(ProbabilityCalculation), nameof(ProbabilityCalculation.Detect), typeof(int))]
-            [HarmonyPatch(typeof(ProbabilityCalculation), nameof(ProbabilityCalculation.Detect), typeof(float))]
-            private static void ProbabilityCalculation_Detect_Override(ref bool __result)
-            {
-                if (RiggedRng) __result = true;
-            }
-
-            [HarmonyPostfix]
-            [HarmonyPatch(typeof(Random), nameof(Random.Next), typeof(int))]
-            [HarmonyPatch(typeof(Random), nameof(Random.Next), typeof(int), typeof(int))]
-            private static void Random_Next_Override(int maxValue, ref int __result)
-            {
-                if (RiggedRng) __result = maxValue - 1;
-            }
-
-            #endregion
         }
     }
 
-    /// <summary>
-    /// GUILayout.SelectionGrid is broken, doesn't show anything
-    /// </summary>
-    internal static class DrawUtils
+    internal enum SensitivityKind
     {
-        public static void DrawOne<T>(string name, Func<T> get, Action<T> set)
-        {
-            GUILayout.BeginHorizontal();
-            {
-                GUI.changed = false;
-                var oldValue = get();
-                GUILayout.Label(name + ": ");
-                GUILayout.FlexibleSpace();
-                var result = GUILayout.TextField(oldValue.ToString(), GUILayout.Width(50));
-                if (GUI.changed)
-                {
-                    var newValue = (T)Convert.ChangeType(result, typeof(T));
-                    if (!newValue.Equals(oldValue))
-                        set(newValue);
-                }
-            }
-            GUILayout.EndHorizontal();
-        }
-        public static void DrawByte(string name, Func<byte> get, Action<byte> set)
-        {
-            GUILayout.BeginHorizontal();
-            {
-                GUI.changed = false;
-                GUILayout.Label(name + ": ");
-                GUILayout.FlexibleSpace();
-                var oldValue = get();
-                var result = GUILayout.TextField(oldValue.ToString(), GUILayout.Width(50));
-                if (GUI.changed && byte.TryParse(result, out var newValue) && !newValue.Equals(oldValue)) set(newValue);
-            }
-            GUILayout.EndHorizontal();
-        }
-        public static void DrawNums(string name, byte count, Func<byte> get, Action<byte> set)
-        {
-            GUILayout.BeginHorizontal();
-            {
-                GUI.changed = false;
-                GUILayout.Label(name + ": ");
-                GUILayout.FlexibleSpace();
-                var oldValue = get();
-
-                for (byte i = 0; i < count; i++)
-                {
-                    if (oldValue == i) GUI.color = Color.green;
-                    if (GUILayout.Button((i + 1).ToString(), IMGUIUtils.LayoutOptionsExpandWidthFalse)) set(i);
-                    GUI.color = Color.white;
-                }
-            }
-            GUILayout.EndHorizontal();
-        }
-        public static void DrawStrings(string name, string[] strings, Func<byte> get, Action<byte> set)
-        {
-            GUILayout.BeginHorizontal();
-            {
-                GUI.changed = false;
-                GUILayout.Label(name + ": ");
-                GUILayout.FlexibleSpace();
-                var oldValue = get();
-
-                for (byte i = 0; i < strings.Length; i++)
-                {
-                    if (oldValue == i) GUI.color = Color.green;
-                    if (GUILayout.Button(strings[i], IMGUIUtils.LayoutOptionsExpandWidthFalse)) set(i);
-                    GUI.color = Color.white;
-                }
-            }
-            GUILayout.EndHorizontal();
-        }
-        public static void DrawBool(string name, Func<bool> get, Action<bool> set)
-        {
-            GUILayout.BeginHorizontal();
-            {
-                GUI.changed = false;
-                var result = GUILayout.Toggle(get(), name);
-                if (GUI.changed) set(result);
-            }
-            GUILayout.EndHorizontal();
-        }
+        Love = 0,
+        Friend = 1,
+        Distant = 2,
+        Dislike = 3
     }
 }
