@@ -1,10 +1,10 @@
 ## CheatTools - Trainer for specific games running in Unity game engine
-A trainer mostly for games by Illusion/Illgames (Koikatu, Koikatsu Party, AI-Shoujo, HoneySelect2, HoneyCome, etc.). It allows control over player, heroines, and most other aspects of the game (supported features depend on the game). It also integrates with RuntimeUnityEditor to provide useful debugging tools.
+A trainer mostly for games by Illusion/Illgames (Koikatu, Koikatsu Party, AI-Shoujo, HoneySelect2, HoneyCome, Summer Vacation Scramble etc.). It allows control over player, heroines, and most other aspects of the game (supported features depend on the game). It also integrates with RuntimeUnityEditor to provide useful debugging tools.
 
 ![Preview](https://user-images.githubusercontent.com/39247311/55248769-c359a380-524a-11e9-86cb-2a3fdb48abe8.PNG)
 
 ### How to use
-1. Install latest versions of [BepInEx v5.x](https://github.com/BepInEx/BepInEx/releases) and [RuntimeUnityEditor](https://github.com/ManlyMarco/RuntimeUnityEditor/releases). For HC you need the latest [nightly builds of BepInEx6](https://builds.bepinex.dev/projects/bepinex_be) and the [IL2CPP version of RuntimeUnityEditor](https://github.com/ManlyMarco/RuntimeUnityEditor/releases/tag/v5.2.1_IL2CPP).
+1. Install latest versions of [BepInEx v5.x](https://github.com/BepInEx/BepInEx/releases) and [RuntimeUnityEditor](https://github.com/ManlyMarco/RuntimeUnityEditor/releases). For HC and SVS you need the latest [nightly builds of BepInEx6](https://builds.bepinex.dev/projects/bepinex_be), [BepisPlugins](https://github.com/IllusionMods/BepisPlugins), and the IL2CPP version of RuntimeUnityEditor.
 2. Download the latest release archive for your game from the [releases](https://github.com/ManlyMarco/IllusionCheatTools/releases) page.
 3. Extract the release in the game directory, the .dll file should end up inside BepInEx\plugins.
 4. To turn on press the Pause key or F12 key depending on the release and game (you can change it in plugin settings if you have the ConfigurationManager plugin, search for "runtime editor hotkey").
