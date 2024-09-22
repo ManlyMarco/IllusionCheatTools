@@ -1,12 +1,44 @@
 ﻿using System;
 using HarmonyLib;
 using Pathfinding;
-using Random = Il2CppSystem.Random;
 
 namespace CheatTools;
 
 internal static class Hooks
 {
+    #region No interruptions
+
+    public static bool InterruptBlock;
+    public static bool InterruptBlockAllow3P = true;
+    public static bool InterruptBlockAllowNonPlayer = true;
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(SV.ReactionManager), nameof(SV.ReactionManager.CheckIntervention))]
+    private static void ReactionManager_CheckIntervention_Postfix(SV.ReactionManager __instance,
+                                                                  SV.Chara.AI ai, SV.Chara.AI aiTarg1, SV.Chara.AI aiTarg2,
+                                                                  SV.SimulationDefine.CommandNo setCommandNo,
+                                                                  ref bool risSetAction)
+    {
+        if (!InterruptBlock) return;
+
+        if (InterruptBlockAllow3P && (setCommandNo == SV.SimulationDefine.CommandNo.LetsHave3P || setCommandNo == SV.SimulationDefine.CommandNo.WantA3P)) return;
+
+        if (InterruptBlockAllowNonPlayer)
+        {
+            var includesPc = ai._charaData.IsPC || aiTarg1?._charaData.IsPC == true || aiTarg2?._charaData.IsPC == true;
+            if (!includesPc) return;
+        }
+
+#if DEBUG
+        Console.WriteLine($"ai={ai._charaData.Name} aiTarg1={aiTarg1._charaData.Name} aiTarg2={aiTarg2._charaData.Name} setCommandNo={setCommandNo} risSetAction={risSetAction}");
+#endif
+        // Cancel the intervention
+        ai._charaData.charasGameParam.commandNo = (int)SV.SimulationDefine.CommandNo.None;
+        risSetAction = false;
+    }
+
+    #endregion
+
     #region Speedhack
 
     [HarmonyPostfix]
@@ -72,8 +104,8 @@ internal static class Hooks
     }
 
     [HarmonyPostfix]
-    [HarmonyPatch(typeof(Random), nameof(Random.Next), typeof(int))]
-    [HarmonyPatch(typeof(Random), nameof(Random.Next), typeof(int), typeof(int))]
+    [HarmonyPatch(typeof(Il2CppSystem.Random), nameof(Il2CppSystem.Random.Next), typeof(int))]
+    [HarmonyPatch(typeof(Il2CppSystem.Random), nameof(Il2CppSystem.Random.Next), typeof(int), typeof(int))]
     private static void Random_Next_Override(int maxValue, ref int __result)
     {
         if (RiggedRng) __result = maxValue - 1;
