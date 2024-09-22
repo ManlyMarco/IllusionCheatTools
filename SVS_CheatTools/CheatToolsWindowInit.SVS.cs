@@ -171,6 +171,8 @@ namespace CheatTools
         private static void DrawGeneralCheats(CheatToolsWindow obj)
         {
             Hooks.RiggedRng = GUILayout.Toggle(Hooks.RiggedRng, new GUIContent("Rigged RNG (success if above 0%)", null, "All actions with at least 1% chance will always succeed. Must be activated BEFORE talking to a character.\nWARNING: This will affect RNG across the game. NPCs will (probably) always succeed with their actions which will skew the simulation heavily. Some events might never happen or keep repeating until this is turned off."));
+            
+            GUILayout.Space(5);
 
             GUILayout.BeginHorizontal();
             {
@@ -194,6 +196,8 @@ namespace CheatTools
                 Hooks.InterruptBlockAllowNonPlayer = GUILayout.Toggle(Hooks.InterruptBlockAllowNonPlayer, new GUIContent("only player", null, "Only block interrupts if player controls one of the involved characters."));
             }
             GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
 
             GUI.enabled = ADV.ADVManager._instance?.IsADV == true;
             if (GUILayout.Button(new GUIContent("Force Unlock visible talk options", null, "Un-gray and make clickable all currently visible buttons in the talk menu. Mostly for use with the blackmail menu. If the chance is 0% you still won't be able to succeed at the action.")))
