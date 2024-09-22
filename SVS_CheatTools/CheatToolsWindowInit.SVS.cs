@@ -174,7 +174,7 @@ namespace CheatTools
 
             GUILayout.BeginHorizontal();
             {
-                GUILayout.Label("Walking speed");
+                GUILayout.Label("Walking speed:");
 
                 var normal = Hooks.SpeedMode == Hooks.SpeedModes.Normal || Hooks.SpeedMode == Hooks.SpeedModes.ReturnToNormal;
                 var newNormal = GUILayout.Toggle(normal, "Normal");
@@ -184,6 +184,14 @@ namespace CheatTools
                     Hooks.SpeedMode = Hooks.SpeedModes.Fast;
                 if (GUILayout.Toggle(Hooks.SpeedMode == Hooks.SpeedModes.Sanic, "Sanic"))
                     Hooks.SpeedMode = Hooks.SpeedModes.Sanic;
+            }
+            GUILayout.EndHorizontal();
+            
+            GUILayout.BeginHorizontal();
+            {
+                Hooks.InterruptBlock = GUILayout.Toggle(Hooks.InterruptBlock, new GUIContent("Block interrupts", null, "Prevent NPCs from interrupting other characters."));
+                Hooks.InterruptBlockAllow3P = GUILayout.Toggle(Hooks.InterruptBlockAllow3P, new GUIContent("except 3P", null, "Do not block NPCs interrupting to ask for a threesome."));
+                Hooks.InterruptBlockAllowNonPlayer = GUILayout.Toggle(Hooks.InterruptBlockAllowNonPlayer, new GUIContent("only player", null, "Only block interrupts if player controls one of the involved characters."));
             }
             GUILayout.EndHorizontal();
 
