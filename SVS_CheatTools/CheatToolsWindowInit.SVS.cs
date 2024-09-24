@@ -171,7 +171,7 @@ namespace CheatTools
         private static void DrawGeneralCheats(CheatToolsWindow obj)
         {
             Hooks.RiggedRng = GUILayout.Toggle(Hooks.RiggedRng, new GUIContent("Rigged RNG (success if above 0%)", null, "All actions with at least 1% chance will always succeed. Must be activated BEFORE talking to a character.\nWARNING: This will affect RNG across the game. NPCs will (probably) always succeed with their actions which will skew the simulation heavily. Some events might never happen or keep repeating until this is turned off."));
-            
+
             GUILayout.Space(5);
 
             GUILayout.BeginHorizontal();
@@ -188,10 +188,10 @@ namespace CheatTools
                     Hooks.SpeedMode = Hooks.SpeedModes.Sanic;
             }
             GUILayout.EndHorizontal();
-            
+
             GUILayout.BeginHorizontal();
             {
-                Hooks.InterruptBlock = GUILayout.Toggle(Hooks.InterruptBlock, new GUIContent("Block interrupts", null, "Prevent NPCs from interrupting other characters."));
+                Hooks.InterruptBlock = GUILayout.Toggle(Hooks.InterruptBlock, new GUIContent("Block interrupts", null, "Prevent NPCs from interrupting interactions of 2 other characters. This does not prevent NPCs from talking to idle characters."));
                 Hooks.InterruptBlockAllow3P = GUILayout.Toggle(Hooks.InterruptBlockAllow3P, new GUIContent("except 3P", null, "Do not block NPCs interrupting to ask for a threesome."));
                 Hooks.InterruptBlockAllowNonPlayer = GUILayout.Toggle(Hooks.InterruptBlockAllowNonPlayer, new GUIContent("only player", null, "Only block interrupts if player controls one of the involved characters."));
             }
