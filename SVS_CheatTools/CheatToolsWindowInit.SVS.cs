@@ -189,6 +189,9 @@ namespace CheatTools
             }
             GUILayout.EndHorizontal();
 
+            if (GUILayout.Button("Unlimited time limit for current period"))
+                SV.GameChara.PlayerAI.charaData.charasGameParam.baseParameter.NowStamina = 100000;
+
             GUILayout.BeginHorizontal();
             {
                 Hooks.InterruptBlock = GUILayout.Toggle(Hooks.InterruptBlock, new GUIContent("Block interrupts", null, "Prevent NPCs from interrupting interactions of 2 other characters. This does not prevent NPCs from talking to idle characters."));
