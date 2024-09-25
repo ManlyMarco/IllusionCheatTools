@@ -8,7 +8,7 @@ namespace CheatTools
 {
     [BepInPlugin(GUID, DisplayName, Version)]
     [BepInDependency(RuntimeUnityEditorCore.GUID, ">=" + RuntimeUnityEditorCore.Version)]
-    [BepInProcess("SamabakeScramble")] // Studio is missing some important classes, so we can't run in it
+    [BepInProcess("SamabakeScramble")]
     public class CheatToolsPlugin : BasePlugin
     {
         public const string DisplayName = Metadata.DisplayName;
@@ -24,8 +24,6 @@ namespace CheatTools
 
         public override void Load()
         {
-            CheatToolsWindowInit.Initialize(this);
-
             var runtimeUnityEditorCore = RuntimeUnityEditorCore.Instance;
             if (runtimeUnityEditorCore == null)
             {
@@ -33,6 +31,8 @@ namespace CheatTools
                 return;
             }
 
+            CheatToolsWindowInit.Initialize(this);
+            
             runtimeUnityEditorCore.AddFeature(new CheatToolsWindow(runtimeUnityEditorCore));
         }
     }

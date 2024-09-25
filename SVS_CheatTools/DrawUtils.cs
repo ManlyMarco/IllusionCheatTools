@@ -9,13 +9,14 @@ namespace CheatTools;
 /// </summary>
 internal static class DrawUtils
 {
+    private static readonly GUILayoutOption[] _LayoutOptionsName = { GUILayout.Width(70) };
     public static void DrawOne<T>(string name, Func<T> get, Action<T> set)
     {
         GUILayout.BeginHorizontal();
         {
             GUI.changed = false;
             var oldValue = get();
-            GUILayout.Label(name + ": ");
+            GUILayout.Label(name + ": ", _LayoutOptionsName);
             GUILayout.FlexibleSpace();
             var result = GUILayout.TextField(oldValue.ToString(), GUILayout.Width(50));
             if (GUI.changed)
@@ -32,7 +33,7 @@ internal static class DrawUtils
         GUILayout.BeginHorizontal();
         {
             GUI.changed = false;
-            GUILayout.Label(name + ": ");
+            GUILayout.Label(name + ": ", _LayoutOptionsName);
             GUILayout.FlexibleSpace();
             var oldValue = get();
             var result = GUILayout.TextField(oldValue.ToString(), GUILayout.Width(50));
@@ -45,7 +46,7 @@ internal static class DrawUtils
         GUILayout.BeginHorizontal();
         {
             GUI.changed = false;
-            GUILayout.Label(new GUIContent(name + ": ", null, tooltip));
+            GUILayout.Label(new GUIContent(name + ": ", null, tooltip), _LayoutOptionsName);
             GUILayout.FlexibleSpace();
             var oldValue = get();
             var result = GUILayout.TextField(oldValue.ToString(), GUILayout.Width(50));
@@ -58,7 +59,7 @@ internal static class DrawUtils
         GUILayout.BeginHorizontal();
         {
             GUI.changed = false;
-            GUILayout.Label(name + ": ");
+            GUILayout.Label(name + ": ", _LayoutOptionsName);
             GUILayout.FlexibleSpace();
             var oldValue = get();
 
@@ -76,7 +77,7 @@ internal static class DrawUtils
         GUILayout.BeginHorizontal();
         {
             GUI.changed = false;
-            GUILayout.Label(name + ": ");
+            GUILayout.Label(name + ": ", _LayoutOptionsName);
             GUILayout.FlexibleSpace();
             var oldValue = get();
 
@@ -96,6 +97,35 @@ internal static class DrawUtils
             GUI.changed = false;
             var result = GUILayout.Toggle(get(), name);
             if (GUI.changed) set(result);
+        }
+        GUILayout.EndHorizontal();
+    }
+
+    public static void DrawSlider(string name, int min, int max, Func<int> get, Action<int> set, string tooltip = null)
+        => DrawSlider(name, (float)min, (float)max, () => (float)get(), f => set(Mathf.RoundToInt(f)), tooltip);
+
+    public static void DrawSlider(string name, float min, float max, Func<float> get, Action<float> set, string tooltip = null)
+    {
+        GUILayout.BeginHorizontal();
+        {
+            GUI.changed = false;
+            GUILayout.Label(new GUIContent(name + ": ", null, tooltip), _LayoutOptionsName);
+            GUILayout.Space(4);
+
+            var oldValue = get();
+
+            var newValue = GUILayout.HorizontalSlider(oldValue, min, max, IMGUIUtils.LayoutOptionsExpandWidthTrue);
+            if (GUI.changed)
+            {
+                GUI.changed = false;
+                set(newValue);
+                oldValue = newValue;
+            }
+
+            GUILayout.Space(4);
+
+            var result = GUILayout.TextField(oldValue.ToString(), GUILayout.Width(50));
+            if (GUI.changed && float.TryParse(result, out newValue) && !newValue.Equals(oldValue)) set(newValue);
         }
         GUILayout.EndHorizontal();
     }
