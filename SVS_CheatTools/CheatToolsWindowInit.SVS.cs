@@ -255,42 +255,35 @@ namespace CheatTools
             {
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Label("Selected chara name: " + GetCharaName(currentAdvChara));
+                    GUILayout.Label("Selected:", IMGUIUtils.LayoutOptionsExpandWidthFalse);
                     GUILayout.FlexibleSpace();
-                    if (GUILayout.Button("_")) _currentVisibleChara = null;
+                    GUILayout.Label(GetCharaName(currentAdvChara), IMGUIUtils.LayoutOptionsExpandWidthFalse);
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button("Close", IMGUIUtils.LayoutOptionsExpandWidthFalse)) _currentVisibleChara = null;
                 }
                 GUILayout.EndHorizontal();
 
                 GUILayout.Space(6);
 
-                var gameParam = currentAdvChara.charFile.GameParameter;
-                if (gameParam != null)
-                {
-                    DrawUtils.DrawStrings("Job", new[] { "None", "Lifeguard", "Cafe", "Shrine" }, () => gameParam.job, b => gameParam.job = b);
-                    DrawUtils.DrawNums("Gayness", 5, () => gameParam.sexualTarget, b => gameParam.sexualTarget = b);
-                    DrawUtils.DrawNums(nameof(gameParam.lvChastity), 5, () => gameParam.lvChastity, b => gameParam.lvChastity = b);
-                    DrawUtils.DrawNums(nameof(gameParam.lvSociability), 5, () => gameParam.lvSociability, b => gameParam.lvSociability = b);
-                    DrawUtils.DrawNums(nameof(gameParam.lvTalk), 5, () => gameParam.lvTalk, b => gameParam.lvTalk = b);
-                    DrawUtils.DrawNums(nameof(gameParam.lvStudy), 5, () => gameParam.lvStudy, b => gameParam.lvStudy = b);
-                    DrawUtils.DrawNums(nameof(gameParam.lvLiving), 5, () => gameParam.lvLiving, b => gameParam.lvLiving = b);
-                    DrawUtils.DrawNums(nameof(gameParam.lvPhysical), 5, () => gameParam.lvPhysical, b => gameParam.lvPhysical = b);
-                    DrawUtils.DrawNums("Fighting style", 3, () => gameParam.lvDefeat, b => gameParam.lvDefeat = b);
-
-                    DrawUtils.DrawBool(nameof(gameParam.isVirgin), () => gameParam.isVirgin, b => gameParam.isVirgin = b);
-                    DrawUtils.DrawBool(nameof(gameParam.isAnalVirgin), () => gameParam.isAnalVirgin, b => gameParam.isAnalVirgin = b);
-                    DrawUtils.DrawBool(nameof(gameParam.isMaleVirgin), () => gameParam.isMaleVirgin, b => gameParam.isMaleVirgin = b);
-                    DrawUtils.DrawBool(nameof(gameParam.isMaleAnalVirgin), () => gameParam.isMaleAnalVirgin, b => gameParam.isMaleAnalVirgin = b);
-
-                    GUILayout.Space(6);
-
-                    DrawBelongingsPicker(gameParam, comboboxMaxY);
-                    DrawTargetAnswersPicker(_hPreferenceDropdown, "H Preference", gameParam, sv => sv.preferenceH, comboboxMaxY);
-                    DrawTargetAnswersPicker(_traitsDropdown, "Trait", gameParam, sv => sv.individuality, comboboxMaxY);
-                }
-
                 var charasGameParam = currentAdvChara.charasGameParam;
                 if (charasGameParam != null)
                 {
+                    var baseParameter = currentAdvChara.charasGameParam.baseParameter;
+                    if (baseParameter != null)
+                    {
+                        GUILayout.Label("In-game stats");
+
+                        DrawUtils.DrawSlider(nameof(baseParameter.NowStamina), 0, baseParameter.Stamina + 100, () => baseParameter.NowStamina, val => baseParameter.NowStamina = val,
+                                             "If character is controlled by player this is used for determining how long until the period ends. Initial value is equal to 'Stamina + 100'.");
+                        DrawUtils.DrawSlider(nameof(baseParameter.Stamina), 0, 1000, () => baseParameter.Stamina, val => baseParameter.Stamina = val);
+                        DrawUtils.DrawSlider(nameof(baseParameter.Conversation), 0, 1000, () => baseParameter.Conversation, val => baseParameter.Conversation = val);
+                        DrawUtils.DrawSlider(nameof(baseParameter.Study), 0, 1000, () => baseParameter.Study, val => baseParameter.Study = val);
+                        DrawUtils.DrawSlider(nameof(baseParameter.Living), 0, 1000, () => baseParameter.Living, val => baseParameter.Living = val);
+                        DrawUtils.DrawSlider(nameof(baseParameter.Job), 0, 1000, () => baseParameter.Job, val => baseParameter.Job = val, "Doesn't seem to work, changes get overwritten.");
+
+                        GUILayout.Space(6);
+                    }
+
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
                         var menstruationsLength = charasGameParam.menstruations.Length;
@@ -334,10 +327,10 @@ namespace CheatTools
                         GUILayout.EndHorizontal();
 
                         void SetMenstruationForDay(int index, int newMens) => charasGameParam.menstruations[index] = newMens;
-
-                        GUILayout.Space(6);
                     }
                     GUILayout.EndVertical();
+
+                    GUILayout.Space(6);
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
@@ -384,6 +377,36 @@ namespace CheatTools
                     GUILayout.Space(6);
                 }
 
+                var gameParam = currentAdvChara.charFile.GameParameter;
+                if (gameParam != null)
+                {
+                    GUILayout.BeginVertical(GUI.skin.box);
+                    {
+                        GUILayout.Label("Card stats (same as in maker)");
+
+                        DrawUtils.DrawStrings("Job", new[] { "None", "Lifeguard", "Cafe", "Shrine" }, () => gameParam.job, b => gameParam.job = b);
+                        DrawUtils.DrawNums("Gayness", 5, () => gameParam.sexualTarget, b => gameParam.sexualTarget = b);
+                        DrawUtils.DrawNums(nameof(gameParam.lvChastity), 5, () => gameParam.lvChastity, b => gameParam.lvChastity = b);
+                        DrawUtils.DrawNums(nameof(gameParam.lvSociability), 5, () => gameParam.lvSociability, b => gameParam.lvSociability = b);
+                        DrawUtils.DrawNums(nameof(gameParam.lvTalk), 5, () => gameParam.lvTalk, b => gameParam.lvTalk = b);
+                        DrawUtils.DrawNums(nameof(gameParam.lvStudy), 5, () => gameParam.lvStudy, b => gameParam.lvStudy = b);
+                        DrawUtils.DrawNums(nameof(gameParam.lvLiving), 5, () => gameParam.lvLiving, b => gameParam.lvLiving = b);
+                        DrawUtils.DrawNums(nameof(gameParam.lvPhysical), 5, () => gameParam.lvPhysical, b => gameParam.lvPhysical = b);
+                        DrawUtils.DrawNums("Fighting style", 3, () => gameParam.lvDefeat, b => gameParam.lvDefeat = b);
+
+                        DrawUtils.DrawBool(nameof(gameParam.isVirgin), () => gameParam.isVirgin, b => gameParam.isVirgin = b);
+                        DrawUtils.DrawBool(nameof(gameParam.isAnalVirgin), () => gameParam.isAnalVirgin, b => gameParam.isAnalVirgin = b);
+                        DrawUtils.DrawBool(nameof(gameParam.isMaleVirgin), () => gameParam.isMaleVirgin, b => gameParam.isMaleVirgin = b);
+                        DrawUtils.DrawBool(nameof(gameParam.isMaleAnalVirgin), () => gameParam.isMaleAnalVirgin, b => gameParam.isMaleAnalVirgin = b);
+                    }
+                    GUILayout.EndVertical();
+
+                    GUILayout.Space(6);
+
+                    DrawBelongingsPicker(gameParam, comboboxMaxY);
+                    DrawTargetAnswersPicker(_hPreferenceDropdown, "H Preference", gameParam, sv => sv.preferenceH, comboboxMaxY);
+                    DrawTargetAnswersPicker(_traitsDropdown, "Trait", gameParam, sv => sv.individuality, comboboxMaxY);
+                }
 
                 if (gameParam != null && GUILayout.Button("Inspect GameParameter"))
                     Inspector.Instance.Push(new InstanceStackEntry(gameParam, "GameParam " + GetCharaName(currentAdvChara)), true);
