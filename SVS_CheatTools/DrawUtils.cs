@@ -9,7 +9,7 @@ namespace CheatTools;
 /// </summary>
 internal static class DrawUtils
 {
-    private static readonly GUILayoutOption[] _LayoutOptionsName = { GUILayout.Width(70) };
+    private static readonly GUILayoutOption[] _LayoutOptionsName = { GUILayout.Width(80) };
     public static void DrawOne<T>(string name, Func<T> get, Action<T> set)
     {
         GUILayout.BeginHorizontal();

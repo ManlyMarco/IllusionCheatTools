@@ -189,9 +189,6 @@ namespace CheatTools
             }
             GUILayout.EndHorizontal();
 
-            if (GUILayout.Button("Unlimited time limit for current period"))
-                SV.GameChara.PlayerAI.charaData.charasGameParam.baseParameter.NowStamina = 100000;
-
             GUILayout.BeginHorizontal();
             {
                 Hooks.InterruptBlock = GUILayout.Toggle(Hooks.InterruptBlock, new GUIContent("Block interrupts", null, "Prevent NPCs from interrupting interactions of 2 other characters. This does not prevent NPCs from talking to idle characters."));
@@ -202,6 +199,10 @@ namespace CheatTools
 
             GUILayout.Space(5);
 
+            GUI.enabled = !ReferenceEquals(SV.GameChara.PlayerAI, null);
+            if (GUILayout.Button("Unlimited time limit for current period"))
+                SV.GameChara.PlayerAI!.charaData.charasGameParam.baseParameter.NowStamina = 100000;
+
             GUI.enabled = ADV.ADVManager._instance?.IsADV == true;
             if (GUILayout.Button(new GUIContent("Force Unlock visible talk options", null, "Un-gray and make clickable all currently visible buttons in the talk menu. Mostly for use with the blackmail menu. If the chance is 0% you still won't be able to succeed at the action.")))
             {
@@ -211,7 +212,6 @@ namespace CheatTools
                     btn.interactable = true;
             }
             GUI.enabled = true;
-
 
             DrawUtils.DrawNums("Weekday", 7, () => (byte)Manager.Game.saveData.Week, b => Manager.Game.saveData.Week = b);
 
@@ -272,13 +272,13 @@ namespace CheatTools
                 if (charasGameParam != null)
                 {
                     var baseParameter = currentAdvChara.charasGameParam.baseParameter;
-                    if (baseParameter != null)
-                    {
-                        GUILayout.Label("In-game stats");
 
-                        DrawUtils.DrawSlider(nameof(baseParameter.NowStamina), 0, baseParameter.Stamina + 100, () => baseParameter.NowStamina, val => baseParameter.NowStamina = val,
-                                             "If character is controlled by player this is used for determining how long until the period ends. Initial value is equal to 'Stamina + 100'.");
+                    {
+                        GUILayout.Label("In-game stats (changed through gameplay)");
+
                         DrawUtils.DrawSlider(nameof(baseParameter.Stamina), 0, 1000, () => baseParameter.Stamina, val => baseParameter.Stamina = val);
+                        DrawUtils.DrawSlider(nameof(baseParameter.NowStamina), 0, baseParameter.Stamina + 100, () => baseParameter.NowStamina, val => baseParameter.NowStamina = val,
+                                             "When character is controlled by player this field is used for determining how long until the period ends. NPCs don't use it.\nInitial value is equal to 'Stamina + 100'.");
                         DrawUtils.DrawSlider(nameof(baseParameter.Conversation), 0, 1000, () => baseParameter.Conversation, val => baseParameter.Conversation = val);
                         DrawUtils.DrawSlider(nameof(baseParameter.Study), 0, 1000, () => baseParameter.Study, val => baseParameter.Study = val);
                         DrawUtils.DrawSlider(nameof(baseParameter.Living), 0, 1000, () => baseParameter.Living, val => baseParameter.Living = val);
@@ -366,6 +366,56 @@ namespace CheatTools
                             targets = new[] { targets[_otherCharaListIndex] };
                         }
 
+                        if (targets.Length == 1)
+                        {
+                            // H Affinity controls
+                            var targetChara = targets[0];
+                            var targetCharaId = targetChara.GetActorId();
+                            var to = baseParameter.GetHAffinity(targetCharaId);
+                            var currentCharaId = currentAdvChara.GetActorId();
+                            var targetBaseParameter = targetChara.charasGameParam.baseParameter;
+                            var fro = targetBaseParameter.GetHAffinity(currentCharaId);
+
+                            GUILayout.BeginHorizontal();
+                            {
+                                GUILayout.Label("H Affinity:");
+                                GUILayout.FlexibleSpace();
+                                GUILayout.Label($"to lv{to.LV} {to.Point}pt", IMGUIUtils.LayoutOptionsExpandWidthFalse);
+                                if (GUILayout.Button("+1")) baseParameter.AddHAffinity(targetCharaId, 20);
+                                if (GUILayout.Button("0")) baseParameter.RemoveHAffinity(targetCharaId);
+                                GUILayout.FlexibleSpace();
+                                GUILayout.Label($"fro lv{fro.LV} {fro.Point}pt", IMGUIUtils.LayoutOptionsExpandWidthFalse);
+                                if (GUILayout.Button("+1")) targetBaseParameter.AddHAffinity(currentCharaId, 20);
+                                if (GUILayout.Button("0")) targetBaseParameter.RemoveHAffinity(currentCharaId);
+
+                            }
+                            GUILayout.EndHorizontal();
+                        }
+                        else if (targets.Length > 1)
+                        {
+                            GUILayout.BeginHorizontal();
+                            {
+                                GUILayout.Label("H Affinity with everyone: ");
+                                if (GUILayout.Button("Max lvl"))
+                                {
+                                    var targetIds = targets.Select(x => x.GetActorId()).ToArray();
+                                    foreach (var targetId in targetIds) baseParameter.AddHAffinity(targetId, 100);
+
+                                    var currentCharaId = currentAdvChara.GetActorId();
+                                    foreach (var target in targets) target.charasGameParam.baseParameter.AddHAffinity(currentCharaId, 100);
+                                }
+                                if (GUILayout.Button("Set to 0"))
+                                {
+                                    var targetIds = targets.Select(x => x.GetActorId()).ToArray();
+                                    foreach (var targetId in targetIds) baseParameter.RemoveHAffinity(targetId);
+
+                                    var currentCharaId = currentAdvChara.GetActorId();
+                                    foreach (var target in targets) target.charasGameParam.baseParameter.RemoveHAffinity(currentCharaId);
+                                }
+                            }
+                            GUILayout.EndHorizontal();
+                        }
+
                         GUILayout.Label("WARNING: BETA, settings may be reset by the game randomly. Save-Load the game after editing for best chance to make it work.");
 
                         DrawSingleRankEditor(SensitivityKind.Love, currentAdvChara, targets);
@@ -385,7 +435,7 @@ namespace CheatTools
                 {
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        GUILayout.Label("Card stats (same as in maker)");
+                        GUILayout.Label("Card stats (same as in the chara maker)");
 
                         DrawUtils.DrawStrings("Job", new[] { "None", "Lifeguard", "Cafe", "Shrine" }, () => gameParam.job, b => gameParam.job = b);
                         DrawUtils.DrawNums("Gayness", 5, () => gameParam.sexualTarget, b => gameParam.sexualTarget = b);
