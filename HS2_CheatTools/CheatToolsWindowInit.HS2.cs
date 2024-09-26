@@ -59,7 +59,6 @@ namespace CheatTools
                     new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.instance"),
                     new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.instance"),
                     new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                    new KeyValuePair<object, string>((Func<object>)EditorUtilities.GetRootGoScanner, "Root Objects")
                 };
             };
 

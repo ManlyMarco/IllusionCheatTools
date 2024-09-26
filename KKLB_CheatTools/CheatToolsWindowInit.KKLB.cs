@@ -24,7 +24,6 @@ namespace CheatTools
                 _openInInspectorButtons = new[]
                 {
                     new KeyValuePair<object, string>((Func<object>)(() => Game.Instance), "Game.Instance"),
-                    new KeyValuePair<object, string>((Func<object>)EditorUtilities.GetRootGoScanner, "Root Objects")
                 };
             };
 

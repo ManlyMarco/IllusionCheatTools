@@ -79,7 +79,6 @@ namespace CheatTools
                     new KeyValuePair<object, string>(_hFlag, "HFlag"),
                     new KeyValuePair<object, string>(_talkScene, "TalkScene"),
                     new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                    new KeyValuePair<object, string>((Func<object>)EditorUtilities.GetRootGoScanner, "Root Objects")
                 };
             };
 

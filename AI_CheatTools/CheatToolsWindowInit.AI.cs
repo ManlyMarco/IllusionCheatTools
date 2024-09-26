@@ -80,7 +80,6 @@ namespace CheatTools
                     new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
                     new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
                     new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
-                    new KeyValuePair<object, string>((Func<object>)EditorUtilities.GetRootGoScanner, "Root Objects")
                 };
                 ;
             };
