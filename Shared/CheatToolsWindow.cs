@@ -60,6 +60,8 @@ namespace CheatTools
         public static event Action<CheatToolsWindow> OnInitialize;
         public static event Action<CheatToolsWindow> OnShown;
 
+        public List<RuntimeUnityEditor.Core.Utils.ImguiComboBox> ComboBoxesToDisplay { get; } = new List<RuntimeUnityEditor.Core.Utils.ImguiComboBox>();
+
         protected override void DrawContents()
         {
             _cheatsScrollPos = GUILayout.BeginScrollView(_cheatsScrollPos);
@@ -80,6 +82,12 @@ namespace CheatTools
                 }
             }
             GUILayout.EndScrollView();
+
+            foreach (var comboBox in ComboBoxesToDisplay)
+            {
+                if (comboBox.DrawDropdownIfOpen())
+                    break;
+            }
         }
     }
 

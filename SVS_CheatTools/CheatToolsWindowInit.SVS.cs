@@ -28,7 +28,7 @@ namespace CheatTools
 
         public static void Initialize(CheatToolsPlugin instance)
         {
-            CheatToolsWindow.OnShown += _ =>
+            CheatToolsWindow.OnShown += window =>
             {
                 _openInInspectorButtons = new[]
                 {
@@ -53,6 +53,7 @@ namespace CheatTools
                         var iCopy = i;
                         TranslationHelper.TranslateAsync(_belongingsDropdown.Contents[iCopy].text, s => _belongingsDropdown.Contents[iCopy].text = s);
                     }
+                    window.ComboBoxesToDisplay.Add(_belongingsDropdown);
                 }
                 if (_traitsDropdown == null)
                 {
@@ -65,8 +66,8 @@ namespace CheatTools
                         TranslationHelper.TranslateAsync(_traitsDropdown.Contents[iCopy].text, s => _traitsDropdown.Contents[iCopy].text = s);
                         TranslationHelper.TranslateAsync(_traitsDropdown.Contents[iCopy].tooltip, s => _traitsDropdown.Contents[iCopy].tooltip = s);
                     }
+                    window.ComboBoxesToDisplay.Add(_traitsDropdown);
                 }
-
                 if (_hPreferenceDropdown == null)
                 {
                     var guiContents = Manager.Game.PreferenceHInfoTable.AsManagedEnumerable().ToDictionary(x => x.Key, x => new GUIContent(x.Value)).OrderBy(x => x.Key).ToList();
@@ -76,9 +77,10 @@ namespace CheatTools
                     {
                         var iCopy = i;
                         TranslationHelper.TranslateAsync(_hPreferenceDropdown.Contents[iCopy].text, s => _hPreferenceDropdown.Contents[iCopy].text = s);
-                        //TranslationHelper.TranslateAsync(_hPreferenceDropdown.Contents[iCopy].tooltip, s => _hPreferenceDropdown.Contents[iCopy].tooltip = s);
                     }
+                    window.ComboBoxesToDisplay.Add(_hPreferenceDropdown);
                 }
+                window.ComboBoxesToDisplay.Add(_otherCharaDropdown);
             };
 
             CheatToolsWindow.Cheats.Add(new CheatEntry(_ => SV.H.HScene.Active(), DrawHSceneCheats, null));
@@ -87,15 +89,6 @@ namespace CheatTools
             CheatToolsWindow.Cheats.Add(CheatEntry.CreateOpenInInspectorButtons(() => _openInInspectorButtons));
 
             Harmony.CreateAndPatchAll(typeof(Hooks));
-
-            //todo cleaner way to update dropdowns
-            CheatToolsWindow.Cheats.Add(new CheatEntry(_ => true, _ =>
-            {
-                _belongingsDropdown?.DrawDropdownIfOpen();
-                _traitsDropdown?.DrawDropdownIfOpen();
-                _hPreferenceDropdown?.DrawDropdownIfOpen();
-                _otherCharaDropdown?.DrawDropdownIfOpen();
-            }, ""));
         }
 
         private static string GetCharaName(this Actor chara)
@@ -202,6 +195,20 @@ namespace CheatTools
             GUI.enabled = !ReferenceEquals(SV.GameChara.PlayerAI, null);
             if (GUILayout.Button("Unlimited time limit for current period"))
                 SV.GameChara.PlayerAI!.charaData.charasGameParam.baseParameter.NowStamina = 100000;
+
+            // todo doesn't work, nullref on open
+            //if (GUILayout.Button("TEST Open relationship screen"))
+            //{
+            //    if (SV.CorrelationDiagramScene.CorrelationDiagram.Instance?.IsOpen() == true)
+            //    {
+            //        SV.CorrelationDiagramScene.CorrelationDiagram.Instance.CloseExeAsync(new SV.CorrelationDiagramScene.CorrelationDiagram.CloseParameter());
+            //    }
+            //    else
+            //    {
+            //        var param = new SV.CorrelationDiagramScene.CorrelationDiagram.OpenParameter();
+            //        SV.CorrelationDiagramScene.CorrelationDiagram.Open(ref param);
+            //    }
+            //}
 
             GUI.enabled = ADV.ADVManager._instance?.IsADV == true;
             if (GUILayout.Button(new GUIContent("Force Unlock visible talk options", null, "Un-gray and make clickable all currently visible buttons in the talk menu. Mostly for use with the blackmail menu. If the chance is 0% you still won't be able to succeed at the action.")))
