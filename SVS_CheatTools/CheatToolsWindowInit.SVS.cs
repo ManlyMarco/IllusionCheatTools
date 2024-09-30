@@ -25,6 +25,8 @@ namespace CheatTools
         private static ImguiComboBox _otherCharaDropdown = new();
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
         private static Actor _currentVisibleChara;
+        private static bool InsideADV => ADV.ADVManager._instance?.IsADV == true;
+        private static bool InsideH => SV.H.HScene.Active();
 
         public static void Initialize(CheatToolsPlugin instance)
         {
@@ -83,7 +85,8 @@ namespace CheatTools
                 window.ComboBoxesToDisplay.Add(_otherCharaDropdown);
             };
 
-            CheatToolsWindow.Cheats.Add(new CheatEntry(_ => SV.H.HScene.Active(), DrawHSceneCheats, null));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(_ => InsideH, DrawHSceneCheats, null));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(_ => InsideADV, DrawAdvCheats, null));
             CheatToolsWindow.Cheats.Add(new CheatEntry(_ => Manager.Game.saveData.WorldTime > 0, DrawGeneralCheats, null));
             CheatToolsWindow.Cheats.Add(new CheatEntry(_ => Manager.Game.Charas.Count > 0, DrawGirlCheatMenu, "Unable to edit character stats on this screen or there are no characters. Load a saved game or start a new game and add characters to the roster."));
             CheatToolsWindow.Cheats.Add(CheatEntry.CreateOpenInInspectorButtons(() => _openInInspectorButtons));
@@ -103,14 +106,14 @@ namespace CheatTools
 
         private static IEnumerable<KeyValuePair<int, Actor>> GetVisibleCharas()
         {
-            if (SV.H.HScene.Active())
+            if (InsideH)
             {
                 // HScene.Actors contains copies of the actors. Couldn't find a better way to get the originals
                 return SV.H.HScene._instance.Actors.Select(GetMainActorInstance).Where(x => x.Value != null);
             }
 
             var talkManager = Manager.TalkManager._instance;
-            if (talkManager != null && ADV.ADVManager._instance?.IsADV == true)
+            if (talkManager != null && InsideADV)
             {
                 return new List<KeyValuePair<int, Actor>>
                 {
@@ -157,11 +160,56 @@ namespace CheatTools
                 GUILayout.EndHorizontal();
             }
 
+            DrawBackgroundHideToggles();
+
             if (GUILayout.Button("Open HScene in inspector"))
                 Inspector.Instance.Push(new InstanceStackEntry(hScene, "SV.H.HScene"), true);
         }
 
-        private static void DrawGeneralCheats(CheatToolsWindow obj)
+        private static GameObject _bgPanel, _bgDownFrame, _bgUpFrame;
+        private static void DrawAdvCheats(CheatToolsWindow cheatToolsWindow)
+        {
+            GUILayout.Label("ADV scene controls");
+
+            if (GUILayout.Button(new GUIContent("Force Unlock visible talk options", null, "Un-gray and make clickable all currently visible buttons in the talk menu. Mostly for use with the blackmail menu. If the chance is 0% you still won't be able to succeed at the action.")))
+            {
+                var commandUi = UnityEngine.Object.FindObjectOfType<SV.CommandUI>();
+                // For some reason buttons are found and set as interactable, but if they are in a hidden menu they revert to inactive when unhidden
+                foreach (var btn in commandUi.GetComponentsInChildren<Button>(true))
+                    btn.interactable = true;
+            }
+
+            DrawBackgroundHideToggles();
+        }
+
+        // Hiding ADV and H background
+        private static void DrawBackgroundHideToggles()
+        {
+            if (!_bgPanel)
+            {
+                var bgCmp = Manager.Game.Instance.transform.GetComponentInChildren<SV.HighPolyBackGroundFrame>();
+                var tr = bgCmp.animFrame.transform;
+                _bgPanel = tr.Find("Panel").gameObject;
+                _bgDownFrame = tr.Find("DownFrame").gameObject;
+                _bgUpFrame = tr.Find("UpFrame").gameObject;
+            }
+
+            var prevActive = _bgDownFrame.activeSelf;
+            var newActive = GUILayout.Toggle(prevActive, "Show background frame");
+            if (prevActive != newActive)
+            {
+                _bgDownFrame.active = newActive;
+                _bgUpFrame.active = newActive;
+            }
+
+            // There is also a saturation effect that is not disabled by this at 'SimulationScene/Global Volume', didn't find a clean way to disable that one
+            prevActive = _bgPanel.activeSelf;
+            newActive = GUILayout.Toggle(prevActive, "Show background blur");
+            if (prevActive != newActive)
+                _bgPanel.active = newActive;
+        }
+
+        private static void DrawGeneralCheats(CheatToolsWindow cheatToolsWindow)
         {
             Hooks.RiggedRng = GUILayout.Toggle(Hooks.RiggedRng, new GUIContent("Rigged RNG (success if above 0%)", null, "All actions with at least 1% chance will always succeed. Must be activated BEFORE talking to a character.\nWARNING: This will affect RNG across the game. NPCs will (probably) always succeed with their actions which will skew the simulation heavily. Some events might never happen or keep repeating until this is turned off."));
 
@@ -195,6 +243,7 @@ namespace CheatTools
             GUI.enabled = !ReferenceEquals(SV.GameChara.PlayerAI, null);
             if (GUILayout.Button("Unlimited time limit for current period"))
                 SV.GameChara.PlayerAI!.charaData.charasGameParam.baseParameter.NowStamina = 100000;
+            GUI.enabled = true;
 
             // todo doesn't work, nullref on open
             //if (GUILayout.Button("TEST Open relationship screen"))
@@ -209,16 +258,6 @@ namespace CheatTools
             //        SV.CorrelationDiagramScene.CorrelationDiagram.Open(ref param);
             //    }
             //}
-
-            GUI.enabled = ADV.ADVManager._instance?.IsADV == true;
-            if (GUILayout.Button(new GUIContent("Force Unlock visible talk options", null, "Un-gray and make clickable all currently visible buttons in the talk menu. Mostly for use with the blackmail menu. If the chance is 0% you still won't be able to succeed at the action.")))
-            {
-                var commandUi = UnityEngine.Object.FindObjectOfType<SV.CommandUI>();
-                // For some reason buttons are found and set as interactable, but if they are in a hidden menu they revert to inactive when unhidden
-                foreach (var btn in commandUi.GetComponentsInChildren<Button>(true))
-                    btn.interactable = true;
-            }
-            GUI.enabled = true;
 
             DrawUtils.DrawNums("Weekday", 7, () => (byte)Manager.Game.saveData.Week, b => Manager.Game.saveData.Week = b);
 
