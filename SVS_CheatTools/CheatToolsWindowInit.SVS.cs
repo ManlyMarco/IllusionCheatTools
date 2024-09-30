@@ -94,11 +94,22 @@ namespace CheatTools
             Harmony.CreateAndPatchAll(typeof(Hooks));
         }
 
-        private static string GetCharaName(this Actor chara)
+        private static string GetCharaName(this Actor chara, bool translated)
         {
             var fullname = chara?.charFile?.Parameter?.fullname;
-            return !string.IsNullOrEmpty(fullname) ? fullname : chara?.chaCtrl?.name ?? chara?.ToString();
+            if (!string.IsNullOrEmpty(fullname))
+            {
+                if (translated)
+                {
+                    TranslationHelper.TryTranslate(fullname, out var translatedName);
+                    if (!string.IsNullOrEmpty(translatedName))
+                        return translatedName;
+                }
+                return fullname;
+            }
+            return chara?.chaCtrl?.name ?? chara?.ToString();
         }
+
         private static int GetActorId(this Actor currentAdvChara)
         {
             return Manager.Game.Charas.AsManagedEnumerable().Single(x => x.Value.Equals(currentAdvChara)).Key;
@@ -276,7 +287,7 @@ namespace CheatTools
 
             foreach (var chara in GetVisibleCharas())
             {
-                if (GUILayout.Button($"Select #{chara.Key} - {GetCharaName(chara.Value)}"))
+                if (GUILayout.Button($"Select #{chara.Key} - {GetCharaName(chara.Value, true)}"))
                     _currentVisibleChara = chara.Value;
             }
 
@@ -306,7 +317,7 @@ namespace CheatTools
                 {
                     GUILayout.Label("Selected:", IMGUIUtils.LayoutOptionsExpandWidthFalse);
                     GUILayout.FlexibleSpace();
-                    GUILayout.Label(GetCharaName(currentAdvChara), IMGUIUtils.LayoutOptionsExpandWidthFalse);
+                    GUILayout.Label(GetCharaName(currentAdvChara, true), IMGUIUtils.LayoutOptionsExpandWidthFalse);
                     GUILayout.FlexibleSpace();
                     if (GUILayout.Button("Close", IMGUIUtils.LayoutOptionsExpandWidthFalse)) _currentVisibleChara = null;
                 }
@@ -408,7 +419,7 @@ namespace CheatTools
 
                         if (_otherCharaListIndex >= 0)
                         {
-                            _otherCharaListIndex = _otherCharaDropdown.Show(_otherCharaListIndex, targets.Select(x => new GUIContent(GetCharaName(x))).ToArray(), comboboxMaxY);
+                            _otherCharaListIndex = _otherCharaDropdown.Show(_otherCharaListIndex, targets.Select(x => new GUIContent(GetCharaName(x, true))).ToArray(), comboboxMaxY);
                             targets = new[] { targets[_otherCharaListIndex] };
                         }
 
@@ -508,10 +519,10 @@ namespace CheatTools
                 }
 
                 if (gameParam != null && GUILayout.Button("Inspect GameParameter"))
-                    Inspector.Instance.Push(new InstanceStackEntry(gameParam, "GameParam " + GetCharaName(currentAdvChara)), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(gameParam, "GameParam " + GetCharaName(currentAdvChara, true)), true);
 
                 if (charasGameParam != null && GUILayout.Button("Inspect CharactersGameParameter"))
-                    Inspector.Instance.Push(new InstanceStackEntry(charasGameParam, "CharaGameParam " + GetCharaName(currentAdvChara)), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(charasGameParam, "CharaGameParam " + GetCharaName(currentAdvChara, true)), true);
 
                 if (GUILayout.Button("Navigate to Character's GameObject"))
                 {
@@ -522,7 +533,7 @@ namespace CheatTools
                 }
 
                 if (GUILayout.Button("Open Character in inspector"))
-                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvChara, "Actor " + GetCharaName(currentAdvChara)), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvChara, "Actor " + GetCharaName(currentAdvChara, true)), true);
 
                 //if (GUILayout.Button("Inspect extended data"))
                 //{
