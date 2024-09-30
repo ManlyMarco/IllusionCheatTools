@@ -169,6 +169,8 @@ namespace CheatTools
         private static GameObject _bgPanel, _bgDownFrame, _bgUpFrame;
         private static void DrawAdvCheats(CheatToolsWindow cheatToolsWindow)
         {
+            GUILayout.Label("ADV scene controls");
+
             if (GUILayout.Button(new GUIContent("Force Unlock visible talk options", null, "Un-gray and make clickable all currently visible buttons in the talk menu. Mostly for use with the blackmail menu. If the chance is 0% you still won't be able to succeed at the action.")))
             {
                 var commandUi = UnityEngine.Object.FindObjectOfType<SV.CommandUI>();
@@ -200,6 +202,7 @@ namespace CheatTools
                 _bgUpFrame.active = newActive;
             }
 
+            // There is also a saturation effect that is not disabled by this at 'SimulationScene/Global Volume', didn't find a clean way to disable that one
             prevActive = _bgPanel.activeSelf;
             newActive = GUILayout.Toggle(prevActive, "Show background blur");
             if (prevActive != newActive)
@@ -240,6 +243,7 @@ namespace CheatTools
             GUI.enabled = !ReferenceEquals(SV.GameChara.PlayerAI, null);
             if (GUILayout.Button("Unlimited time limit for current period"))
                 SV.GameChara.PlayerAI!.charaData.charasGameParam.baseParameter.NowStamina = 100000;
+            GUI.enabled = true;
 
             // todo doesn't work, nullref on open
             //if (GUILayout.Button("TEST Open relationship screen"))
