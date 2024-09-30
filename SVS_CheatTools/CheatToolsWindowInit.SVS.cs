@@ -5,6 +5,7 @@ using BepInEx.Logging;
 using Character;
 using HarmonyLib;
 using Il2CppInterop.Runtime.InteropTypes.Arrays;
+using IllusionMods;
 using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
 using RuntimeUnityEditor.Core.ObjectTree;
@@ -24,7 +25,7 @@ namespace CheatTools
         private static int _otherCharaListIndex;
         private static ImguiComboBox _otherCharaDropdown = new();
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
-        private static Actor _currentVisibleChara;
+        private static Actor _currentVisibleChara, _currentVisibleCharaMain;
         private static bool InsideADV => ADV.ADVManager._instance?.IsADV == true;
         private static bool InsideH => SV.H.HScene.Active();
 
@@ -93,55 +94,6 @@ namespace CheatTools
 
             Harmony.CreateAndPatchAll(typeof(Hooks));
         }
-
-        private static string GetCharaName(this Actor chara, bool translated)
-        {
-            var fullname = chara?.charFile?.Parameter?.fullname;
-            if (!string.IsNullOrEmpty(fullname))
-            {
-                if (translated)
-                {
-                    TranslationHelper.TryTranslate(fullname, out var translatedName);
-                    if (!string.IsNullOrEmpty(translatedName))
-                        return translatedName;
-                }
-                return fullname;
-            }
-            return chara?.chaCtrl?.name ?? chara?.ToString();
-        }
-
-        private static int GetActorId(this Actor currentAdvChara)
-        {
-            return Manager.Game.Charas.AsManagedEnumerable().Single(x => x.Value.Equals(currentAdvChara)).Key;
-        }
-
-        private static IEnumerable<KeyValuePair<int, Actor>> GetVisibleCharas()
-        {
-            if (InsideH)
-            {
-                // HScene.Actors contains copies of the actors. Couldn't find a better way to get the originals
-                return SV.H.HScene._instance.Actors.Select(GetMainActorInstance).Where(x => x.Value != null);
-            }
-
-            var talkManager = Manager.TalkManager._instance;
-            if (talkManager != null && InsideADV)
-            {
-                return new List<KeyValuePair<int, Actor>>
-                {
-                    // PlayerHi and Npc1-4 contain copies of the Actors
-                    GetMainActorInstance(talkManager.PlayerHi),
-                    GetMainActorInstance(talkManager.Npc1),
-                    GetMainActorInstance(talkManager.Npc2),
-                    GetMainActorInstance(talkManager.Npc3),
-                    GetMainActorInstance(talkManager.Npc4),
-                }.Where(x => x.Value != null);
-            }
-
-            return Manager.Game.saveData.Charas.AsManagedEnumerable().Where(x => x.Value != null);
-        }
-
-        private static KeyValuePair<int, Actor> GetMainActorInstance(this SV.H.HActor x) => x?.Actor.GetMainActorInstance() ?? default;
-        private static KeyValuePair<int, Actor> GetMainActorInstance(this Actor x) => x == null ? default : Manager.Game.Charas.AsManagedEnumerable().FirstOrDefault(y => x.charFile.About.dataID == y.Value.charFile.About.dataID);
 
         private static void DrawHSceneCheats(CheatToolsWindow cheatToolsWindow)
         {
@@ -285,10 +237,15 @@ namespace CheatTools
         {
             GUILayout.Label("Character status editor");
 
-            foreach (var chara in GetVisibleCharas())
+            foreach (var chara in GameUtilities.GetCurrentActors(false))
             {
-                if (GUILayout.Button($"Select #{chara.Key} - {GetCharaName(chara.Value, true)}"))
+                var main = chara.Value.FindMainActorInstance();
+                var isCopy = !ReferenceEquals(main.Value, chara.Value);
+                if (GUILayout.Button($"Select #{chara.Key} - {chara.Value.GetCharaName(true)}{(isCopy ? " (Copy)" : "")}"))
+                {
                     _currentVisibleChara = chara.Value;
+                    _currentVisibleCharaMain = isCopy ? main.Value : null;
+                }
             }
 
             GUILayout.Space(6);
@@ -296,7 +253,7 @@ namespace CheatTools
             try
             {
                 if (_currentVisibleChara != null)
-                    DrawSingleCharaCheats(_currentVisibleChara, cheatToolsWindow);
+                    DrawSingleCharaCheats(_currentVisibleChara, _currentVisibleCharaMain, cheatToolsWindow);
                 else
                     GUILayout.Label("Select a character to edit their stats");
             }
@@ -307,9 +264,10 @@ namespace CheatTools
             }
         }
 
-        private static void DrawSingleCharaCheats(Actor currentAdvChara, CheatToolsWindow cheatToolsWindow)
+        private static void DrawSingleCharaCheats(Actor currentAdvChara, Actor mainChara, CheatToolsWindow cheatToolsWindow)
         {
             var comboboxMaxY = (int)cheatToolsWindow.WindowRect.bottom - 30;
+            var isCopy = mainChara != null;
 
             GUILayout.BeginVertical(GUI.skin.box);
             {
@@ -317,11 +275,28 @@ namespace CheatTools
                 {
                     GUILayout.Label("Selected:", IMGUIUtils.LayoutOptionsExpandWidthFalse);
                     GUILayout.FlexibleSpace();
-                    GUILayout.Label(GetCharaName(currentAdvChara, true), IMGUIUtils.LayoutOptionsExpandWidthFalse);
+                    GUILayout.Label(currentAdvChara.GetCharaName(true), IMGUIUtils.LayoutOptionsExpandWidthFalse);
                     GUILayout.FlexibleSpace();
                     if (GUILayout.Button("Close", IMGUIUtils.LayoutOptionsExpandWidthFalse)) _currentVisibleChara = null;
                 }
                 GUILayout.EndHorizontal();
+
+                if (isCopy)
+                {
+                    GUILayout.BeginHorizontal();
+                    {
+                        GUILayout.Label(new GUIContent("!! This character is a copy !!", null, "All changes made to this characters will be lost after the current scene finishes.\n\n" +
+                                                                                               "If you want to make permanent changes, open the main instance of this character and do your changes there.\n" +
+                                                                                               "You will have to exit and re-enter current scene to propagate the changes to the copied character)."), IMGUIUtils.LayoutOptionsExpandWidthFalse);
+                        GUILayout.FlexibleSpace();
+                        if (GUILayout.Button("Open main"))
+                        {
+                            _currentVisibleChara = mainChara;
+                            _currentVisibleCharaMain = null;
+                        }
+                    }
+                    GUILayout.EndHorizontal();
+                }
 
                 GUILayout.Space(6);
 
@@ -393,6 +368,11 @@ namespace CheatTools
                     GUILayout.Space(6);
 
                     GUILayout.BeginVertical(GUI.skin.box);
+                    if (isCopy)
+                    {
+                        GUILayout.Label("Can't edit relationships of copied characters, open the main character first.");
+                    }
+                    else
                     {
                         // DarkSoldier27: Ok I figure it out:
                         // 0:LOVE
@@ -419,7 +399,7 @@ namespace CheatTools
 
                         if (_otherCharaListIndex >= 0)
                         {
-                            _otherCharaListIndex = _otherCharaDropdown.Show(_otherCharaListIndex, targets.Select(x => new GUIContent(GetCharaName(x, true))).ToArray(), comboboxMaxY);
+                            _otherCharaListIndex = _otherCharaDropdown.Show(_otherCharaListIndex, targets.Select(x => new GUIContent(x.GetCharaName(true))).ToArray(), comboboxMaxY);
                             targets = new[] { targets[_otherCharaListIndex] };
                         }
 
@@ -427,9 +407,9 @@ namespace CheatTools
                         {
                             // H Affinity controls
                             var targetChara = targets[0];
-                            var targetCharaId = targetChara.GetActorId();
+                            var targetCharaId = targetChara.TryGetActorId();
                             var to = baseParameter.GetHAffinity(targetCharaId);
-                            var currentCharaId = currentAdvChara.GetActorId();
+                            var currentCharaId = currentAdvChara.TryGetActorId();
                             var targetBaseParameter = targetChara.charasGameParam.baseParameter;
                             var fro = targetBaseParameter.GetHAffinity(currentCharaId);
 
@@ -455,18 +435,18 @@ namespace CheatTools
                                 GUILayout.Label("H Affinity with everyone: ");
                                 if (GUILayout.Button("Max lvl"))
                                 {
-                                    var targetIds = targets.Select(x => x.GetActorId()).ToArray();
+                                    var targetIds = targets.Select(x => x.TryGetActorId()).ToArray();
                                     foreach (var targetId in targetIds) baseParameter.AddHAffinity(targetId, 100);
 
-                                    var currentCharaId = currentAdvChara.GetActorId();
+                                    var currentCharaId = currentAdvChara.TryGetActorId();
                                     foreach (var target in targets) target.charasGameParam.baseParameter.AddHAffinity(currentCharaId, 100);
                                 }
                                 if (GUILayout.Button("Set to 0"))
                                 {
-                                    var targetIds = targets.Select(x => x.GetActorId()).ToArray();
+                                    var targetIds = targets.Select(x => x.TryGetActorId()).ToArray();
                                     foreach (var targetId in targetIds) baseParameter.RemoveHAffinity(targetId);
 
-                                    var currentCharaId = currentAdvChara.GetActorId();
+                                    var currentCharaId = currentAdvChara.TryGetActorId();
                                     foreach (var target in targets) target.charasGameParam.baseParameter.RemoveHAffinity(currentCharaId);
                                 }
                             }
@@ -519,10 +499,10 @@ namespace CheatTools
                 }
 
                 if (gameParam != null && GUILayout.Button("Inspect GameParameter"))
-                    Inspector.Instance.Push(new InstanceStackEntry(gameParam, "GameParam " + GetCharaName(currentAdvChara, true)), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(gameParam, "GameParam " + currentAdvChara.GetCharaName(true)), true);
 
                 if (charasGameParam != null && GUILayout.Button("Inspect CharactersGameParameter"))
-                    Inspector.Instance.Push(new InstanceStackEntry(charasGameParam, "CharaGameParam " + GetCharaName(currentAdvChara, true)), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(charasGameParam, "CharaGameParam " + currentAdvChara.GetCharaName(true)), true);
 
                 if (GUILayout.Button("Navigate to Character's GameObject"))
                 {
@@ -533,7 +513,7 @@ namespace CheatTools
                 }
 
                 if (GUILayout.Button("Open Character in inspector"))
-                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvChara, "Actor " + GetCharaName(currentAdvChara, true)), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvChara, "Actor " + currentAdvChara.GetCharaName(true)), true);
 
                 //if (GUILayout.Button("Inspect extended data"))
                 //{
@@ -666,7 +646,7 @@ namespace CheatTools
 
                 if (affectedCharas.Count == 1)
                 {
-                    var rank = targetCharaSensitivity.tableFavorabiliry[GetActorId(affectedCharas[0])].ranks[(int)kind];
+                    var rank = targetCharaSensitivity.tableFavorabiliry[affectedCharas[0].TryGetActorId()].ranks[(int)kind];
                     GUILayout.Label(((int)rank).ToString());
                 }
 
@@ -677,7 +657,7 @@ namespace CheatTools
 
                 if (affectedCharas.Count == 1)
                 {
-                    var rank = affectedCharas[0].charasGameParam.sensitivity.tableFavorabiliry[GetActorId(targetChara)].ranks[(int)kind];
+                    var rank = affectedCharas[0].charasGameParam.sensitivity.tableFavorabiliry[targetChara.TryGetActorId()].ranks[(int)kind];
                     GUILayout.Label(((int)rank).ToString());
                 }
 
@@ -689,7 +669,7 @@ namespace CheatTools
 
             void OnOutgoing(int amount)
             {
-                var targetIds = affectedCharas.Select(GetActorId).ToArray();
+                var targetIds = affectedCharas.Select(actor => actor.TryGetActorId()).ToArray();
                 foreach (var tabkvp in targetCharaSensitivity.tableFavorabiliry)
                 {
                     if (targetIds.Contains(tabkvp.Key))
@@ -706,7 +686,7 @@ namespace CheatTools
             }
             void OnIncoming(int amount)
             {
-                var ourId = GetActorId(targetChara);
+                var ourId = targetChara.TryGetActorId();
                 foreach (var charaKvp in affectedCharas)
                 {
                     var otherSensitivity = charaKvp.charasGameParam.sensitivity;

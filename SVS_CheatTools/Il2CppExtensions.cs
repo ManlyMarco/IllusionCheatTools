@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace CheatTools
+namespace IllusionMods
 {
     internal static class Il2CppExtensions
     {
