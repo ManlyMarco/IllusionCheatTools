@@ -609,7 +609,7 @@ namespace CheatTools
                 combobox.Show(comboboxMaxY);
                 var selectedTraitIndex = combobox.ContentsIndexes[combobox.Index];
 
-                if (GUILayout.Button(new GUIContent("ADD", null, "If you add more than 2 entries they will work in-game, but will be removed after you save/load the game or the character."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                if (GUILayout.Button(new GUIContent("ADD", null, "If you add more than 2 entries they will work in-game, but will be removed after you save/load the game or the character.\n\nWARNING: Adding more than 3 traits or items can crash the game in some cases."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
                 {
                     SetAnswer(answerBase, selectedTraitIndex);
                 }
@@ -617,6 +617,27 @@ namespace CheatTools
                 {
                     foreach (var chara in Manager.Game.Charas.AsManagedEnumerable().Select(x => x.Value))
                         SetAnswer(targetAnswers(chara.charFile.GameParameter), selectedTraitIndex);
+                }
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            {
+                if (GUILayout.Button(new GUIContent("Clear ALL", null, "Remove all entries from ALL characters, leaving all lists empty."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                {
+                    foreach (var chara in Manager.Game.Charas.AsManagedEnumerable().Select(x => x.Value))
+                        targetAnswers(chara.charFile.GameParameter).answer = new Il2CppStructArray<int>(new[] { -1, -1 });
+                }
+                if (GUILayout.Button(new GUIContent("Trim ALL to 2", null, "Keep only the first two entries and remove the rest from ALL characters (leaving 2 entries per-character, the default limit)."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                {
+                    foreach (var chara in Manager.Game.Charas.AsManagedEnumerable().Select(x => x.Value))
+                    {
+                        var answers = targetAnswers(chara.charFile.GameParameter);
+                        var old = answers.answer;
+                        answers.answer = new Il2CppStructArray<int>(2);
+                        answers.answer[0] = old.Length >= 1 ? old[0] : -1;
+                        answers.answer[1] = old.Length >= 2 ? old[1] : -1;
+                    }
                 }
             }
             GUILayout.EndHorizontal();
