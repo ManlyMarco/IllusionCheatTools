@@ -21,6 +21,7 @@ namespace CheatTools
         {
             OnInitialize?.Invoke(this);
             Enabled = true;
+            DefaultScreenPosition = ScreenPartition.LeftLower;
         }
 
         protected override void VisibleChanged(bool visible)
@@ -28,12 +29,6 @@ namespace CheatTools
             base.VisibleChanged(visible);
             if (visible)
                 OnShown?.Invoke(this);
-        }
-
-        protected override Rect GetDefaultWindowRect(Rect screenRect)
-        {
-            const int cheatWindowHeight = 500;
-            return new Rect(screenRect.xMin, screenRect.yMax - cheatWindowHeight, 270, cheatWindowHeight);
         }
 
         public CheatToolsWindow(RuntimeUnityEditorCore editor)

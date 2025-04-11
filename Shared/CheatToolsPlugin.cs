@@ -52,12 +52,6 @@ namespace CheatTools
             }
 
             runtimeUnityEditorCore.AddFeature(new CheatToolsWindow(runtimeUnityEditorCore));
-
-            if (runtimeUnityEditorCore.ShowHotkey == KeyCode.None)
-            {
-                // Previous versions of cheat tools set this to none, need to restore a sane value
-                runtimeUnityEditorCore.ShowHotkey = KeyCode.Pause;
-            }
         }
     }
 }

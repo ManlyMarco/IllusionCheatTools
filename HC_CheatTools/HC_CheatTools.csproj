@@ -20,7 +20,7 @@
 	<ItemGroup>
 		<PackageReference Include="BepInEx.Unity.IL2CPP" Version="6.0.0-be.716" />
 		<PackageReference Include="IllusionLibs.HoneyCome.Assembly-CSharp" Version="2023.99.12.15" />
-		<PackageReference Include="RuntimeUnityEditor.Core.IL2CPP" Version="5.5.1" />
+		<PackageReference Include="RuntimeUnityEditor.Core.IL2CPP" Version="5.6.0" />
 	</ItemGroup>
 
 	<Import Project="..\Shared\Shared.projitems" Label="Shared" />
