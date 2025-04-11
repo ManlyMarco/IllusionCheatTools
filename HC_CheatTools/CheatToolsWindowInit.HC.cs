@@ -141,7 +141,7 @@ namespace CheatTools
                 var gi = currentAdvGirl.fileGameInfo;
                 if (gi != null)
                 {
-                    var anyChanges = false;
+                    //var anyChanges = false;
 
                     void DrawSingleStateBtn(ChaFileDefine.State state)
                     {
@@ -156,7 +156,7 @@ namespace CheatTools
                             gi.Slavery = state == ChaFileDefine.State.Slavery ? 100 : Mathf.Min(gi.Slavery, 90);
                             gi.Broken = state == ChaFileDefine.State.Broken ? 100 : Mathf.Min(gi.Broken, 90);
                             gi.Dependence = state == ChaFileDefine.State.Dependence ? 100 : Mathf.Min(gi.Dependence, 90);
-                            anyChanges = true;
+                            //anyChanges = true;
                         }
                     }
 
@@ -196,7 +196,7 @@ namespace CheatTools
                             if (newStatus != status)
                             {
                                 set(newStatus);
-                                anyChanges = true;
+                                //anyChanges = true;
                             }
                         }
                         GUILayout.EndHorizontal();
@@ -213,7 +213,7 @@ namespace CheatTools
                             if (GUI.changed && int.TryParse(textField, out var newStatus) && newStatus != status)
                             {
                                 set(newStatus);
-                                anyChanges = true;
+                                //anyChanges = true;
                             }
 
                             GUI.changed = false;

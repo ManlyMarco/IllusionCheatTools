@@ -15,7 +15,7 @@ namespace CheatTools
         public const string GUID = Metadata.GUID;
         public const string Version = Metadata.Version;
 
-        internal static new ManualLogSource Logger;
+        internal static ManualLogSource Logger;
 
         public CheatToolsPlugin()
         {
