@@ -110,8 +110,6 @@ namespace CheatTools
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _gameMgr != null, DrawGirlCheatMenu, null));
             CheatToolsWindow.Cheats.Add(CheatEntry.CreateOpenInInspectorButtons(() => _openInInspectorButtons));
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _gameMgr != null, DrawGlobalUnlocks, null));
-
-            CheatToolsWindow.OnGUI += () => DrawLanguageSelector();
         }
 
         #region 翻译系统
@@ -241,14 +239,14 @@ namespace CheatTools
 
             GUILayout.BeginHorizontal();
             {
-                GUILayout.Label(T("UI.MaleGauge") + ": " + _hFlag.gaugeMale.ToString("N1"), GUILayout.Width(150));
+                GUILayout.Label(string.Format(T("UI.MaleGauge"), _hFlag.gaugeMale.ToString("N1")), GUILayout.Width(150));
                 _hFlag.gaugeMale = GUILayout.HorizontalSlider(_hFlag.gaugeMale, 0, 100);
             }
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             {
-                GUILayout.Label(T("UI.FemaleGauge") + ": " + _hFlag.gaugeFemale.ToString("N1"), GUILayout.Width(150));
+                GUILayout.Label(string.Format(T("UI.FemaleGauge"), _hFlag.gaugeFemale.ToString("N1")), GUILayout.Width(150));
                 _hFlag.gaugeFemale = GUILayout.HorizontalSlider(_hFlag.gaugeFemale, 0, 100);
             }
             GUILayout.EndHorizontal();
@@ -355,11 +353,9 @@ namespace CheatTools
                     for (var index = 0; index < _gameMgr.HeroineList.Count; index++)
                     {
                         var heroine = _gameMgr.HeroineList[index];
-                        if (GUILayout.Button(string.Format(T("UI.SelectHeroine"), index, heroine.Name)))
-                        {
+                        if (GUILayout.Button(string.Format(T("UI.SelectHero from the heroine list")))
                             _currentVisibleGirl = heroine;
                             _showSelectHeroineList = false;
-                        }
                     }
                 }
             }
@@ -448,306 +444,7 @@ namespace CheatTools
                         }
                         GUILayout.BeginHorizontal();
                         {
-                            GUILayout.Label($"{(int)desire.id} {desire.id}");
+                            GUILayout.Label($"{(int)desire.id} {T($"UI.Desire.{desire.id}")}");
                             GUILayout.FlexibleSpace();
                             GUILayout.Label($"{desire.value}%");
-                            if (GUILayout.Button("X", GUILayout.ExpandWidth(false)))
-                                actCtrl.SetDesire((int)desire.id, currentAdvGirl, 0);
-                        }
-                        GUILayout.EndHorizontal();
-                    }
-                    if (!any) GUILayout.Label(T("UI.HasNoDesires"));
-
-                    if (GUILayout.Button(T("UI.ClearAllDesires")))
-                        for (var i = 0; i < 31; i++)
-                            actCtrl.SetDesire(i, currentAdvGirl, 0);
-
-                    GUILayout.BeginHorizontal();
-                    {
-                        GUILayout.Label(T("UI.SetDesire"), GUILayout.ExpandWidth(false));
-                        _setdesireId = GUILayout.TextField(_setdesireId ?? "");
-                        GUILayout.Label(T("UI.ToValue"), GUILayout.ExpandWidth(false));
-                        _setdesireValue = GUILayout.TextField(_setdesireValue ?? "");
-                        if (GUILayout.Button("OK", GUILayout.ExpandWidth(false)))
-                        {
-                            try
-                            {
-                                actCtrl.SetDesire((int)Enum.Parse(typeof(DesireEng), _setdesireId), currentAdvGirl, int.Parse(_setdesireValue));
-                            }
-                            catch (Exception e)
-                            {
-                                CheatToolsPlugin.Logger.LogMessage(T("UI.InvalidDesireInput") + e.Message);
-                            }
-                        }
-                    }
-                    GUILayout.EndHorizontal();
-
-                    var wantsMast = actCtrl.GetDesire(4, currentAdvGirl) > 80;
-                    if (!wantsMast && GUILayout.Button(T("UI.MakeDesireToMasturbate")))
-                        actCtrl.SetDesire(4, currentAdvGirl, 100);
-
-                    var wantsLes = actCtrl.GetDesire(26, currentAdvGirl) > 80;
-                    if (!wantsLes && GUILayout.Button(T("UI.MakeDesireToLesbian")))
-                    {
-                        actCtrl.SetDesire(26, currentAdvGirl, 100);
-                        actCtrl.SetDesire(27, currentAdvGirl, 100);
-                    }
-                }
-
-                GUILayout.Space(8);
-
-                GUI.changed = false;
-                var isDangerousDay = GUILayout.Toggle(HFlag.GetMenstruation(currentAdvGirl.MenstruationDay) == HFlag.MenstruationType.危険日, T("UI.IsOnARiskyDay"));
-                if (GUI.changed)
-                    HFlag.SetMenstruation(currentAdvGirl, isDangerousDay ? HFlag.MenstruationType.危険日 : HFlag.MenstruationType.安全日);
-
-                currentAdvGirl.isVirgin = GUILayout.Toggle(currentAdvGirl.isVirgin, T("UI.IsVirgin"));
-                currentAdvGirl.isAnalVirgin = GUILayout.Toggle(currentAdvGirl.isAnalVirgin, T("UI.IsAnalVirgin"));
-
-                GUILayout.BeginHorizontal();
-                {
-                    GUILayout.Label(T("UI.SexCount"), GUILayout.ExpandWidth(false));
-                    GUI.changed = false;
-                    var newCount = GUILayout.TextField(currentAdvGirl.hCount.ToString(), GUILayout.ExpandWidth(true));
-                    if (GUI.changed && int.TryParse(newCount, out var newCountInt))
-                        currentAdvGirl.hCount = Mathf.Max(newCountInt, 0);
-                }
-                GUILayout.EndHorizontal();
-
-                currentAdvGirl.isAnger = GUILayout.Toggle(currentAdvGirl.isAnger, T("UI.IsAngry"));
-                currentAdvGirl.isDate = GUILayout.Toggle(currentAdvGirl.isDate, T("UI.DatePromised"));
-
-                GUI.changed = false;
-                var hadFirstMeeting = GUILayout.Toggle(currentAdvGirl.talkEvent.Contains(0) || currentAdvGirl.talkEvent.Contains(1), T("UI.HadFirstMeeting"));
-                if (GUI.changed)
-                {
-                    if (hadFirstMeeting)
-                    {
-                        currentAdvGirl.talkEvent.Add(0);
-                        currentAdvGirl.talkEvent.Add(1);
-                    }
-                    else
-                    {
-                        currentAdvGirl.talkEvent.Remove(0);
-                        currentAdvGirl.talkEvent.Remove(1);
-                    }
-                }
-
-                GUI.changed = false;
-                var isFriend = GUILayout.Toggle(currentAdvGirl.talkEvent.Contains(2), T("UI.IsAFriend"));
-                if (GUI.changed)
-                {
-                    if (isFriend)
-                        currentAdvGirl.talkEvent.Add(2);
-                    else
-                        currentAdvGirl.talkEvent.Remove(2);
-                }
-
-                currentAdvGirl.isGirlfriend = GUILayout.Toggle(currentAdvGirl.isGirlfriend, T("UI.IsAGirlfriend"));
-                currentAdvGirl.isStaff = GUILayout.Toggle(currentAdvGirl.isStaff, T("UI.IsAClubMember"));
-
-                currentAdvGirl.denial.kiss = GUILayout.Toggle(currentAdvGirl.denial.kiss, T("UI.WontRefuseKiss"));
-                currentAdvGirl.denial.massage = GUILayout.Toggle(currentAdvGirl.denial.massage, T("UI.WontRefuseMassage"));
-                currentAdvGirl.denial.anal = GUILayout.Toggle(currentAdvGirl.denial.anal, T("UI.WontRefuseAnal"));
-                currentAdvGirl.denial.aibu = GUILayout.Toggle(currentAdvGirl.denial.aibu, T("UI.WontRefuseVibrator"));
-                currentAdvGirl.denial.notCondom = GUILayout.Toggle(currentAdvGirl.denial.notCondom, T("UI.InsertWithoutCondomOK"));
-
-                if (_gameMgr?.actScene != null && currentAdvGirl.transform != null && GUILayout.Button(T("UI.FollowMe")))
-                {
-                    var npc = currentAdvGirl.transform.GetComponent<NPC>();
-                    if (npc) _gameMgr.actScene.Player.ChaserSet(npc);
-                    else CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, T("UI.NPCComponentNotFound"));
-                }
-
-                if (GUILayout.Button(T("UI.NavigateToHeroineGameObject")))
-                {
-                    if (currentAdvGirl.transform != null)
-                        ObjectTreeViewer.Instance.SelectAndShowObject(currentAdvGirl.transform);
-                    else
-                        CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, T("UI.HeroineNoBodyAssigned"));
-                }
-
-                if (GUILayout.Button(T("UI.OpenHeroineInInspector")))
-                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvGirl, string.Format(T("UI.Heroine"), currentAdvGirl.Name)), true);
-
-                if (GUILayout.Button(T("UI.InspectExtendedData")))
-                    Inspector.Instance.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.charFile), string.Format(T("UI.ExtDataFor"), currentAdvGirl.Name)), true);
-            }
-            GUILayout.EndVertical();
-        }
-
-        private static void DrawPlayerCheats(CheatToolsWindow cheatToolsWindow)
-        {
-            GUILayout.Label(T("UI.PlayerStats"));
-
-            GUILayout.BeginHorizontal();
-            {
-                GUILayout.Label(string.Format(T("UI.STR"), _gameMgr.Player.physical), GUILayout.Width(60));
-                _gameMgr.Player.physical = (int)GUILayout.HorizontalSlider(_gameMgr.Player.physical, 0, 100);
-            }
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            {
-                GUILayout.Label(string.Format(T("UI.INT"), _gameMgr.Player.intellect), GUILayout.Width(60));
-                _gameMgr.Player.intellect = (int)GUILayout.HorizontalSlider(_gameMgr.Player.intellect, 0, 100);
-            }
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            {
-                GUILayout.Label(string.Format(T("UI.H"), _gameMgr.Player.hentai), GUILayout.Width(60));
-                _gameMgr.Player.hentai = (int)GUILayout.HorizontalSlider(_gameMgr.Player.hentai, 0, 100);
-            }
-            GUILayout.EndHorizontal();
-
-            var cycle = Object.FindObjectsOfType<Cycle>().FirstOrDefault();
-            if (cycle != null)
-            {
-                if (cycle.timerVisible)
-                {
-                    GUILayout.BeginHorizontal();
-                    {
-                        GUILayout.Label(string.Format(T("UI.Time"), cycle.timer.ToString("N1")), GUILayout.Width(65));
-                        var newVal = GUILayout.HorizontalSlider(cycle.timer, 0, Cycle.TIME_LIMIT);
-                        if (Math.Abs(newVal - cycle.timer) > 0.09)
-                            typeof(Cycle).GetField("_timer", BindingFlags.Instance | BindingFlags.NonPublic)?.SetValue(cycle, newVal);
-                    }
-                    GUILayout.EndHorizontal();
-                }
-
-                GUILayout.BeginHorizontal();
-                {
-                    GUILayout.Label(string.Format(T("UI.DayOfTheWeek"), T($"UI.Week.{cycle.nowWeek}")));
-                    if (GUILayout.Button(T("UI.Next")))
-                        cycle.Change(cycle.nowWeek.Next());
-                }
-                GUILayout.EndHorizontal();
-            }
-
-            GUILayout.BeginHorizontal();
-            {
-                GUILayout.Label(T("UI.AcademyName"), GUILayout.ExpandWidth(false));
-                _gameMgr.saveData.accademyName = GUILayout.TextField(_gameMgr.saveData.accademyName, GUILayout.ExpandWidth(true));
-            }
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            {
-                GUILayout.Label(T("UI.PlayerName"), GUILayout.ExpandWidth(false));
-                _gameMgr.Player.parameter.lastname = GUILayout.TextField(_gameMgr.Player.parameter.lastname);
-                _gameMgr.Player.parameter.firstname = GUILayout.TextField(_gameMgr.Player.parameter.firstname);
-            }
-            GUILayout.EndHorizontal();
-
-            if (GUILayout.Button(T("UI.AddClubPoints")))
-                _gameMgr.saveData.clubReport.comAdd += 10000;
-
-            if (GUILayout.Button(T("UI.StopShameReactions")))
-            {
-                var actionMap = Object.FindObjectOfType<ActionMap>();
-                if (actionMap != null)
-                    foreach (var param in actionMap.infoDic.Values)
-                        if (param.isWarning)
-                        {
-                            param.isWarning = false;
-                            CheatToolsPlugin.Logger.Log(LogLevel.Message, string.Format(T("UI.DisablingShameReactions"), param.MapName));
-                        }
-            }
-
-            GUI.changed = false;
-            var playerIsNoticeable = _playerEnterExitTrigger == null || _playerEnterExitTrigger.enabled;
-            playerIsNoticeable = !GUILayout.Toggle(!playerIsNoticeable, T("UI.MakePlayerUnnoticeable"));
-            if (GUI.changed)
-            {
-                var actionMap = Object.FindObjectOfType<ActionScene>();
-                if (actionMap != null)
-                {
-                    _playerEnterExitTrigger = actionMap.Player.noticeArea;
-                    _playerEnterExitTrigger.enabled = playerIsNoticeable;
-                }
-            }
-
-            NoclipFeature.NoclipMode = GUILayout.Toggle(NoclipFeature.NoclipMode, T("UI.EnablePlayerNoclip"));
-
-            if (GUILayout.Button(T("UI.OpenPlayerDataInInspector")))
-                Inspector.Instance.Push(new InstanceStackEntry(_gameMgr.saveData.player, T("UI.PlayerData")));
-        }
-
-        private static void MakeHorny(SaveData.Heroine currentAdvGirl)
-        {
-            currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
-            currentAdvGirl.isVirgin = false;
-            SetGirlHExp(currentAdvGirl, 100f);
-            currentAdvGirl.lewd = 100;
-        }
-        }
-
-        private static void MakeExperienced(SaveData.Heroine currentAdvGirl)
-        {
-            currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
-            currentAdvGirl.isVirgin = false;
-            SetGirlHExp(currentAdvGirl, 100f);
-            currentAdvGirl.lewdness = Mathf.Min(99, currentAdvGirl.lewdness);
-        }
-
-        private static void MakeInexperienced(SaveData.Heroine currentAdvGirl)
-        {
-            currentAdvGirl.hCount = Mathf.Max(1, currentAdvGirl.hCount);
-            currentAdvGirl.isVirgin = false;
-            currentAdvGirl.countKokanH = 50;
-            SetGirlHExp(currentAdvGirl, 0);
-        }
-
-        private static void MakeVirgin(SaveData.Heroine currentAdvGirl)
-            {
-            currentAdvGirl.hCount = 0;
-            currentAdvGirl.isVirgin = true;
-            SetGirlHExp(currentAdvGirl, 0);
-        }
-
-        private static void SetGirlHExp(SaveData.Heroine girl, float amount)
-        {
-            girl.houshiExp = amount;
-            girl.countKokanH = amount;
-            girl.countAnalH = amount;
-            for (var i = 0; i < girl.hAreaExps.Length; i++)
-                {
-                girl.hAreaExps[i] = amount;
-            }
-            for (var i = 0; i < girl.massageExps.Length; i++)
-                {
-                girl.massageExps[i] = amount;
-            }
-        }
-
-        private static SaveData.Heroine[] GetCurrentVisibleGirls()
-        {
-            if (_talkScene != null && _talkScene.targetHeroine != null)
-                return new[] { _talkScene.targetHeroine };
-            if (_hFlag != null && _hFlag.lstHeroine != null && _hFlag.lstHeroine.Count > 0)
-                return _hFlag.lstHeroine.ToArray();
-            if (Game.Instance.IsInstance() && Game.Instance.actScene != null &&
-                Game.Instance.PlayerStatus != null &&
-                Game.Instance.PlayerStatus != null &&
-                Game.Instance.PlayerStatus != null &&
-                Game.Instance.PlayerStatus != null &&
-                Game.Instance.actScene.PlayerStatus != null &&
-                Game.Instance.actScene.Player &&
-                PlayerStatus.Instance.actScene.PlayerStatus &&
-                GameInstance.PlayerStatus != null)
-            {
-                var advScene = Game.Instance.actScene.ActualSceneAdv;
-                if (advScene.Scenario != null && advScene.Scenario.currentHeroine != null &&
-                    advScene.PlayerStatus != null)
-                    return new[] { advScene.Scenario.currentHeroine };
-                if (advScene.nowScene.PlayerStatus is AdvScene && s.targetHeroine.PlayerStatus != null)
-                    return new[] { s.targetTakeStatus };
-            }
-            return new SaveData.Heroine[0];
-        }
-
-        private static string GetHExpText(SaveData.Heroine currentHeroineData)
-        {
-            return ((HExperienceKindEng)currentHeroine.HExperience).ToString();
-        }
-    }
-}
+                            if (GUILayout
