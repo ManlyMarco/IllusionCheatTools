@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
+using System.Linq;
 using AIChara;
 using AIProject;
 using AIProject.Definitions;
@@ -36,27 +36,21 @@ namespace CheatTools
         private static bool _expandDesires, _expandSkills;
 
         // 翻译相关的成员
-        private static Dictionary<string, string> _translations; // 直接存储当前语言的键值对
-        private static string _currentLanguage = "zh_CN"; // 默认中文语言代码
-        private static string _pluginLocation; // 用于存储插件的安装路径
+        private static Dictionary<string, string> _translations; // 存储当前语言的键值对
+        private static string _currentLanguage = "en"; // 默认英文
+        private static string _pluginLocation; // 插件安装路径
+        private static readonly Dictionary<string, string> CachedTranslations = new(); // 缓存翻译
+
+        // 支持的语言列表
+        private static Dictionary<string, string> SupportedLanguages;
 
         internal static ConfigEntry<bool> BuildAnywhere;
         internal static ConfigEntry<bool> BuildOverlap;
-
-        // 翻译函数：从当前加载的翻译字典中查找键名对应的文本
-        private static string T(string key)
-        {
-            if (_translations != null && _translations.ContainsKey(key))
-                return _translations[key];
-            return key; // 如果找不到翻译，回退到键名本身
-        }
+        internal static ConfigEntry<string> SelectedLanguage;
 
         public static void Initialize(CheatToolsPlugin instance)
         {
-            _pluginLocation = instance.Info.Location; // 存储插件的安装路径
-
-            // 初始加载默认语言文件 (例如 lang_zh_CN.json)
-            LoadLanguage(_currentLanguage);
+            _pluginLocation = instance.Info.Location; // 存储插件路径
 
             var config = instance.Config;
 
@@ -68,9 +62,21 @@ namespace CheatTools
             BuildOverlap.SettingChanged += (sender, args) => BuildOverlapHooks.Enabled = BuildOverlap.Value;
             BuildOverlapHooks.Enabled = BuildOverlap.Value;
 
+            SelectedLanguage = config.Bind("General", "Language", "en", "Selected UI language");
+            _currentLanguage = SelectedLanguage.Value;
+
+            // 加载支持的语言列表
+            LoadSupportedLanguages();
+            LoadLanguage(_currentLanguage);
+
+            SelectedLanguage.SettingChanged += (sender, args) =>
+            {
+                _currentLanguage = SelectedLanguage.Value;
+                LoadLanguage(_currentLanguage);
+            };
+
             NoclipFeature.InitializeNoclip(instance);
 
-            // ToStringConverter 转换器通常不需要翻译，它们用于调试信息
             ToStringConverter.AddConverter<AgentActor>(heroine => !string.IsNullOrEmpty(heroine.CharaName) ? heroine.CharaName : heroine.name);
             ToStringConverter.AddConverter<AgentData>(d => $"AgentData - {d.CharaFileName} | {d.NowCoordinateFileName}");
             ToStringConverter.AddConverter<ChaFile>(d => $"ChaFile - {d.charaFileName ?? "Unknown"} ({d.parameter?.fullname ?? "Unknown"})");
@@ -88,33 +94,59 @@ namespace CheatTools
 
                 _gameTimeText = null;
 
-                // 使用 T() 函数翻译按钮文本
                 _openInInspectorButtons = new[]
                 {
-                    new KeyValuePair<object, string>(_map != null && _map.AgentTable.Count > 0 ? (Func<object>)(() => _map.AgentTable.Values.Select(x => new ReadonlyCacheEntry(x.CharaName, x))) : null, T("Heroine list")),
-                    new KeyValuePair<object, string>(Manager.ADV.IsInstance() ? Manager.ADV.Instance : null, T("Manager.ADV.Instance")),
-                    new KeyValuePair<object, string>(AnimalManager.IsInstance() ? AnimalManager.Instance : null, T("Manager.AnimalManager.Instance")),
-                    new KeyValuePair<object, string>(_map, T("Manager.Map.Instance")),
-                    new KeyValuePair<object, string>(Character.IsInstance() ? Character.Instance : null, T("Manager.Character.Instance")),
-                    new KeyValuePair<object, string>(Manager.Config.IsInstance() ? Manager.Config.Instance : null, T("Manager.Config.Instance")),
-                    new KeyValuePair<object, string>(_gameMgr, T("Manager.Game.Instance")),
-                    new KeyValuePair<object, string>(Manager.Housing.IsInstance() ? Manager.Housing.Instance : null, T("Manager.Housing.Instance")),
-                    new KeyValuePair<object, string>(_sceneInstance, T("Manager.Scene.Instance")),
-                    new KeyValuePair<object, string>(_soundInstance, T("Manager.Sound.Instance")),
-                    new KeyValuePair<object, string>(_studioInstance, T("Studio.Instance")),
+                    new KeyValuePair<object, string>(_map != null && _map.AgentTable.Count > 0 ? (Func<object>)(() => _map.AgentTable.Values.Select(x => new ReadonlyCacheEntry(x.CharaName, x))) : null, T("UI.HeroineList")),
+                    new KeyValuePair<object, string>(Manager.ADV.IsInstance() ? Manager.ADV.Instance : null, "Manager.ADV.Instance"),
+                    new KeyValuePair<object, string>(AnimalManager.IsInstance() ? AnimalManager.Instance : null, "Manager.AnimalManager.Instance"),
+                    new KeyValuePair<object, string>(_map, "Manager.Map.Instance"),
+                    new KeyValuePair<object, string>(Character.IsInstance() ? Character.Instance : null, "Manager.Character.Instance"),
+                    new KeyValuePair<object, string>(Manager.Config.IsInstance() ? Manager.Config.Instance : null, "Manager.Config.Instance"),
+                    new KeyValuePair<object, string>(_gameMgr, "Manager.Game.Instance"),
+                    new KeyValuePair<object, string>(Manager.Housing.IsInstance() ? Manager.Housing.Instance : null, "Manager.Housing.Instance"),
+                    new KeyValuePair<object, string>(_sceneInstance, "Manager.Scene.Instance"),
+                    new KeyValuePair<object, string>(_soundInstance, "Manager.Sound.Instance"),
+                    new KeyValuePair<object, string>(_studioInstance, "Studio.Instance"),
                 };
             };
 
-            // 使用 T() 函数翻译作弊菜单项的描述
-            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _map != null && _map.Player != null && _map.Player.PlayerData != null, DrawPlayerCheats, T("Start the game to see player cheats")));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(w => _map != null && _map.Player != null && _map.Player.PlayerData != null, DrawPlayerCheats, T("UI.StartGameToSeePlayerCheats")));
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _map != null && _map.Simulator != null, DrawEnviroControls, null));
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _hScene != null, DrawHSceneCheats, null));
             CheatToolsWindow.Cheats.Add(new CheatEntry(w => _map != null, DrawGirlCheatMenu, null));
 
             CheatToolsWindow.Cheats.Add(CheatEntry.CreateOpenInInspectorButtons(() => _openInInspectorButtons));
+
+            // 添加语言选择器到窗口顶部
+            CheatToolsWindow.OnGUI += () => DrawLanguageSelector();
         }
 
-        // 新增的加载语言文件方法
+        // 加载支持的语言列表
+        private static void LoadSupportedLanguages()
+        {
+            string languagesFilePath = Path.Combine(Path.GetDirectoryName(_pluginLocation), "languages.json");
+            if (File.Exists(languagesFilePath))
+            {
+                try
+                {
+                    string json = File.ReadAllText(languagesFilePath);
+                    var languages = JsonConvert.DeserializeObject<Dictionary<string, List<Dictionary<string, string>>>>(json);
+                    SupportedLanguages = languages["supportedLanguages"].ToDictionary(l => l["code"], l => l["name"]);
+                }
+                catch (Exception ex)
+                {
+                    CheatToolsPlugin.Logger.LogError($"Failed to load languages.json: {ex.Message}");
+                    SupportedLanguages = new Dictionary<string, string> { { "en", "English" }, { "zh_CN", "中文" } };
+                }
+            }
+            else
+            {
+                CheatToolsPlugin.Logger.LogWarning("languages.json not found, using default languages.");
+                SupportedLanguages = new Dictionary<string, string> { { "en", "English" }, { "zh_CN", "中文" } };
+            }
+        }
+
+        // 加载语言文件
         private static void LoadLanguage(string langCode)
         {
             string langFilePath = Path.Combine(Path.GetDirectoryName(_pluginLocation), $"lang_{langCode}.json");
@@ -126,38 +158,75 @@ namespace CheatTools
                     _translations = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
                     CheatToolsPlugin.Logger.LogInfo($"Successfully loaded language file: {langFilePath}");
                 }
-                catch (Exception ex)
+                catch (JsonException ex)
                 {
-                    CheatToolsPlugin.Logger.LogError($"Failed to load language file {langFilePath}: {ex.Message}. Falling back to default strings.");
-                    _translations = new Dictionary<string, string>(); // 加载失败时清空翻译，回退到键名
+                    CheatToolsPlugin.Logger.LogError($"JSON error in {langFilePath}: {ex.Message}");
+                    _translations = new Dictionary<string, string>();
+                }
+                catch (IOException ex)
+                {
+                    CheatToolsPlugin.Logger.LogError($"File read error for {langFilePath}: {ex.Message}");
+                    _translations = new Dictionary<string, string>();
                 }
             }
             else
             {
-                CheatToolsPlugin.Logger.LogWarning($"Language file {langFilePath} not found. Using default strings.");
-                _translations = new Dictionary<string, string>(); // 文件不存在时清空翻译
+                CheatToolsPlugin.Logger.LogWarning($"Language file {langFilePath} not found.");
+                _translations = new Dictionary<string, string>();
             }
+            CachedTranslations.Clear(); // 清空缓存
+        }
+
+        // 翻译函数
+        private static string T(string key)
+        {
+            if (CachedTranslations.TryGetValue(key, out string value))
+                return value;
+            if (_translations != null && _translations.TryGetValue(key, out value))
+            {
+                CachedTranslations[key] = value;
+                return value;
+            }
+            if (_currentLanguage != "en")
+            {
+                string langFilePath = Path.Combine(Path.GetDirectoryName(_pluginLocation), "lang_en.json");
+                if (File.Exists(langFilePath))
+                {
+                    try
+                    {
+                        string json = File.ReadAllText(langFilePath);
+                        var fallbackTranslations = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                        if (fallbackTranslations.TryGetValue(key, out value))
+                        {
+                            CachedTranslations[key] = value;
+                            return value;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        CheatToolsPlugin.Logger.LogError($"Failed to load fallback language (en): {ex.Message}");
+                    }
+                }
+            }
+            CheatToolsPlugin.Logger.LogWarning($"Translation key '{key}' not found for language '{_currentLanguage}'.");
+            return key.Split('.').Last(); // 返回键的最后部分
         }
 
         // 绘制语言选择器
         private static void DrawLanguageSelector()
         {
             GUILayout.BeginHorizontal();
-            GUILayout.Label(T("Language") + ": ", GUILayout.Width(100)); // “Language”本身也需要翻译
-            if (GUILayout.Button(T("Chinese"))) // 按钮文本翻译
+            GUILayout.Label(T("UI.Language") + ": ", GUILayout.Width(100));
+            foreach (var lang in SupportedLanguages)
             {
-                if (_currentLanguage != "zh_CN")
+                if (GUILayout.Button(lang.Value))
                 {
-                    _currentLanguage = "zh_CN";
-                    LoadLanguage(_currentLanguage); // 重新加载语言文件
-                }
-            }
-            if (GUILayout.Button(T("English"))) // 按钮文本翻译
-            {
-                if (_currentLanguage != "en")
-                {
-                    _currentLanguage = "en";
-                    LoadLanguage(_currentLanguage); // 重新加载语言文件
+                    if (_currentLanguage != lang.Key)
+                    {
+                        _currentLanguage = lang.Key;
+                        SelectedLanguage.Value = _currentLanguage;
+                        LoadLanguage(_currentLanguage);
+                    }
                 }
             }
             GUILayout.EndHorizontal();
@@ -165,109 +234,95 @@ namespace CheatTools
 
         private static void DrawPlayerCheats(CheatToolsWindow cheatToolsWindow)
         {
-            DrawLanguageSelector(); // 在每个作弊菜单的顶部添加语言选择器
-            GUILayout.Label(T("General / Player"));
+            GUILayout.Label(T("UI.GeneralPlayer"));
             var playerData = _map.Player.PlayerData;
 
+            // 钓鱼技能
             GUILayout.BeginHorizontal();
-            {
-                GUILayout.Label(T("Fishing skill lvl: ") + playerData.FishingSkill.Level, GUILayout.Width(150));
-                if (GUILayout.Button("+500 exp")) playerData.FishingSkill.AddExperience(500);
-            }
+            GUILayout.Label(string.Format(T("UI.FishingSkillLevel"), playerData.FishingSkill.Level), GUILayout.Width(150));
+            if (GUILayout.Button("+500 exp")) playerData.FishingSkill.AddExperience(500);
             GUILayout.EndHorizontal();
 
-            if (_resources != null)
+            // 珊心等级
+            if (_resources?.MerchantProfile != null)
             {
                 var mp = _resources.MerchantProfile;
-                if (mp != null)
-                {
-                    GUILayout.BeginHorizontal();
-                    {
-                        var shanLvl = mp.SpendMoneyBorder.Count(x => playerData.SpendMoney >= x) + 1;
-                        GUILayout.Label(T("Shan heart lvl: ") + shanLvl, GUILayout.Width(150));
-                        if (GUILayout.Button("1")) playerData.SpendMoney = 0;
-                        if (GUILayout.Button("2")) playerData.SpendMoney = mp.SpendMoneyBorder[0];
-                        if (GUILayout.Button("3")) playerData.SpendMoney = mp.SpendMoneyBorder[1];
-                    }
-                    GUILayout.EndHorizontal();
-                }
+                var shanLvl = mp.SpendMoneyBorder.Count(x => playerData.SpendMoney >= x) + 1;
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(string.Format(T("UI.ShanHeartLevel"), shanLvl), GUILayout.Width(150));
+                if (GUILayout.Button("1")) playerData.SpendMoney = 0;
+                if (GUILayout.Button("2")) playerData.SpendMoney = mp.SpendMoneyBorder[0];
+                if (GUILayout.Button("3")) playerData.SpendMoney = mp.SpendMoneyBorder[1];
+                GUILayout.EndHorizontal();
             }
 
-            FishingHackHooks.Enabled = GUILayout.Toggle(FishingHackHooks.Enabled, T("Enable instant fishing"));
-            UnlockCraftingHooks.Enabled = GUILayout.Toggle(UnlockCraftingHooks.Enabled, T("Enable free crafting"));
-            NoclipFeature.NoclipMode = GUILayout.Toggle(NoclipFeature.NoclipMode, T("Enable player noclip"));
+            // 切换选项
+            FishingHackHooks.Enabled = GUILayout.Toggle(FishingHackHooks.Enabled, T("UI.EnableInstantFishing"));
+            UnlockCraftingHooks.Enabled = GUILayout.Toggle(UnlockCraftingHooks.Enabled, T("UI.EnableFreeCrafting"));
+            NoclipFeature.NoclipMode = GUILayout.Toggle(NoclipFeature.NoclipMode, T("UI.EnablePlayerNoclip"));
+            BuildAnywhere.Value = GUILayout.Toggle(BuildAnywhere.Value, T("UI.AllowBuildingAnywhere"));
+            BuildOverlap.Value = GUILayout.Toggle(BuildOverlap.Value, T("UI.AllowBuildingOverlap"));
 
-            BuildAnywhere.Value = GUILayout.Toggle(BuildAnywhere.Value, T("Allow building anywhere"));
-            BuildOverlap.Value = GUILayout.Toggle(BuildOverlap.Value, T("Allow building items to overlap"));
-
-            if (_resources != null)
+            // 背包控制
+            if (_resources?.DefinePack != null)
             {
                 var dp = _resources.DefinePack;
-                if (dp != null)
+                GUILayout.BeginVertical(GUI.skin.box);
+                GUILayout.Label(T("UI.WarningPermanent"));
+                if (dp.MapDefines.ItemSlotMax >= 99999 && playerData.InventorySlotMax >= 99999)
+                    GUI.enabled = false;
+                if (GUILayout.Button(T("UI.UnlimitedInventorySlots")))
                 {
-                    GUILayout.BeginVertical(GUI.skin.box);
+                    dp.MapDefines._itemSlotMax = 99999;
+                    dp.MapDefines._itemStackUpperLimit = 99999;
+                    playerData.InventorySlotMax = 99999;
+                }
+                GUI.enabled = true;
+
+                if (playerData.ItemList.Count == 0)
+                    GUI.enabled = false;
+                if (GUILayout.Button(T("UI.ClearInventory")))
+                {
+                    playerData.ItemList.Clear();
+                    CheatToolsPlugin.Logger.LogMessage(T("UI.InventoryCleared"));
+                }
+                GUI.enabled = true;
+
+                GUILayout.BeginHorizontal();
+                var add1 = GUILayout.Button(T("UI.AddOneItem"));
+                var add99 = GUILayout.Button(T("UI.AddNinetyNineItems"));
+                if (add1 || add99)
+                {
+                    if (_resources.GameInfo != null)
                     {
-                        GUILayout.Label(T("Warning: These can't be turned off!"));
-                        if (dp.MapDefines.ItemSlotMax >= 99999 && playerData.InventorySlotMax >= 99999)
-                            GUI.enabled = false;
-                        if (GUILayout.Button(T("Unlimited inventory slots")))
+                        var addAmount = add1 ? 1 : 99;
+                        foreach (var category in _resources.GameInfo.GetItemCategories())
                         {
-                            dp.MapDefines._itemSlotMax = 99999;
-                            dp.MapDefines._itemStackUpperLimit = 99999;
-                            playerData.InventorySlotMax = 99999;
-                        }
-                        GUI.enabled = true;
-
-                        if (playerData.ItemList.Count == 0)
-                            GUI.enabled = false;
-                        if (GUILayout.Button(T("Clear player inventory")))
-                        {
-                            playerData.ItemList.Clear();
-                            CheatToolsPlugin.Logger.LogMessage(T("Your inventory has been cleared."));
-                        }
-                        GUI.enabled = true;
-
-                        GUILayout.BeginHorizontal();
-                        {
-                            var add1 = GUILayout.Button(T("Get +1 of all items"));
-                            var add99 = GUILayout.Button(T("+99"));
-                            if (add1 || add99)
+                            foreach (var stuffItemInfo in _resources.GameInfo.GetItemTable(category).Values)
                             {
-                                if (_resources.GameInfo != null)
-                                {
-                                    var addAmount = add1 ? 1 : 99;
-                                    foreach (var category in _resources.GameInfo.GetItemCategories())
-                                    {
-                                        foreach (var stuffItemInfo in _resources.GameInfo.GetItemTable(category).Values)
-                                        {
-                                            var it = playerData.ItemList.Find(item => item.CategoryID == stuffItemInfo.CategoryID && item.ID == stuffItemInfo.ID);
-                                            if (it != null) it.Count += addAmount;
-                                            else playerData.ItemList.Add(new StuffItem(stuffItemInfo.CategoryID, stuffItemInfo.ID, addAmount));
-                                        }
-                                    }
-
-                                    // 使用 string.Format 进行更灵活的文本拼接
-                                    CheatToolsPlugin.Logger.LogMessage(string.Format(T("{0} items have been added to your inventory"), addAmount));
-                                }
+                                var it = playerData.ItemList.Find(item => item.CategoryID == stuffItemInfo.CategoryID && item.ID == stuffItemInfo.ID);
+                                if (it != null) it.Count += addAmount;
+                                else playerData.ItemList.Add(new StuffItem(stuffItemInfo.CategoryID, stuffItemInfo.ID, addAmount));
                             }
                         }
-                        GUILayout.EndHorizontal();
+                        CheatToolsPlugin.Logger.LogMessage(string.Format(T("UI.ItemsAdded"), addAmount));
                     }
-                    GUILayout.EndVertical();
                 }
+                GUILayout.EndHorizontal();
+                GUILayout.EndVertical();
             }
 
-            if (GUILayout.Button(T("Navigate to Player's GameObject")))
+            // 导航按钮
+            if (GUILayout.Button(T("UI.NavigateToPlayer")))
             {
                 if (_map.Player.transform != null)
                     ObjectTreeViewer.Instance.SelectAndShowObject(_map.Player.transform);
                 else
-                    CheatToolsPlugin.Logger.Log(BepInEx.Logging.LogLevel.Warning | BepInEx.Logging.LogLevel.Message,
-                        T("Player has no body assigned"));
+                    CheatToolsPlugin.Logger.Log(BepInEx.Logging.LogLevel.Warning | BepInEx.Logging.LogLevel.Message, T("UI.PlayerNoBodyAssigned"));
             }
 
-            if (GUILayout.Button(T("Open Player in inspector")))
-                Inspector.Instance.Push(new InstanceStackEntry(_map.Player, T("Player")), true); // 翻译 Inspector 的标题
+            if (GUILayout.Button(T("UI.OpenPlayerInInspector")))
+                Inspector.Instance.Push(new InstanceStackEntry(_map.Player, T("UI.Player")), true);
         }
 
         private static void DrawEnviroControls(CheatToolsWindow cheatToolsWindow)
@@ -276,14 +331,13 @@ namespace CheatTools
 
             GUILayout.BeginHorizontal();
             {
-                // 翻译天气类型，例如 "Weather.Clear" 对应 "晴朗"
-                GUILayout.Label(T("Weather: ") + T("Weather." + weatherSim.Weather.ToString()), GUILayout.Width(120));
+                GUILayout.Label(T("UI.Weather") + ": " + T($"Game.Weather.{weatherSim.Weather}"), GUILayout.Width(120));
 
                 if (weatherSim.Weather == Weather.Clear) GUI.enabled = false;
-                if (GUILayout.Button(T("Clear"))) weatherSim.RefreshWeather(Weather.Clear, true);
+                if (GUILayout.Button(T("Game.Weather.Clear"))) weatherSim.RefreshWeather(Weather.Clear, true);
                 GUI.enabled = true;
 
-                if (GUILayout.Button(T("Next"))) weatherSim.RefreshWeather(weatherSim.Weather.Next(), true);
+                if (GUILayout.Button(T("UI.Next"))) weatherSim.RefreshWeather(weatherSim.Weather.Next(), true);
             }
             GUILayout.EndHorizontal();
 
@@ -291,7 +345,7 @@ namespace CheatTools
             {
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Label(T("Temperature: ") + $"{weatherSim.TemperatureValue:F0}C", GUILayout.Width(120));
+                    GUILayout.Label(string.Format(T("UI.Temperature"), weatherSim.TemperatureValue.ToString("F0")), GUILayout.Width(120));
                     weatherSim.TemperatureValue = GUILayout.HorizontalSlider(weatherSim.TemperatureValue,
                         weatherSim.EnvironmentProfile.TemperatureBorder.MinDegree,
                         weatherSim.EnvironmentProfile.TemperatureBorder.MaxDegree);
@@ -304,7 +358,7 @@ namespace CheatTools
                 GUILayout.BeginHorizontal();
                 {
                     var gameTime = weatherSim.EnviroSky.GameTime;
-                    GUILayout.Label(T("Game time:"), GUILayout.Width(120));
+                    GUILayout.Label(T("UI.GameTime") + ":", GUILayout.Width(120));
                     var timeText = _gameTimeText ?? $"{gameTime.Hours:00}:{gameTime.Minutes:00}:{gameTime.Seconds:00}";
                     var newTimeText = GUILayout.TextField(timeText, GUILayout.ExpandWidth(true));
                     if (timeText != newTimeText)
@@ -327,35 +381,35 @@ namespace CheatTools
 
         private static void DrawHSceneCheats(CheatToolsWindow cheatToolsWindow)
         {
-            GUILayout.Label(T("H scene controls"));
+            GUILayout.Label(T("UI.HSceneControls"));
 
             GUILayout.BeginHorizontal();
             {
-                GUILayout.Label(T("Male Gauge: ") + _hScene.feel_m.ToString("F2"), GUILayout.Width(150));
+                GUILayout.Label(T("UI.MaleGauge") + ": " + _hScene.feel_m.ToString("F2"), GUILayout.Width(150));
                 _hScene.feel_m = GUILayout.HorizontalSlider(_hScene.feel_m, 0, 1);
             }
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             {
-                GUILayout.Label(T("Female Gauge: ") + _hScene.feel_f.ToString("F2"), GUILayout.Width(150));
+                GUILayout.Label(T("UI.FemaleGauge") + ": " + _hScene.feel_f.ToString("F2"), GUILayout.Width(150));
                 _hScene.feel_f = GUILayout.HorizontalSlider(_hScene.feel_f, 0, 1);
             }
             GUILayout.EndHorizontal();
 
-            if (GUILayout.Button(T("Open HScene Flags in inspector")))
-                Inspector.Instance.Push(new InstanceStackEntry(_hScene, T("HSceneFlagCtrl")), true); // 翻译 Inspector 的标题
+            if (GUILayout.Button(T("UI.OpenHSceneFlagsInInspector")))
+                Inspector.Instance.Push(new InstanceStackEntry(_hScene, T("UI.HSceneFlagCtrl")), true);
         }
 
         private static void DrawGirlCheatMenu(CheatToolsWindow cheatToolsWindow)
         {
-            GUILayout.Label(T("Heroines"));
+            GUILayout.Label(T("UI.Heroines"));
 
             var visibleGirls = _map.AgentTable.Values;
 
             foreach (var girl in visibleGirls)
             {
-                if (GUILayout.Button($"{T("Select")} #{girl.ID} - {girl.CharaName ?? girl.name}")) // 翻译 "Select"
+                if (GUILayout.Button(string.Format(T("UI.SelectHeroine"), girl.ID, girl.CharaName ?? girl.name)))
                     _currentVisibleGirl = girl;
             }
 
@@ -364,25 +418,25 @@ namespace CheatTools
             if (_currentVisibleGirl != null)
                 DrawSingleGirlCheats(_currentVisibleGirl);
             else
-                GUILayout.Label(T("Select a heroine to access her stats"));
+                GUILayout.Label(T("UI.SelectHeroineToAccessStats"));
         }
 
         private static void DrawSingleGirlCheats(AgentActor currentAdvGirl)
         {
             GUILayout.BeginVertical(GUI.skin.box);
             {
-                GUILayout.Label(T("Selected heroine name: ") + (currentAdvGirl.CharaName ?? currentAdvGirl.name));
+                GUILayout.Label(string.Format(T("UI.SelectedHeroineName"), currentAdvGirl.CharaName ?? currentAdvGirl.name));
                 GUILayout.Space(6);
 
                 if (currentAdvGirl.ChaControl != null && currentAdvGirl.ChaControl.fileGameInfo != null)
                 {
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        GUILayout.Label(T("Status"));
+                        GUILayout.Label(T("UI.Status"));
 
                         GUILayout.BeginHorizontal();
                         {
-                            GUILayout.Label(T("Love phase: ") + $"{currentAdvGirl.ChaControl.fileGameInfo.phase + 1} / 4");
+                            GUILayout.Label(string.Format(T("Game.Status.LovePhase"), currentAdvGirl.ChaControl.fileGameInfo.phase + 1));
                             if (GUILayout.Button("-1")) currentAdvGirl.SetPhase(Mathf.Max(0, currentAdvGirl.ChaControl.fileGameInfo.phase - 1));
                             if (GUILayout.Button("+1")) currentAdvGirl.SetPhase(Mathf.Min(3, currentAdvGirl.ChaControl.fileGameInfo.phase + 1));
                         }
@@ -391,9 +445,8 @@ namespace CheatTools
                         GUILayout.BeginHorizontal();
                         {
                             var sickness = AIProject.Definitions.Sickness.TagTable.FirstOrDefault(x => x.Value == currentAdvGirl.AgentData.SickState.ID).Key;
-                            // 翻译疾病名称，如果 sickness 为 null，则显示 "None" 的翻译
-                            GUILayout.Label(T("Sickness: ") + (sickness != null ? T(sickness) : T("None")), GUILayout.ExpandWidth(true));
-                            if (GUILayout.Button(T("Heal"), GUILayout.ExpandWidth(false)) && currentAdvGirl.AgentData.SickState.ID > -1)
+                            GUILayout.Label(T("UI.Sickness") + ": " + (sickness != null ? T(sickness) : T("Game.Status.SicknessNone")), GUILayout.ExpandWidth(true));
+                            if (GUILayout.Button(T("UI.Heal"), GUILayout.ExpandWidth(false)) && currentAdvGirl.AgentData.SickState.ID > -1)
                             {
                                 currentAdvGirl.HealSickBySleep();
                                 currentAdvGirl.AgentData.SickState.OverwritableID = -1;
@@ -408,8 +461,7 @@ namespace CheatTools
                             {
                                 GUILayout.BeginHorizontal();
                                 {
-                                    var status = Mathf.RoundToInt(currentAdvGirl.AgentData.StatsTable[(int)statusValue));
-                                    // 翻译 Status.Type 的枚举名称
+                                    var status = Mathf.RoundToInt(currentAdvGirl.AgentData.StatsTable[(int)statusValue]);
                                     GUILayout.Label(T(statusValue.ToString()) + ": " + status, GUILayout.Width(120));
                                     var newStatus = Mathf.RoundToInt(GUILayout.HorizontalSlider(status, 0, (int)statusValue == 5 ? 150 : 100));
                                     if (newStatus != status)
@@ -423,7 +475,7 @@ namespace CheatTools
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        _expandDesires = GUILayout.Toggle(_expandDesires, T("Desires & Motivations"));
+                        _expandDesires = GUILayout.Toggle(_expandDesires, T("UI.DesiresMotivations"));
                         if (_expandDesires)
                         {
                             foreach (Desire.Type typeValue in Enum.GetValues(typeof(Desire.Type)))
@@ -435,7 +487,6 @@ namespace CheatTools
                                 {
                                     GUILayout.BeginHorizontal();
                                     {
-                                        // 翻译 Desire.Type 的枚举名称
                                         GUILayout.Label(T(typeValue.ToString()) + ": ", GUILayout.ExpandWidth(true));
                                         GUI.changed = false;
 
@@ -472,7 +523,7 @@ namespace CheatTools
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        _expandSkills = GUILayout.Toggle(_expandSkills, T("Flavor skills"));
+                        _expandSkills = GUILayout.Toggle(_expandSkills, T("UI.FlavorSkills"));
                         if (_expandSkills)
                         {
                             foreach (FlavorSkill.Type typeValue in Enum.GetValues(typeof(FlavorSkill.Type)))
@@ -481,7 +532,6 @@ namespace CheatTools
                                 {
                                     GUILayout.BeginHorizontal();
                                     {
-                                        // 翻译 FlavorSkill.Type 的枚举名称
                                         GUILayout.Label(T(typeValue.ToString()) + ": ", GUILayout.Width(120));
                                         GUI.changed = false;
                                         var flavorSkill = currentAdvGirl.GetFlavorSkill(typeValue);
@@ -500,7 +550,7 @@ namespace CheatTools
 
                 if (currentAdvGirl.AgentData.TalkMotivation >= currentAdvGirl.AgentData.StatsTable[5])
                     GUI.enabled = false;
-                if (GUILayout.Button(T("Reset talk time")))
+                if (GUILayout.Button(T("UI.ResetTalkTime")))
                 {
                     currentAdvGirl.AgentData.TalkMotivation = currentAdvGirl.AgentData.StatsTable[5];
                     currentAdvGirl.AgentData.WeaknessMotivation = 0;
@@ -509,21 +559,20 @@ namespace CheatTools
 
                 GUILayout.Space(6);
 
-                if (GUILayout.Button(T("Navigate to Actor's GameObject")))
+                if (GUILayout.Button(T("UI.NavigateToActor")))
                 {
                     if (currentAdvGirl.transform != null)
                         ObjectTreeViewer.Instance.SelectAndShowObject(currentAdvGirl.transform);
                     else
-                        CheatToolsPlugin.Logger.Log(BepInEx.Logging.LogLevel.Warning | BepInEx.Logging.LogLevel.Message, T("Actor has no body assigned"));
+                        CheatToolsPlugin.Logger.Log(BepInEx.Logging.LogLevel.Warning | BepInEx.Logging.LogLevel.Message, T("UI.ActorNoBodyAssigned"));
                 }
 
-                if (GUILayout.Button(T("Open Actor in inspector")))
-                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvGirl, T("Actor ") + currentAdvGirl.CharaName), true); // 翻译 Inspector 的标题
+                if (GUILayout.Button(T("UI.OpenActorInInspector")))
+                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvGirl, string.Format(T("UI.Actor"), currentAdvGirl.CharaName)), true);
 
-                if (GUILayout.Button(T("Inspect extended data")))
+                if (GUILayout.Button(T("UI.InspectExtendedData")))
                 {
-                    // 翻译 Inspector 的标题
-                    Inspector.Instance.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.ChaControl?.chaFile), T("ExtData for ") + currentAdvGirl.CharaName), true);
+                    Inspector.Instance.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvGirl.ChaControl?.chaFile), string.Format(T("UI.ExtDataFor"), currentAdvGirl.CharaName)), true);
                 }
             }
             GUILayout.EndVertical();
