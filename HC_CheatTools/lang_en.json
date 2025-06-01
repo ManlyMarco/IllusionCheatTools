@@ -1,0 +1,50 @@
+{
+  "UI": {
+    "Language": "Language",
+    "DangerZone": "Danger zone! These cheats are permanent and can't be undone without resetting the save.",
+    "GetAllAchievements": "Get all achievements",
+    "UnlockAllPerks": "Unlock all perks",
+    "HSceneControls": "H scene controls",
+    "MaleGauge": "Male Gauge",
+    "FemaleGauge": "Female Gauge",
+    "PainGauge": "Pain Gauge",
+    "SpankGauge": "Spank Gauge",
+    "OpenHSceneFlagsInInspector": "Open HScene Flags in inspector",
+    "HSceneFlagCtrl": "HSceneFlagCtrl",
+    "CharacterStatusEditor": "Character status editor",
+    "UnableToEditCharacterStats": "Unable to edit character stats on this screen.\nYou have to start an H scene, edit the character, and finish the H scene to save changes.",
+    "SelectHeroine": "Select #{0} - {1}",
+    "SelectCharacterToEditStats": "Select a character to edit their stats",
+    "SelectedHeroineName": "Selected heroine name: {0}",
+    "CurrentState": "Current state",
+    "Statistics": "Statistics",
+    "Favor": "Favor",
+    "Enjoyment": "Enjoyment",
+    "Aversion": "Aversion",
+    "Slavery": "Slavery",
+    "Broken": "Broken",
+    "Dependence": "Dependence",
+    "Dirty": "Dirty",
+    "Tiredness": "Tiredness",
+    "Toilet": "Toilet",
+    "Libido": "Libido",
+    "Alertness": "Alertness",
+    "HCount": "H Count",
+    "ViewMoreStatsAndFlags": "View more stats and flags",
+    "NavigateToHeroineGameObject": "Navigate to Heroine's GameObject",
+    "HeroineNoBodyAssigned": "Heroine has no body assigned",
+    "OpenHeroineInInspector": "Open Heroine in inspector",
+    "Heroine": "Heroine {0}"
+  },
+  "Game": {
+    "State": {
+      "Blank": "Blank",
+      "Favor": "Favor",
+      "Enjoyment": "Enjoyment",
+      "Aversion": "Aversion",
+      "Slavery": "Slavery",
+      "Broken": "Broken",
+      "Dependence": "Dependence"
+    }
+  }
+}
