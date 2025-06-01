@@ -1,0 +1,64 @@
+{
+  "UI": {
+    "Language": "Language",
+    "English": "English",
+    "Chinese": "Chinese",
+    "GeneralPlayer": "General / Player",
+    "FishingSkillLevel": "Fishing skill lvl: {0}",
+    "ShanHeartLevel": "Shan heart lvl: {0}",
+    "EnableInstantFishing": "Enable instant fishing",
+    "EnableFreeCrafting": "Enable free crafting",
+    "EnablePlayerNoclip": "Enable player noclip",
+    "AllowBuildingAnywhere": "Allow building anywhere",
+    "AllowBuildingOverlap": "Allow building items to overlap",
+    "WarningPermanent": "Warning: These can't be turned off!",
+    "UnlimitedInventorySlots": "Unlimited inventory slots",
+    "ClearInventory": "Clear player inventory",
+    "InventoryCleared": "Your inventory has been cleared.",
+    "AddOneItem": "Get +1 of all items",
+    "AddNinetyNineItems": "+99",
+    "ItemsAdded": "{0} of all items have been added to your inventory",
+    "NavigateToPlayer": "Navigate to Player's GameObject",
+    "PlayerNoBodyAssigned": "Player has no body assigned",
+    "OpenPlayerInInspector": "Open Player in inspector",
+    "Player": "Player",
+    "Weather": "Weather",
+    "Next": "Next",
+    "Temperature": "Temperature: {0}C",
+    "GameTime": "Game time",
+    "HSceneControls": "H scene controls",
+    "MaleGauge": "Male Gauge",
+    "FemaleGauge": "Female Gauge",
+    "OpenHSceneFlagsInInspector": "Open HScene Flags in inspector",
+    "HSceneFlagCtrl": "HSceneFlagCtrl",
+    "Heroines": "Heroines",
+    "SelectHeroine": "Select #{0} - {1}",
+    "SelectHeroineToAccessStats": "Select a heroine to access her stats",
+    "SelectedHeroineName": "Selected heroine name: {0}",
+    "Status": "Status",
+    "Sickness": "Sickness",
+    "Heal": "Heal",
+    "DesiresMotivations": "Desires & Motivations",
+    "FlavorSkills": "Flavor skills",
+    "ResetTalkTime": "Reset talk time",
+    "NavigateToActor": "Navigate to Actor's GameObject",
+    "ActorNoBodyAssigned": "Actor has no body assigned",
+    "OpenActorInInspector": "Open Actor in inspector",
+    "Actor": "Actor {0}",
+    "InspectExtendedData": "Inspect extended data",
+    "ExtDataFor": "ExtData for {0}",
+    "StartGameToSeePlayerCheats": "Start the game to see player cheats",
+    "HeroineList": "Heroine list"
+  },
+  "Game": {
+    "Weather": {
+      "Clear": "Clear",
+      "Rain": "Rain"
+    },
+    "Status": {
+      "LovePhase": "Love phase: {0} / 4",
+      "SicknessNone": "None"
+    }
+  }
+}
+
