@@ -1,0 +1,53 @@
+{
+  "UI": {
+    "Language": "语言",
+    "English": "英文",
+    "Chinese": "中文",
+    "DangerZone": "危险区域！这些作弊是永久性的，无法在不重置存档的情况下关闭。",
+    "GetAllAchievements": "获取所有成就",
+    "UnlockAllPerks": "解锁所有特权",
+    "HSceneControls": "H场景控制",
+    "MaleGauge": "男性Gauge",
+    "FemaleGauge": "女性Gauge",
+    "PainGauge": "疼痛Gauge",
+    "OpenHSceneFlagsInInspector": "在检查器中打开HScene Flags",
+    "HSceneFlagCtrl": "HSceneFlagCtrl",
+    "CharacterStatusEditor": "角色状态编辑器",
+    "UnableToEditCharacterStats": "无法在此屏幕上编辑角色状态。开始一个H场景或进入大厅。",
+    "SelectHeroine": "选择 #{0} - {1}",
+    "SelectCharacterToEditStats": "选择一个角色以编辑其状态",
+    "SelectedHeroineName": "已选女主角名称: {0}",
+    "CurrentState": "当前状态",
+    "Statistics": "统计",
+    "Favor": "好感",
+    "Enjoyment": "享受",
+    "Aversion": "厌恶",
+    "Slavery": "奴役",
+    "Broken": "破碎",
+    "Dependence": "依赖",
+    "Dirty": "脏污",
+    "Tiredness": "疲倦",
+    "Toilet": "厕所需求",
+    "Libido": "性欲",
+    "HCount": "H次数",
+    "ViewMoreStatsAndFlags": "查看更多状态和标志",
+    "NavigateToHeroineGameObject": "导航到女主角的游戏对象",
+    "HeroineNoBodyAssigned": "女主角没有分配身体",
+    "OpenHeroineInInspector": "在检查器中打开女主角",
+    "Heroine": "女主角 {0}",
+    "InspectExtendedData": "检查扩展数据",
+    "ExtDataFor": "{0} 的扩展数据",
+    "HeroineList": "女主角列表"
+  },
+  "Game": {
+    "State": {
+      "Blank": "空白",
+      "Favor": "好感",
+      "Enjoyment": "享受",
+      "Aversion": "厌恶",
+      "Slavery": "奴役",
+      "Broken": "破碎",
+      "Dependence": "依赖"
+    }
+  }
+}
