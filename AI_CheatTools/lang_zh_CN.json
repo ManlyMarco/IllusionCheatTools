@@ -1,0 +1,63 @@
+{
+  "UI": {
+    "Language": "语言",
+    "English": "英文",
+    "Chinese": "中文",
+    "GeneralPlayer": "通用 / 玩家",
+    "FishingSkillLevel": "钓鱼技能等级: {0}",
+    "ShanHeartLevel": "珊心等级: {0}",
+    "EnableInstantFishing": "启用即时钓鱼",
+    "EnableFreeCrafting": "启用免费制作",
+    "EnablePlayerNoclip": "启用玩家穿墙",
+    "AllowBuildingAnywhere": "允许在任何地方建造",
+    "AllowBuildingOverlap": "允许建造物品重叠",
+    "WarningPermanent": "警告: 这些设置无法关闭!",
+    "UnlimitedInventorySlots": "无限背包槽位",
+    "ClearInventory": "清空玩家背包",
+    "InventoryCleared": "你的背包已清空。",
+    "AddOneItem": "获取所有物品 +1",
+    "AddNinetyNineItems": "+99",
+    "ItemsAdded": "已向你的背包添加 {0} 个所有物品",
+    "NavigateToPlayer": "导航到玩家的游戏对象",
+    "PlayerNoBodyAssigned": "玩家没有分配身体",
+    "OpenPlayerInInspector": "在检查器中打开玩家",
+    "Player": "玩家",
+    "Weather": "天气",
+    "Next": "下一个",
+    "Temperature": "温度: {0}C",
+    "GameTime": "游戏时间",
+    "HSceneControls": "H场景控制",
+    "MaleGauge": "男性Gauge",
+    "FemaleGauge": "女性Gauge",
+    "OpenHSceneFlagsInInspector": "在检查器中打开HScene Flags",
+    "HSceneFlagCtrl": "HSceneFlagCtrl",
+    "Heroines": "女主角",
+    "SelectHeroine": "选择 #{0} - {1}",
+    "SelectHeroineToAccessStats": "选择一位女主角以访问她的状态",
+    "SelectedHeroineName": "已选女主角名称: {0}",
+    "Status": "状态",
+    "Sickness": "疾病",
+    "Heal": "治疗",
+    "DesiresMotivations": "欲望与动机",
+    "FlavorSkills": "风味技能",
+    "ResetTalkTime": "重置谈话时间",
+    "NavigateToActor": "导航到角色的游戏对象",
+    "ActorNoBodyAssigned": "角色没有分配身体",
+    "OpenActorInInspector": "在检查器中打开角色",
+    "Actor": "角色 {0}",
+    "InspectExtendedData": "检查扩展数据",
+    "ExtDataFor": "{0} 的扩展数据",
+    "StartGameToSeePlayerCheats": "开始游戏以查看玩家作弊选项",
+    "HeroineList": "女主角列表"
+  },
+  "Game": {
+    "Weather": {
+      "Clear": "晴朗",
+      "Rain": "雨天"
+    },
+    "Status": {
+      "LovePhase": "恋爱阶段: {0} / 4",
+      "SicknessNone": "无"
+    }
+  }
+}
