@@ -1,0 +1,21 @@
+{
+  "UI": {
+    "Language": "Language",
+    "English": "English",
+    "Chinese": "Chinese",
+    "VRMoveTools": "VR move tools",
+    "AlwaysAllowThumbstickMove": "Always allow moving with thumbstick",
+    "UnlimitedThumbstickMove": "Unlimited thumbstick move",
+    "ThumbstickMoveDistance": "Thumbstick move distance {0}",
+    "UnlockTeleportToolDistance": "Unlock teleport tool distance",
+    "PlayerUnlocks": "Player unlocks (current playthrough)",
+    "SakurakoFavor": "Sakurako Favor: {0}",
+    "UmekoFavor": "Umeko Favor: {0}",
+    "OpenAdvancedOptions": "Open advanced options",
+    "PlayerStatus": "PlayerStatus",
+    "GlobalUnlocks": "Global unlocks (might need a game restart, permanent)",
+    "UnlockAllChapters": "Unlock all chapters",
+    "UnlockAllClothes": "Unlock all clothes",
+    "MarkAllEndingsAndGamesAsSeen": "Mark all endings and games as seen"
+  }
+}
