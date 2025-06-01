@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using BepInEx.Logging;
 using Character;
@@ -14,6 +15,7 @@ using SaveData;
 using SaveData.Extension;
 using UnityEngine;
 using UnityEngine.UI;
+using Newtonsoft.Json;
 
 namespace CheatTools
 {
@@ -29,23 +31,46 @@ namespace CheatTools
         private static bool InsideADV => ADV.ADVManager._instance?.IsADV == true;
         private static bool InsideH => SV.H.HScene.Active();
 
+        // 翻译相关成员
+        private static Dictionary<string, string> _translations;
+        private static string _currentLanguage = "en";
+        private static string _pluginLocation;
+        private static readonly Dictionary<string, string> CachedTranslations = new();
+        private static Dictionary<string, string> SupportedLanguages;
+        internal static ConfigEntry<string> SelectedLanguage;
+
         public static void Initialize(CheatToolsPlugin instance)
         {
+            _pluginLocation = instance.Info.Location;
+
+            var config = instance.Config;
+            SelectedLanguage = config.Bind("General", "Language", "en", T("UI.ConfigLanguageDesc"));
+            _currentLanguage = SelectedLanguage.Value;
+
+            LoadSupportedLanguages();
+            LoadLanguage(_currentLanguage);
+
+            SelectedLanguage.SettingChanged += (sender, args) =>
+            {
+                _currentLanguage = SelectedLanguage.Value;
+                LoadLanguage(_currentLanguage);
+            };
+
             CheatToolsWindow.OnShown += window =>
             {
                 _openInInspectorButtons = new[]
                 {
-                    new KeyValuePair<object, string>((object)SV.H.HScene._instance ?? SV.H.HScene._instance, "SV.H.HScene"),
-                    new KeyValuePair<object, string>(ADV.ADVManager._instance, "ADV.ADVManager"),
-                    new KeyValuePair<object, string>((object)Manager.Game._instance ?? typeof(Manager.Game), "Manager.Game"),
-                    new KeyValuePair<object, string>(Manager.Game.saveData, "Manager.Game.saveData"),
-                    new KeyValuePair<object, string>(typeof(Manager.Config), "Manager.Config"),
-                    new KeyValuePair<object, string>((object)Manager.Scene._instance ?? typeof(Manager.Scene), "Manager.Scene"),
-                    new KeyValuePair<object, string>((object)Manager.Sound._instance ?? typeof(Manager.Sound), "Manager.Sound"),
-                    new KeyValuePair<object, string>(typeof(Manager.GameSystem), "Manager.GameSystem"),
-                    new KeyValuePair<object, string>((object)Manager.MapManager._instance ?? typeof(Manager.MapManager), "Manager.MapManager"),
-                    new KeyValuePair<object, string>((object)Manager.SimulationManager._instance ?? typeof(Manager.SimulationManager), "Manager.SimulationManager"),
-                    new KeyValuePair<object, string>((object)Manager.TalkManager._instance ?? typeof(Manager.TalkManager), "Manager.TalkManager"),
+                    new KeyValuePair<object, string>((object)SV.H.HScene._instance ?? SV.H.HScene._instance, T("UI.SVHScene")),
+                    new KeyValuePair<object, string>(ADV.ADVManager._instance, T("UI.ADVManager")),
+                    new KeyValuePair<object, string>((object)Manager.Game._instance ?? typeof(Manager.Game), T("UI.ManagerGame")),
+                    new KeyValuePair<object, string>(Manager.Game.saveData, T("UI.ManagerGameSaveData")),
+                    new KeyValuePair<object, string>(typeof(Manager.Config), T("UI.ManagerConfig")),
+                    new KeyValuePair<object, string>((object)Manager.Scene._instance ?? typeof(Manager.Scene), T("UI.ManagerScene")),
+                    new KeyValuePair<object, string>((object)Manager.Sound._instance ?? typeof(Manager.Sound), T("UI.ManagerSound")),
+                    new KeyValuePair<object, string>(typeof(Manager.GameSystem), T("UI.ManagerGameSystem")),
+                    new KeyValuePair<object, string>((object)Manager.MapManager._instance ?? typeof(Manager.MapManager), T("UI.ManagerMapManager")),
+                    new KeyValuePair<object, string>((object)Manager.SimulationManager._instance ?? typeof(Manager.SimulationManager), T("UI.ManagerSimulationManager")),
+                    new KeyValuePair<object, string>((object)Manager.TalkManager._instance ?? typeof(Manager.TalkManager), T("UI.ManagerTalkManager")),
                 };
 
                 if (_belongingsDropdown == null)
@@ -89,55 +114,154 @@ namespace CheatTools
             CheatToolsWindow.Cheats.Add(new CheatEntry(_ => InsideH, DrawHSceneCheats, null));
             CheatToolsWindow.Cheats.Add(new CheatEntry(_ => InsideADV, DrawAdvCheats, null));
             CheatToolsWindow.Cheats.Add(new CheatEntry(_ => Manager.Game.saveData.WorldTime > 0, DrawGeneralCheats, null));
-            CheatToolsWindow.Cheats.Add(new CheatEntry(_ => Manager.Game.Charas.Count > 0, DrawGirlCheatMenu, "Unable to edit character stats on this screen or there are no characters. Load a saved game or start a new game and add characters to the roster."));
+            CheatToolsWindow.Cheats.Add(new CheatEntry(_ => Manager.Game.Charas.Count > 0, DrawGirlCheatMenu, T("UI.NoCharactersToEdit")));
             CheatToolsWindow.Cheats.Add(CheatEntry.CreateOpenInInspectorButtons(() => _openInInspectorButtons));
 
             Harmony.CreateAndPatchAll(typeof(Hooks));
         }
 
+        #region 翻译系统
+
+        private static void LoadSupportedLanguages()
+        {
+            string languagesFilePath = Path.Combine(Path.GetDirectoryName(_pluginLocation), "languages.json");
+            if (File.Exists(languagesFilePath))
+            {
+                try
+                {
+                    string json = File.ReadAllText(languagesFilePath);
+                    var languages = JsonConvert.DeserializeObject<Dictionary<string, List<Dictionary<string, string>>>>(json);
+                    SupportedLanguages = languages["supportedLanguages"].ToDictionary(l => l["code"], l => l["name"]);
+                }
+                catch (Exception ex)
+                {
+                    CheatToolsPlugin.Logger.LogError($"无法加载 languages.json: {ex.Message}");
+                    SupportedLanguages = new Dictionary<string, string> { { "en", "English" }, { "zh_CN", "中文" } };
+                }
+            }
+            else
+            {
+                CheatToolsPlugin.Logger.LogWarning("未找到 languages.json，使用默认语言。");
+                SupportedLanguages = new Dictionary<string, string> { { "en", "English" }, { "zh_CN", "中文" } };
+            }
+        }
+
+        private static void LoadLanguage(string langCode)
+        {
+            string langFilePath = Path.Combine(Path.GetDirectoryName(_pluginLocation), $"lang_{langCode}.json");
+            if (File.Exists(langFilePath))
+            {
+                try
+                {
+                    string json = File.ReadAllText(langFilePath);
+                    _translations = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                    CheatToolsPlugin.Logger.LogInfo($"成功加载语言: {langCode}");
+                }
+                catch (Exception ex)
+                {
+                    CheatToolsPlugin.Logger.LogError($"加载 {langFilePath} 失败: {ex.Message}");
+                    _translations = new Dictionary<string, string>();
+                }
+            }
+            else
+            {
+                CheatToolsPlugin.Logger.LogWarning($"未找到语言文件 {langFilePath}。");
+                _translations = new Dictionary<string, string>();
+            }
+            CachedTranslations.Clear();
+        }
+
+        private static string T(string key)
+        {
+            if (CachedTranslations.TryGetValue(key, out string value))
+                return value;
+
+            if (_translations != null && _translations.TryGetValue(key, out value))
+            {
+                CachedTranslations[key] = value;
+                return value;
+            }
+
+            if (_currentLanguage != "en")
+            {
+                string fallbackPath = Path.Combine(Path.GetDirectoryName(_pluginLocation), "lang_en.json");
+                if (File.Exists(fallbackPath))
+                {
+                    try
+                    {
+                        string json = File.ReadAllText(fallbackPath);
+                        var fallbackTranslations = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                        if (fallbackTranslations.TryGetValue(key, out value))
+                        {
+                            CachedTranslations[key] = value;
+                            return value;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        CheatToolsPlugin.Logger.LogError($"无法加载回退语言 (en): {ex.Message}");
+                    }
+                }
+            }
+
+            CheatToolsPlugin.Logger.LogWarning($"语言 '{_currentLanguage}' 中缺少翻译键 '{key}'。");
+            return key.Split('.').Last();
+        }
+
+        private static void DrawLanguageSelector()
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(T("UI.Language") + ": ", GUILayout.Width(100));
+            foreach (var lang in SupportedLanguages)
+            {
+                if (GUILayout.Button(lang.Value))
+                {
+                    if (_currentLanguage != lang.Key)
+                    {
+                        _currentLanguage = lang.Key;
+                        SelectedLanguage.Value = _currentLanguage;
+                        LoadLanguage(_currentLanguage);
+                    }
+                }
+            }
+            GUILayout.EndHorizontal();
+        }
+
+        #endregion
+
         private static void DrawHSceneCheats(CheatToolsWindow cheatToolsWindow)
         {
             var hScene = SV.H.HScene._instance;
 
-            GUILayout.Label("H scene controls");
+            GUILayout.Label(T("UI.HSceneControls"));
 
             foreach (var actor in hScene.Actors)
             {
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Label(actor.Name + " Gauge: " + actor.GaugeValue.ToString("N1"), GUILayout.Width(150));
+                    GUILayout.Label(string.Format(T("UI.ActorGauge"), actor.Name, actor.GaugeValue.ToString("N1")), GUILayout.Width(150));
                     GUI.changed = false;
                     var newValue = GUILayout.HorizontalSlider(actor.GaugeValue, 0, 100);
                     if (GUI.changed)
                         actor.SetGaugeValue(newValue);
-
-                    // todo editing siru array doesn't cause updates
-                    //    for (int i = 0; i < hActor._siruLv.Length; i++)
-                    //    {
-                    //        GUILayout.BeginHorizontal();
-                    //        GUILayout.Label($"{(ChaFileDefine.SiruParts)i}: lv{hActor._siruLv[i]}", GUILayout.Width(150));
-                    //        hActor._siruLv[i] = (byte)GUILayout.HorizontalSlider(hActor._siruLv[i], 0, 6);
-                    //        GUILayout.EndHorizontal();
-                    //    }
                 }
                 GUILayout.EndHorizontal();
             }
 
             DrawBackgroundHideToggles();
 
-            if (GUILayout.Button("Open HScene in inspector"))
-                Inspector.Instance.Push(new InstanceStackEntry(hScene, "SV.H.HScene"), true);
+            if (GUILayout.Button(T("UI.OpenHSceneInInspector")))
+                Inspector.Instance.Push(new InstanceStackEntry(hScene, T("UI.SVHScene")), true);
         }
 
         private static GameObject _bgPanel, _bgDownFrame, _bgUpFrame;
         private static void DrawAdvCheats(CheatToolsWindow cheatToolsWindow)
         {
-            GUILayout.Label("ADV scene controls");
+            GUILayout.Label(T("UI.ADVSceneControls"));
 
-            if (GUILayout.Button(new GUIContent("Force Unlock visible talk options", null, "Un-gray and make clickable all currently visible buttons in the talk menu. Mostly for use with the blackmail menu. If the chance is 0% you still won't be able to succeed at the action.")))
+            if (GUILayout.Button(new GUIContent(T("UI.ForceUnlockTalkOptions"), null, T("UI.ForceUnlockTalkOptionsTooltip"))))
             {
                 var commandUi = UnityEngine.Object.FindObjectOfType<SV.CommandUI>();
-                // For some reason buttons are found and set as interactable, but if they are in a hidden menu they revert to inactive when unhidden
                 foreach (var btn in commandUi.GetComponentsInChildren<Button>(true))
                     btn.interactable = true;
             }
@@ -145,7 +269,6 @@ namespace CheatTools
             DrawBackgroundHideToggles();
         }
 
-        // Hiding ADV and H background
         private static void DrawBackgroundHideToggles()
         {
             if (!_bgPanel)
@@ -158,90 +281,69 @@ namespace CheatTools
             }
 
             var prevActive = _bgDownFrame.activeSelf;
-            var newActive = GUILayout.Toggle(prevActive, "Show background frame");
+            var newActive = GUILayout.Toggle(prevActive, T("UI.ShowBackgroundFrame"));
             if (prevActive != newActive)
             {
                 _bgDownFrame.active = newActive;
                 _bgUpFrame.active = newActive;
             }
 
-            // There is also a saturation effect that is not disabled by this at 'SimulationScene/Global Volume', didn't find a clean way to disable that one
             prevActive = _bgPanel.activeSelf;
-            newActive = GUILayout.Toggle(prevActive, "Show background blur");
+            newActive = GUILayout.Toggle(prevActive, T("UI.ShowBackgroundBlur"));
             if (prevActive != newActive)
                 _bgPanel.active = newActive;
         }
 
         private static void DrawGeneralCheats(CheatToolsWindow cheatToolsWindow)
         {
-            Hooks.RiggedRng = GUILayout.Toggle(Hooks.RiggedRng, new GUIContent("Rigged RNG (success if above 0%)", null, "All actions with at least 1% chance will always succeed. Must be activated BEFORE talking to a character.\nWARNING: This will affect RNG across the game. NPCs will (probably) always succeed with their actions which will skew the simulation heavily. Some events might never happen or keep repeating until this is turned off."));
+            Hooks.RiggedRng = GUILayout.Toggle(Hooks.RiggedRng, new GUIContent(T("UI.RiggedRNG"), null, T("UI.RiggedRNGTooltip")));
 
             GUILayout.Space(5);
 
             GUILayout.BeginHorizontal();
             {
-                GUILayout.Label("Walking speed:");
+                GUILayout.Label(T("UI.WalkingSpeed"));
 
                 var normal = Hooks.SpeedMode == Hooks.SpeedModes.Normal || Hooks.SpeedMode == Hooks.SpeedModes.ReturnToNormal;
-                var newNormal = GUILayout.Toggle(normal, "Normal");
+                var newNormal = GUILayout.Toggle(normal, T("UI.SpeedNormal"));
                 if (!normal && newNormal)
                     Hooks.SpeedMode = Hooks.SpeedModes.ReturnToNormal;
-                if (GUILayout.Toggle(Hooks.SpeedMode == Hooks.SpeedModes.Fast, "Fast"))
+                if (GUILayout.Toggle(Hooks.SpeedMode == Hooks.SpeedModes.Fast, T("UI.SpeedFast")))
                     Hooks.SpeedMode = Hooks.SpeedModes.Fast;
-                if (GUILayout.Toggle(Hooks.SpeedMode == Hooks.SpeedModes.Sanic, "Sanic"))
+                if (GUILayout.Toggle(Hooks.SpeedMode == Hooks.SpeedModes.Sanic, T("UI.SpeedSanic")))
                     Hooks.SpeedMode = Hooks.SpeedModes.Sanic;
             }
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
             {
-                Hooks.InterruptBlock = GUILayout.Toggle(Hooks.InterruptBlock, new GUIContent("Block interrupts", null, "Prevent NPCs from interrupting interactions of 2 other characters. This does not prevent NPCs from talking to idle characters."));
-                Hooks.InterruptBlockAllow3P = GUILayout.Toggle(Hooks.InterruptBlockAllow3P, new GUIContent("except 3P", null, "Do not block NPCs interrupting to ask for a threesome."));
-                Hooks.InterruptBlockAllowNonPlayer = GUILayout.Toggle(Hooks.InterruptBlockAllowNonPlayer, new GUIContent("only player", null, "Only block interrupts if player controls one of the involved characters."));
+                Hooks.InterruptBlock = GUILayout.Toggle(Hooks.InterruptBlock, new GUIContent(T("UI.BlockInterrupts"), null, T("UI.BlockInterruptsTooltip")));
+                Hooks.InterruptBlockAllow3P = GUILayout.Toggle(Hooks.InterruptBlockAllow3P, new GUIContent(T("UI.Except3P"), null, T("UI.Except3PTooltip")));
+                Hooks.InterruptBlockAllowNonPlayer = GUILayout.Toggle(Hooks.InterruptBlockAllowNonPlayer, new GUIContent(T("UI.OnlyPlayer"), null, T("UI.OnlyPlayerTooltip")));
             }
             GUILayout.EndHorizontal();
 
             GUILayout.Space(5);
 
             GUI.enabled = !ReferenceEquals(SV.GameChara.PlayerAI, null);
-            if (GUILayout.Button("Unlimited time limit for current period"))
+            if (GUILayout.Button(T("UI.UnlimitedTimeLimit")))
                 SV.GameChara.PlayerAI!.charaData.charasGameParam.baseParameter.NowStamina = 100000;
             GUI.enabled = true;
 
-            // todo doesn't work, nullref on open
-            //if (GUILayout.Button("TEST Open relationship screen"))
-            //{
-            //    if (SV.CorrelationDiagramScene.CorrelationDiagram.Instance?.IsOpen() == true)
-            //    {
-            //        SV.CorrelationDiagramScene.CorrelationDiagram.Instance.CloseExeAsync(new SV.CorrelationDiagramScene.CorrelationDiagram.CloseParameter());
-            //    }
-            //    else
-            //    {
-            //        var param = new SV.CorrelationDiagramScene.CorrelationDiagram.OpenParameter();
-            //        SV.CorrelationDiagramScene.CorrelationDiagram.Open(ref param);
-            //    }
-            //}
+            DrawUtils.DrawNums(T("UI.Weekday"), 7, () => (byte)Manager.Game.saveData.Week, b => Manager.Game.saveData.Week = b);
 
-            DrawUtils.DrawNums("Weekday", 7, () => (byte)Manager.Game.saveData.Week, b => Manager.Game.saveData.Week = b);
-
-            DrawUtils.DrawInt("Day count", () => Manager.Game.saveData.Day, i => Manager.Game.saveData.Day = i, "Total number of days passed in-game. Used for calculating menstruation status and probably other things.");
-
-            //GUILayout.BeginHorizontal();
-            //{
-            //    GUILayout.Label("asd: ");
-            //}
-            //GUILayout.EndHorizontal();
+            DrawUtils.DrawInt(T("UI.DayCount"), () => Manager.Game.saveData.Day, i => Manager.Game.saveData.Day = i, T("UI.DayCountTooltip"));
         }
 
         private static void DrawGirlCheatMenu(CheatToolsWindow cheatToolsWindow)
         {
-            GUILayout.Label("Character status editor");
+            GUILayout.Label(T("UI.CharacterStatusEditor"));
 
             foreach (var chara in GameUtilities.GetCurrentActors(false))
             {
                 var main = chara.Value.FindMainActorInstance();
                 var isCopy = !ReferenceEquals(main.Value, chara.Value);
-                if (GUILayout.Button($"Select #{chara.Key} - {chara.Value.GetCharaName(true)}{(isCopy ? " (Copy)" : "")}"))
+                if (GUILayout.Button(string.Format(T("UI.SelectCharacter"), chara.Key, chara.Value.GetCharaName(true), isCopy ? T("UI.Copy") : "")))
                 {
                     _currentVisibleChara = chara.Value;
                     _currentVisibleCharaMain = isCopy ? main.Value : null;
@@ -255,7 +357,7 @@ namespace CheatTools
                 if (_currentVisibleChara != null)
                     DrawSingleCharaCheats(_currentVisibleChara, _currentVisibleCharaMain, cheatToolsWindow);
                 else
-                    GUILayout.Label("Select a character to edit their stats");
+                    GUILayout.Label(T("UI.SelectCharacterToEdit"));
             }
             catch (Exception e)
             {
@@ -273,11 +375,11 @@ namespace CheatTools
             {
                 GUILayout.BeginHorizontal();
                 {
-                    GUILayout.Label("Selected:", IMGUIUtils.LayoutOptionsExpandWidthFalse);
+                    GUILayout.Label(T("UI.Selected"), IMGUIUtils.LayoutOptionsExpandWidthFalse);
                     GUILayout.FlexibleSpace();
                     GUILayout.Label(currentAdvChara.GetCharaName(true), IMGUIUtils.LayoutOptionsExpandWidthFalse);
                     GUILayout.FlexibleSpace();
-                    if (GUILayout.Button("Close", IMGUIUtils.LayoutOptionsExpandWidthFalse)) _currentVisibleChara = null;
+                    if (GUILayout.Button(T("UI.Close"), IMGUIUtils.LayoutOptionsExpandWidthFalse)) _currentVisibleChara = null;
                 }
                 GUILayout.EndHorizontal();
 
@@ -285,11 +387,9 @@ namespace CheatTools
                 {
                     GUILayout.BeginHorizontal();
                     {
-                        GUILayout.Label(new GUIContent("!! This character is a copy !!", null, "All changes made to this characters will be lost after the current scene finishes.\n\n" +
-                                                                                               "If you want to make permanent changes, open the main instance of this character and do your changes there.\n" +
-                                                                                               "You will have to exit and re-enter current scene to propagate the changes to the copied character)."), IMGUIUtils.LayoutOptionsExpandWidthFalse);
+                        GUILayout.Label(new GUIContent(T("UI.CharacterIsCopy"), null, T("UI.CharacterIsCopyTooltip")), IMGUIUtils.LayoutOptionsExpandWidthFalse);
                         GUILayout.FlexibleSpace();
-                        if (GUILayout.Button("Open main"))
+                        if (GUILayout.Button(T("UI.OpenMain")))
                         {
                             _currentVisibleChara = mainChara;
                             _currentVisibleCharaMain = null;
@@ -303,21 +403,16 @@ namespace CheatTools
                 var charasGameParam = currentAdvChara.charasGameParam;
                 if (charasGameParam != null)
                 {
-                    var baseParameter = currentAdvChara.charasGameParam.baseParameter;
+                    GUILayout.Label(T("UI.InGameStats"));
 
-                    {
-                        GUILayout.Label("In-game stats (changed through gameplay)");
+                    DrawUtils.DrawSlider(T("UI.Stamina"), 0, 1000, () => charasGameParam.baseParameter.Stamina, val => charasGameParam.baseParameter.Stamina = val);
+                    DrawUtils.DrawSlider(T("UI.NowStamina"), 0, charasGameParam.baseParameter.Stamina + 100, () => charasGameParam.baseParameter.NowStamina, val => charasGameParam.baseParameter.NowStamina = val, T("UI.NowStaminaTooltip"));
+                    DrawUtils.DrawSlider(T("UI.Conversation"), 0, 1000, () => charasGameParam.baseParameter.Conversation, val => charasGameParam.baseParameter.Conversation = val);
+                    DrawUtils.DrawSlider(T("UI.Study"), 0, 1000, () => charasGameParam.baseParameter.Study, val => charasGameParam.baseParameter.Study = val);
+                    DrawUtils.DrawSlider(T("UI.Living"), 0, 1000, () => charasGameParam.baseParameter.Living, val => charasGameParam.baseParameter.Living = val);
+                    DrawUtils.DrawSlider(T("UI.Job"), 0, 1000, () => charasGameParam.baseParameter.Job, val => charasGameParam.baseParameter.Job = val, T("UI.JobTooltip"));
 
-                        DrawUtils.DrawSlider(nameof(baseParameter.Stamina), 0, 1000, () => baseParameter.Stamina, val => baseParameter.Stamina = val);
-                        DrawUtils.DrawSlider(nameof(baseParameter.NowStamina), 0, baseParameter.Stamina + 100, () => baseParameter.NowStamina, val => baseParameter.NowStamina = val,
-                                             "When character is controlled by player this field is used for determining how long until the period ends. NPCs don't use it.\nInitial value is equal to 'Stamina + 100'.");
-                        DrawUtils.DrawSlider(nameof(baseParameter.Conversation), 0, 1000, () => baseParameter.Conversation, val => baseParameter.Conversation = val);
-                        DrawUtils.DrawSlider(nameof(baseParameter.Study), 0, 1000, () => baseParameter.Study, val => baseParameter.Study = val);
-                        DrawUtils.DrawSlider(nameof(baseParameter.Living), 0, 1000, () => baseParameter.Living, val => baseParameter.Living = val);
-                        DrawUtils.DrawSlider(nameof(baseParameter.Job), 0, 1000, () => baseParameter.Job, val => baseParameter.Job = val, "Doesn't seem to work, changes get overwritten.");
-
-                        GUILayout.Space(6);
-                    }
+                    GUILayout.Space(6);
 
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
@@ -326,22 +421,22 @@ namespace CheatTools
 
                         GUILayout.BeginHorizontal();
                         {
-                            GUILayout.Label("Menstruation: ");
+                            GUILayout.Label(T("UI.Menstruation"));
 
                             GUI.color = currentAdvChara.IsMenstruation(ActorExtensionH.Menstruation.Normal) ? Color.green : Color.white;
-                            if (GUILayout.Button("Normal")) SetMenstruationForDay(currentDayIndex, 0);
+                            if (GUILayout.Button(T("UI.MenstruationNormal"))) SetMenstruationForDay(currentDayIndex, 0);
                             GUI.color = currentAdvChara.IsMenstruation(ActorExtensionH.Menstruation.Safe) ? Color.green : Color.white;
-                            if (GUILayout.Button("Safe")) SetMenstruationForDay(currentDayIndex, 1);
+                            if (GUILayout.Button(T("UI.MenstruationSafe"))) SetMenstruationForDay(currentDayIndex, 1);
                             GUI.color = currentAdvChara.IsMenstruation(ActorExtensionH.Menstruation.Danger) ? Color.green : Color.white;
-                            if (GUILayout.Button("Danger")) SetMenstruationForDay(currentDayIndex, 2);
+                            if (GUILayout.Button(T("UI.MenstruationDanger"))) SetMenstruationForDay(currentDayIndex, 2);
                             GUI.color = Color.white;
                         }
                         GUILayout.EndHorizontal();
 
                         GUILayout.BeginHorizontal();
                         {
-                            GUILayout.Label(menstruationsLength / 7 + "-weekly", GUILayout.Width(80));
-                            var mensUiItems = new GUIContent[] { new("N"), new("S"), new("D") };
+                            GUILayout.Label($"{menstruationsLength / 7}-weekly", GUILayout.Width(80));
+                            var mensUiItems = new GUIContent[] { new(T("UI.MenstruationN")), new(T("UI.MenstruationS")), new(T("UI.MenstruationD")) };
                             for (var i = 0; i < menstruationsLength; i++)
                             {
                                 var mens = charasGameParam.menstruations[i];
@@ -354,7 +449,7 @@ namespace CheatTools
                                     GUI.color = Color.white;
                                     GUILayout.EndHorizontal();
                                     GUILayout.BeginHorizontal();
-                                    GUILayout.Label("schedule:", GUILayout.Width(80));
+                                    GUILayout.Label(T("UI.Schedule"), GUILayout.Width(80));
                                 }
                             }
                             GUI.color = Color.white;
@@ -370,28 +465,19 @@ namespace CheatTools
                     GUILayout.BeginVertical(GUI.skin.box);
                     if (isCopy)
                     {
-                        GUILayout.Label("Can't edit relationships of copied characters, open the main character first.");
+                        GUILayout.Label(T("UI.CannotEditRelationshipsCopy"));
                     }
                     else
                     {
-                        // DarkSoldier27: Ok I figure it out:
-                        // 0:LOVE
-                        // 1:FRIEND
-                        // 2:INDIFFERENT
-                        // 3:DISLIKE
-                        // values go from 0 to 30, reaching 30 increase a favorability point in longSensitivityCounts <- this is what determined their status, the max value for this one is also 30
-                        // and yeah reaching below 0 reduce a point
-
                         GUILayout.BeginHorizontal();
-
-                        GUILayout.Label("Edit relationship with: ");
+                        GUILayout.Label(T("UI.EditRelationshipWith"));
 
                         var targets = Manager.Game.saveData.Charas.AsManagedEnumerable().Select(x => x.Value).Where(x => x != null && !x.Equals(currentAdvChara)).ToArray();
 
                         _otherCharaListIndex = Math.Clamp(_otherCharaListIndex, -1, targets.Length - 1);
 
                         GUI.changed = false;
-                        var result = GUILayout.Toggle(_otherCharaListIndex == -1, "Everyone");
+                        var result = GUILayout.Toggle(_otherCharaListIndex == -1, T("UI.Everyone"));
                         if (GUI.changed)
                             _otherCharaListIndex = result ? -1 : 0;
 
@@ -405,26 +491,24 @@ namespace CheatTools
 
                         if (targets.Length == 1)
                         {
-                            // H Affinity controls
                             var targetChara = targets[0];
                             var targetCharaId = targetChara.TryGetActorId();
-                            var to = baseParameter.GetHAffinity(targetCharaId);
+                            var to = currentAdvChara.charasGameParam.baseParameter.GetHAffinity(targetCharaId);
                             var currentCharaId = currentAdvChara.TryGetActorId();
                             var targetBaseParameter = targetChara.charasGameParam.baseParameter;
                             var fro = targetBaseParameter.GetHAffinity(currentCharaId);
 
                             GUILayout.BeginHorizontal();
                             {
-                                GUILayout.Label("H Affinity:");
+                                GUILayout.Label(T("UI.HAffinity"));
                                 GUILayout.FlexibleSpace();
-                                GUILayout.Label($"to lv{to.LV} {to.Point}pt", IMGUIUtils.LayoutOptionsExpandWidthFalse);
-                                if (GUILayout.Button("+1")) baseParameter.AddHAffinity(targetCharaId, 20);
-                                if (GUILayout.Button("0")) baseParameter.RemoveHAffinity(targetCharaId);
+                                GUILayout.Label(string.Format(T("UI.HAffinityTo"), to.LV, to.Point), IMGUIUtils.LayoutOptionsExpandWidthFalse);
+                                if (GUILayout.Button("+1")) currentAdvChara.charasGameParam.baseParameter.AddHAffinity(targetCharaId, 20);
+                                if (GUILayout.Button("0")) currentAdvChara.charasGameParam.baseParameter.RemoveHAffinity(targetCharaId);
                                 GUILayout.FlexibleSpace();
-                                GUILayout.Label($"fro lv{fro.LV} {fro.Point}pt", IMGUIUtils.LayoutOptionsExpandWidthFalse);
+                                GUILayout.Label(string.Format(T("UI.HAffinityFro"), fro.LV, fro.Point), IMGUIUtils.LayoutOptionsExpandWidthFalse);
                                 if (GUILayout.Button("+1")) targetBaseParameter.AddHAffinity(currentCharaId, 20);
                                 if (GUILayout.Button("0")) targetBaseParameter.RemoveHAffinity(currentCharaId);
-
                             }
                             GUILayout.EndHorizontal();
                         }
@@ -432,19 +516,19 @@ namespace CheatTools
                         {
                             GUILayout.BeginHorizontal();
                             {
-                                GUILayout.Label("H Affinity with everyone: ");
-                                if (GUILayout.Button("Max lvl"))
+                                GUILayout.Label(T("UI.HAffinityEveryone"));
+                                if (GUILayout.Button(T("UI.MaxLevel")))
                                 {
                                     var targetIds = targets.Select(x => x.TryGetActorId()).ToArray();
-                                    foreach (var targetId in targetIds) baseParameter.AddHAffinity(targetId, 100);
+                                    foreach (var targetId in targetIds) currentAdvChara.charasGameParam.baseParameter.AddHAffinity(targetId, 100);
 
                                     var currentCharaId = currentAdvChara.TryGetActorId();
                                     foreach (var target in targets) target.charasGameParam.baseParameter.AddHAffinity(currentCharaId, 100);
                                 }
-                                if (GUILayout.Button("Set to 0"))
+                                if (GUILayout.Button(T("UI.SetToZero")))
                                 {
                                     var targetIds = targets.Select(x => x.TryGetActorId()).ToArray();
-                                    foreach (var targetId in targetIds) baseParameter.RemoveHAffinity(targetId);
+                                    foreach (var targetId in targetIds) currentAdvChara.charasGameParam.baseParameter.RemoveHAffinity(targetId);
 
                                     var currentCharaId = currentAdvChara.TryGetActorId();
                                     foreach (var target in targets) target.charasGameParam.baseParameter.RemoveHAffinity(currentCharaId);
@@ -453,7 +537,7 @@ namespace CheatTools
                             GUILayout.EndHorizontal();
                         }
 
-                        GUILayout.Label("WARNING: BETA, settings may be reset by the game randomly. Save-Load the game after editing for best chance to make it work.");
+                        GUILayout.Label(T("UI.RelationshipWarning"));
 
                         DrawSingleRankEditor(SensitivityKind.Love, currentAdvChara, targets);
                         DrawSingleRankEditor(SensitivityKind.Friend, currentAdvChara, targets);
@@ -461,10 +545,6 @@ namespace CheatTools
                         DrawSingleRankEditor(SensitivityKind.Dislike, currentAdvChara, targets);
                     }
                     GUILayout.EndVertical();
-
-                    //todo charasGameParam.sensitivity, same deal as relationships with tables and stocks
-
-                    GUILayout.Space(6);
                 }
 
                 var gameParam = currentAdvChara.charFile.GameParameter;
@@ -472,53 +552,48 @@ namespace CheatTools
                 {
                     GUILayout.BeginVertical(GUI.skin.box);
                     {
-                        GUILayout.Label("Card stats (same as in the chara maker)");
+                        GUILayout.Label(T("UI.CardStats"));
 
-                        DrawUtils.DrawStrings("Job", new[] { "None", "Lifeguard", "Cafe", "Shrine" }, () => gameParam.job, b => gameParam.job = b);
-                        DrawUtils.DrawNums("Gayness", 5, () => gameParam.sexualTarget, b => gameParam.sexualTarget = b);
-                        DrawUtils.DrawNums(nameof(gameParam.lvChastity), 5, () => gameParam.lvChastity, b => gameParam.lvChastity = b);
-                        DrawUtils.DrawNums(nameof(gameParam.lvSociability), 5, () => gameParam.lvSociability, b => gameParam.lvSociability = b);
-                        DrawUtils.DrawNums(nameof(gameParam.lvTalk), 5, () => gameParam.lvTalk, b => gameParam.lvTalk = b);
-                        DrawUtils.DrawNums(nameof(gameParam.lvStudy), 5, () => gameParam.lvStudy, b => gameParam.lvStudy = b);
-                        DrawUtils.DrawNums(nameof(gameParam.lvLiving), 5, () => gameParam.lvLiving, b => gameParam.lvLiving = b);
-                        DrawUtils.DrawNums(nameof(gameParam.lvPhysical), 5, () => gameParam.lvPhysical, b => gameParam.lvPhysical = b);
-                        DrawUtils.DrawNums("Fighting style", 3, () => gameParam.lvDefeat, b => gameParam.lvDefeat = b);
+                        DrawUtils.DrawStrings(T("UI.Job"), new[] { T("UI.JobNone"), T("UI.JobLifeguard"), T("UI.JobCafe"), T("UI.JobShrine") }, () => gameParam.job, b => gameParam.job = b);
+                        DrawUtils.DrawNums(T("UI.Gayness"), 5, () => gameParam.sexualTarget, b => gameParam.sexualTarget = b);
+                        DrawUtils.DrawNums(T("UI.LvChastity"), 5, () => gameParam.lvChastity, b => gameParam.lvChastity = b);
+                        DrawUtils.DrawNums(T("UI.LvSociability"), 5, () => gameParam.lvSociability, b => gameParam.lvSociability = b);
+                        DrawUtils.DrawNums(T("UI.LvTalk"), 5, () => gameParam.lvTalk, b => gameParam.lvTalk = b);
+                        DrawUtils.DrawNums(T("UI.LvStudy"), 5, () => gameParam.lvStudy, b => gameParam.lvStudy = b);
+                        DrawUtils.DrawNums(T("UI.LvLiving"), 5, () => gameParam.lvLiving, b => gameParam.lvLiving = b);
+                        DrawUtils.DrawNums(T("UI.LvPhysical"), 5, () => gameParam.lvPhysical, b => gameParam.lvPhysical = b);
+                        DrawUtils.DrawNums(T("UI.FightingStyle"), 3, () => gameParam.lvDefeat, b => gameParam.lvDefeat = b);
 
-                        DrawUtils.DrawBool(nameof(gameParam.isVirgin), () => gameParam.isVirgin, b => gameParam.isVirgin = b);
-                        DrawUtils.DrawBool(nameof(gameParam.isAnalVirgin), () => gameParam.isAnalVirgin, b => gameParam.isAnalVirgin = b);
-                        DrawUtils.DrawBool(nameof(gameParam.isMaleVirgin), () => gameParam.isMaleVirgin, b => gameParam.isMaleVirgin = b);
-                        DrawUtils.DrawBool(nameof(gameParam.isMaleAnalVirgin), () => gameParam.isMaleAnalVirgin, b => gameParam.isMaleAnalVirgin = b);
+                        DrawUtils.DrawBool(T("UI.IsVirgin"), () => gameParam.isVirgin, b => gameParam.isVirgin = b);
+                        DrawUtils.DrawBool(T("UI.IsAnalVirgin"), () => gameParam.isAnalVirgin, b => gameParam.isAnalVirgin = b);
+                        DrawUtils.DrawBool(T("UI.IsMaleVirgin"), () => gameParam.isMaleVirgin, b => gameParam.isMaleVirgin = b);
+                        DrawUtils.DrawBool(T("UI.IsMaleAnalVirgin"), () => gameParam.isMaleAnalVirgin, b => gameParam.isMaleAnalVirgin = b);
                     }
                     GUILayout.EndVertical();
 
                     GUILayout.Space(6);
 
                     DrawBelongingsPicker(gameParam, comboboxMaxY);
-                    DrawTargetAnswersPicker(_hPreferenceDropdown, "H Preference", gameParam, sv => sv.preferenceH, comboboxMaxY);
-                    DrawTargetAnswersPicker(_traitsDropdown, "Trait", gameParam, sv => sv.individuality, comboboxMaxY);
+                    DrawTargetAnswersPicker(_hPreferenceDropdown, T("UI.HPreference"), gameParam, sv => sv.preferenceH, comboboxMaxY);
+                    DrawTargetAnswersPicker(_traitsDropdown, T("UI.Trait"), gameParam, sv => sv.individuality, comboboxMaxY);
                 }
 
-                if (gameParam != null && GUILayout.Button("Inspect GameParameter"))
-                    Inspector.Instance.Push(new InstanceStackEntry(gameParam, "GameParam " + currentAdvChara.GetCharaName(true)), true);
+                if (gameParam != null && GUILayout.Button(T("UI.InspectGameParameter")))
+                    Inspector.Instance.Push(new InstanceStackEntry(gameParam, string.Format(T("UI.GameParam"), currentAdvChara.GetCharaName(true))), true);
 
-                if (charasGameParam != null && GUILayout.Button("Inspect CharactersGameParameter"))
-                    Inspector.Instance.Push(new InstanceStackEntry(charasGameParam, "CharaGameParam " + currentAdvChara.GetCharaName(true)), true);
+                if (charasGameParam != null && GUILayout.Button(T("UI.InspectCharaGameParam")))
+                    Inspector.Instance.Push(new InstanceStackEntry(charasGameParam, string.Format(T("UI.CharaGameParam"), currentAdvChara.GetCharaName(true))), true);
 
-                if (GUILayout.Button("Navigate to Character's GameObject"))
+                if (GUILayout.Button(T("UI.NavigateToCharacterGameObject")))
                 {
                     if (currentAdvChara.transform)
                         ObjectTreeViewer.Instance.SelectAndShowObject(currentAdvChara.transform);
                     else
-                        CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, "Character has no body assigned");
+                        CheatToolsPlugin.Logger.Log(LogLevel.Warning | LogLevel.Message, T("UI.CharacterNoBodyAssigned"));
                 }
 
-                if (GUILayout.Button("Open Character in inspector"))
-                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvChara, "Actor " + currentAdvChara.GetCharaName(true)), true);
-
-                //if (GUILayout.Button("Inspect extended data"))
-                //{
-                //    Inspector.Instance.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvChara.chaFile), "ExtData for " + currentAdvChara.Name), true);
-                //}
+                if (GUILayout.Button(T("UI.OpenCharacterInInspector")))
+                    Inspector.Instance.Push(new InstanceStackEntry(currentAdvChara, string.Format(T("UI.Actor"), currentAdvChara.GetCharaName(true))), true);
             }
             GUILayout.EndVertical();
         }
@@ -529,7 +604,7 @@ namespace CheatTools
 
             GUILayout.BeginVertical(GUI.skin.box);
 
-            GUILayout.Label("Items owned:");
+            GUILayout.Label(T("UI.ItemsOwned"));
             var targetArr = gameParam.belongings;
             foreach (var gameParameterBelonging in targetArr)
             {
@@ -538,14 +613,13 @@ namespace CheatTools
                     if (gameParameterBelonging >= 0 && gameParameterBelonging < _belongingsDropdown.Contents.Length)
                         GUILayout.Label(_belongingsDropdown.Contents[gameParameterBelonging]);
                     else
-                        GUILayout.Label("Unknown item ID " + gameParameterBelonging);
+                        GUILayout.Label(string.Format(T("UI.UnknownItemId"), gameParameterBelonging));
 
                     GUILayout.FlexibleSpace();
                     if (GUILayout.Button("X", IMGUIUtils.LayoutOptionsExpandWidthFalse))
                     {
                         gameParam.belongings = new Il2CppStructArray<int>(targetArr.Where(x => x != gameParameterBelonging).ToArray());
                     }
-
                 }
                 GUILayout.EndHorizontal();
             }
@@ -553,12 +627,12 @@ namespace CheatTools
             GUILayout.BeginHorizontal();
             {
                 _belongingsDropdown.Show(comboboxMaxY);
-                if (GUILayout.Button("GIVE", IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                if (GUILayout.Button(T("UI.Give"), IMGUIUtils.LayoutOptionsExpandWidthFalse))
                 {
                     if (!gameParam.belongings.Contains(_belongingsDropdown.Index))
                         gameParam.belongings = new Il2CppStructArray<int>(targetArr.AddItem(_belongingsDropdown.Index).ToArray());
                 }
-                if (GUILayout.Button(new GUIContent("TO ALL", null, "Give this item to ALL characters if they don't already have it, including you."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                if (GUILayout.Button(new GUIContent(T("UI.ToAll"), null, T("UI.ToAllTooltip")), IMGUIUtils.LayoutOptionsExpandWidthFalse))
                 {
                     foreach (var chara in Manager.Game.Charas.AsManagedEnumerable().Select(x => x.Value))
                     {
@@ -593,7 +667,7 @@ namespace CheatTools
                         GUILayout.Label(combobox.Contents[index]);
                     }
                     else
-                        GUILayout.Label($"Unknown {name} ID {traitId}");
+                        GUILayout.Label(string.Format(T("UI.UnknownId"), name, traitId));
 
                     GUILayout.FlexibleSpace();
                     if (GUILayout.Button("X", IMGUIUtils.LayoutOptionsExpandWidthFalse))
@@ -609,11 +683,11 @@ namespace CheatTools
                 combobox.Show(comboboxMaxY);
                 var selectedTraitIndex = combobox.ContentsIndexes[combobox.Index];
 
-                if (GUILayout.Button(new GUIContent("ADD", null, "If you add more than 2 entries they will work in-game, but will be removed after you save/load the game or the character.\n\nWARNING: Adding more than 3 traits or items can crash the game in some cases."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                if (GUILayout.Button(new GUIContent(T("UI.Add"), null, T("UI.AddTooltip")), IMGUIUtils.LayoutOptionsExpandWidthFalse))
                 {
                     SetAnswer(answerBase, selectedTraitIndex);
                 }
-                if (GUILayout.Button(new GUIContent("TO ALL", null, "Add this entry to ALL characters, including you."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                if (GUILayout.Button(new GUIContent(T("UI.ToAll"), null, T("UI.ToAllTooltip")), IMGUIUtils.LayoutOptionsExpandWidthFalse))
                 {
                     foreach (var chara in Manager.Game.Charas.AsManagedEnumerable().Select(x => x.Value))
                         SetAnswer(targetAnswers(chara.charFile.GameParameter), selectedTraitIndex);
@@ -623,12 +697,12 @@ namespace CheatTools
 
             GUILayout.BeginHorizontal();
             {
-                if (GUILayout.Button(new GUIContent("Clear ALL", null, "Remove all entries from ALL characters, leaving all lists empty."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                if (GUILayout.Button(new GUIContent(T("UI.ClearAll"), null, T("UI.ClearAllTooltip")), IMGUIUtils.LayoutOptionsExpandWidthFalse))
                 {
                     foreach (var chara in Manager.Game.Charas.AsManagedEnumerable().Select(x => x.Value))
                         targetAnswers(chara.charFile.GameParameter).answer = new Il2CppStructArray<int>(new[] { -1, -1 });
                 }
-                if (GUILayout.Button(new GUIContent("Trim ALL to 2", null, "Keep only the first two entries and remove the rest from ALL characters (leaving 2 entries per-character, the default limit)."), IMGUIUtils.LayoutOptionsExpandWidthFalse))
+                if (GUILayout.Button(new GUIContent(T("UI.TrimAllToTwo"), null, T("UI.TrimAllToTwoTooltip")), IMGUIUtils.LayoutOptionsExpandWidthFalse))
                 {
                     foreach (var chara in Manager.Game.Charas.AsManagedEnumerable().Select(x => x.Value))
                     {
@@ -661,9 +735,9 @@ namespace CheatTools
 
             GUILayout.BeginHorizontal();
             {
-                GUILayout.Label(kind + ":", GUILayout.Width(45));
+                GUILayout.Label(T($"UI.SensitivityKind.{kind}") + ":", GUILayout.Width(45));
 
-                GUILayout.Label(new GUIContent("to", null, "Current character's feelings towards the target character selected in the dropdown above.\nRanks: 0 - Low, 1 - Medium, 2 - High, 3 - Max"));
+                GUILayout.Label(new GUIContent(T("UI.To"), null, T("UI.ToTooltip")));
 
                 if (affectedCharas.Count == 1)
                 {
@@ -674,7 +748,7 @@ namespace CheatTools
                 if (GUILayout.Button("+1")) OnOutgoing(1);
                 if (GUILayout.Button("-1")) OnOutgoing(-1);
 
-                GUILayout.Label(new GUIContent("from", null, "The target character's feelings towards current character."));
+                GUILayout.Label(new GUIContent(T("UI.From"), null, T("UI.FromTooltip")));
 
                 if (affectedCharas.Count == 1)
                 {
@@ -686,7 +760,6 @@ namespace CheatTools
                 if (GUILayout.Button("-1")) OnIncoming(-1);
             }
             GUILayout.EndHorizontal();
-            return;
 
             void OnOutgoing(int amount)
             {
@@ -696,15 +769,10 @@ namespace CheatTools
                     if (targetIds.Contains(tabkvp.Key))
                     {
                         ChangeRank(tabkvp.Value, kind, amount);
-
-                        // All of these overwrite everything we just changed
-                        // todo: need to find some way to update relationship status across the game without having to save/load
-                        //targetCharaSensitivity.CalcFavorState(tabkvp.Value);
-                        //targetCharaSensitivity.LongStockCalc(tabkvp.Value);
-                        //targetCharaSensitivity.CalcHighvFavorability();
                     }
                 }
             }
+
             void OnIncoming(int amount)
             {
                 var ourId = targetChara.TryGetActorId();
@@ -713,12 +781,9 @@ namespace CheatTools
                     var otherSensitivity = charaKvp.charasGameParam.sensitivity;
                     var favorabiliryInfo = otherSensitivity.tableFavorabiliry[ourId];
                     ChangeRank(favorabiliryInfo, kind, amount);
-
-                    //otherSensitivity.CalcFavorState(favorabiliryInfo);
-                    //otherSensitivity.LongStockCalc(favorabiliryInfo);
-                    //otherSensitivity.CalcHighvFavorability();
                 }
             }
+
             void ChangeRank(SensitivityParameter.FavorabiliryInfo favorabiliryInfo, SensitivityKind sensitivityKind, int amount)
             {
                 var newRank = (SensitivityParameter.Rank)Mathf.Clamp((int)(favorabiliryInfo.ranks[(int)sensitivityKind] + amount), 0, (int)SensitivityParameter.Rank.MAX);
