@@ -1,0 +1,14 @@
+{
+  "supportedLanguages": [
+    {
+      "code": "en",
+      "name": "English",
+      "file": "lang_en.json"
+    },
+    {
+      "code": "zh_CN",
+      "name": "中文",
+      "file": "lang_zh_CN.json"
+    }
+  ]
+}
