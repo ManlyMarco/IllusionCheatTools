@@ -1,0 +1,6 @@
+{
+  "supportedLanguages": [
+    { "code": "en", "name": "English" },
+    { "code": "zh_CN", "name": "中文" }
+  ]
+}
