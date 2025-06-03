@@ -136,13 +136,23 @@ namespace CheatTools
                 catch (Exception ex)
                 {
                     CheatToolsPlugin.Logger.LogError($"Failed to load languages.json: {ex.Message}");
-                    SupportedLanguages = new Dictionary<string, string> { { "en", "English" }, { "zh_CN", "中文" } };
+                    SupportedLanguages = new Dictionary<string, string> 
+                    { { "en", "English" }, 
+                    { "zh_CN", "中文" } 
+                      // 如果还有其他语言，也一并添加
+                 };
                 }
             }
             else
             {
                 CheatToolsPlugin.Logger.LogWarning("languages.json not found, using default languages.");
-                SupportedLanguages = new Dictionary<string, string> { { "en", "English" }, { "zh_CN", "中文" } };
+                // 包含所有你准备好 lang_XX.json 文件的语言
+                SupportedLanguages = new Dictionary<string, string> 
+                { 
+                    { "en", "English" }, 
+                    { "zh_CN", "中文" } 
+                    // 如果还有其他语言，也一并添加
+                };
             }
         }
 
