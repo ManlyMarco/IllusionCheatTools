@@ -122,39 +122,44 @@ namespace CheatTools
         }
 
         // 加载支持的语言列表
-        private static void LoadSupportedLanguages()
+        // 改进加载 languages.json 失败或文件不存在时，也能默认提供所有预期的语言选项
+private static void LoadSupportedLanguages()
+{
+    string languagesFilePath = Path.Combine(Path.GetDirectoryName(_pluginLocation), "languages.json");
+    if (File.Exists(languagesFilePath))
+    {
+        try
         {
-            string languagesFilePath = Path.Combine(Path.GetDirectoryName(_pluginLocation), "languages.json");
-            if (File.Exists(languagesFilePath))
-            {
-                try
-                {
-                    string json = File.ReadAllText(languagesFilePath);
-                    var languages = JsonConvert.DeserializeObject<Dictionary<string, List<Dictionary<string, string>>>>(json);
-                    SupportedLanguages = languages["supportedLanguages"].ToDictionary(l => l["code"], l => l["name"]);
-                }
-                catch (Exception ex)
-                {
-                    CheatToolsPlugin.Logger.LogError($"Failed to load languages.json: {ex.Message}");
-                    SupportedLanguages = new Dictionary<string, string> 
-                    { { "en", "English" }, 
-                    { "zh_CN", "中文" } 
-                      // 如果还有其他语言，也一并添加
-                 };
-                }
-            }
-            else
-            {
-                CheatToolsPlugin.Logger.LogWarning("languages.json not found, using default languages.");
-                // 包含所有你准备好 lang_XX.json 文件的语言
-                SupportedLanguages = new Dictionary<string, string> 
-                { 
-                    { "en", "English" }, 
-                    { "zh_CN", "中文" } 
-                    // 如果还有其他语言，也一并添加
-                };
-            }
+            string json = File.ReadAllText(languagesFilePath);
+            var languages = JsonConvert.DeserializeObject<Dictionary<string, List<Dictionary<string, string>>>>(json);
+            SupportedLanguages = languages["supportedLanguages"].ToDictionary(l => l["code"], l => l["name"]);
         }
+        catch (Exception ex)
+        {
+            // 如果 languages.json 加载失败，记录错误并使用一个包含所有你期望的默认语言的回退列表
+            CheatToolsPlugin.Logger.LogError($"Failed to load languages.json: {ex.Message}. Falling back to default supported languages.");
+            // 包含所有你准备好 lang_XX.json 文件的语言
+            SupportedLanguages = new Dictionary<string, string>
+            {
+                { "en", "English" },
+                { "zh_CN", "中文 (简体)" },
+                // 如果还有其他语言，也一并添加
+            };
+        }
+    }
+    else
+    {
+        // 如果 languages.json 文件不存在，记录警告并使用一个包含所有你期望的默认语言的回退列表
+        CheatToolsPlugin.Logger.LogWarning("languages.json not found, using default supported languages.");
+        // 包含所有你准备好 lang_XX.json 文件的语言
+        SupportedLanguages = new Dictionary<string, string>
+        {
+            { "en", "English" },
+            { "zh_CN", "中文 (简体)" },
+            // 如果还有其他语言，也一并添加
+        };
+    }
+}
 
         // 加载语言文件
         private static void LoadLanguage(string langCode)
