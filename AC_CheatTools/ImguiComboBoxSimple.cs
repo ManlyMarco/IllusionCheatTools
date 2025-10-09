@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace CheatTools
 {
-    /// <inheritdoc cref="ImguiComboBox"/>/>
+    /// <inheritdoc cref="ImguiComboBox"/>
     internal class ImguiComboBoxSimple : ImguiComboBox
     {
         public readonly GUIContent[] Contents;
