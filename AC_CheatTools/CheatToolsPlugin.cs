@@ -19,7 +19,7 @@ namespace CheatTools
 
         public CheatToolsPlugin()
         {
-            Logger = base.Log;
+            Logger = Log;
         }
 
         public override void Load()

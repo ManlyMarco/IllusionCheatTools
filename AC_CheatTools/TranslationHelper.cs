@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Linq;
-using CheatTools;
 using XUnity.AutoTranslator.Plugin.Core;
 
-namespace IllusionMods
+namespace CheatTools
 {
     /// <summary>
     /// Class that abstracts away AutoTranslator. It lets you translate text to current language.

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
 
@@ -102,7 +103,7 @@ internal static class DrawUtils
     }
 
     public static void DrawSlider(string name, int min, int max, Func<int> get, Action<int> set, string tooltip = null)
-        => DrawSlider(name, (float)min, (float)max, () => (float)get(), f => set(Mathf.RoundToInt(f)), tooltip);
+        => DrawSlider(name, min, max, () => (float)get(), f => set(Mathf.RoundToInt(f)), tooltip);
 
     public static void DrawSlider(string name, float min, float max, Func<float> get, Action<float> set, string tooltip = null)
     {
@@ -124,8 +125,8 @@ internal static class DrawUtils
 
             GUILayout.Space(4);
 
-            var result = GUILayout.TextField(oldValue.ToString(), GUILayout.Width(50));
-            if (GUI.changed && float.TryParse(result, out newValue) && !newValue.Equals(oldValue)) set(newValue);
+            var result = GUILayout.TextField(oldValue.ToString(CultureInfo.InvariantCulture), GUILayout.Width(50));
+            if (GUI.changed && float.TryParse(result, NumberStyles.Float | NumberStyles.AllowThousands, NumberFormatInfo.InvariantInfo, out newValue) && !newValue.Equals(oldValue)) set(newValue);
         }
         GUILayout.EndHorizontal();
     }

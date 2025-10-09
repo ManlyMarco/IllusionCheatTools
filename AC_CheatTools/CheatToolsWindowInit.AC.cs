@@ -1,27 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using AC.Scene;
-using AC.Scene.Explore;
-using AC.Scene.Explore.Communication;
 using AC.User;
 using BepInEx.Logging;
-using Character;
 using Cysharp.Threading.Tasks;
 using H;
 using HarmonyLib;
-using Il2CppInterop.Runtime.InteropTypes.Arrays;
-using Il2CppSystem;
 using Il2CppSystem.Threading;
 using ILLGAMES.ADV;
-using IllusionMods;
 using RuntimeUnityEditor.Core.Inspector;
 using RuntimeUnityEditor.Core.Inspector.Entries;
 using RuntimeUnityEditor.Core.ObjectTree;
 using RuntimeUnityEditor.Core.Utils;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-using UnityEngine.Splines;
-using UnityEngine.UI;
 using Array = System.Array;
 using Exception = System.Exception;
 using Math = System.Math;
@@ -30,16 +21,15 @@ namespace CheatTools
 {
     public static class CheatToolsWindowInit
     {
-        private static int _otherCharaListIndex;
-        private static ImguiComboBox _otherCharaDropdown = new();
         private static KeyValuePair<object, string>[] _openInInspectorButtons;
         private static NPCData _currentVisibleChara;
 
         // Only true when dialog box is open
         private static bool ADVOpen => ADVCore._instance && ADVCore._instance.isActiveAndEnabled;
-
+        private static SaveData CurrentSaveData => Manager.Game.Instance?.SaveData;
+        private static bool InsideH => HScene.IsActive();
         // TODO faster way to get this?
-        private static ExploreScene ExploreSceneInstance => _exploreSceneInstance ? _exploreSceneInstance : _exploreSceneInstance = GameObject.FindObjectOfType<ExploreScene>();
+        private static ExploreScene ExploreSceneInstance => _exploreSceneInstance ? _exploreSceneInstance : _exploreSceneInstance = UnityEngine.Object.FindObjectOfType<ExploreScene>();
         private static ExploreScene _exploreSceneInstance;
 
         private static bool InsideCommunication
@@ -50,10 +40,6 @@ namespace CheatTools
                 return exploreScene != null && exploreScene.CommunicationUI != null && exploreScene.CommunicationUI.isActiveAndEnabled && exploreScene.CommunicationUI._targets.Count > 0 && !InsideH;
             }
         }
-
-        private static SaveData CurrentSaveData => Manager.Game.Instance?.SaveData;
-
-        private static bool InsideH => HScene.IsActive();
 
         public static void Initialize(CheatToolsPlugin instance)
         {
@@ -70,8 +56,6 @@ namespace CheatTools
                     new KeyValuePair<object, string>((object)Manager.Sound._instance ?? typeof(Manager.Sound), "Manager.Sound"),
                     new KeyValuePair<object, string>(typeof(Manager.GameSystem), "Manager.GameSystem"),
                 };
-
-                window.ComboBoxesToDisplay.Add(_otherCharaDropdown);
             };
 
             CheatToolsWindow.Cheats.Add(new CheatEntry(_ => InsideH, DrawHSceneCheats, null));
@@ -146,20 +130,25 @@ namespace CheatTools
             }
             GUILayout.EndHorizontal();
 
-            if (GUILayout.Button(new GUIContent("I. AM. MAGNETIC.", null, "Warning: May cause a softlock, save first")))
+            if (!InsideCommunication && !InsideH)
             {
-                ExploreSceneInstance.Player._state.Release();
-
-                foreach (var npc in ExploreSceneInstance.NPCList)
+                GUI.color = Color.red;
+                if (GUILayout.Button(new GUIContent("I. AM. MAGNETIC.", null, "Warning: Likely to softlock the game, save first!")))
                 {
-                    // BUG: Can softlock in first person mode with no controls enabled other than wasd and right click
-                    ExploreSceneInstance.CallNPC(npc)
-                                        .ContinueWith((Il2CppSystem.Action)(() =>
-                                        {
-                                            // TODO find a way to ensure player is not softlocked, this doesn't really help
-                                            ExploreSceneInstance._cycleUI.Visible = true;
-                                        }));
+                    ExploreSceneInstance.Player._state.Release();
+
+                    foreach (var npc in ExploreSceneInstance.NPCList)
+                    {
+                        // BUG: Can softlock in first person mode with no controls enabled other than wasd and right click
+                        ExploreSceneInstance.CallNPC(npc)
+                                            .ContinueWith((Il2CppSystem.Action)(() =>
+                                            {
+                                                // TODO find a way to ensure player is not softlocked, this doesn't really help
+                                                ExploreSceneInstance._cycleUI.Visible = true;
+                                            }));
+                    }
                 }
+                GUI.color = Color.white;
             }
         }
 
@@ -220,7 +209,7 @@ namespace CheatTools
                 for (var i = 0; i < playerData._tastes.Length; i++)
                 {
                     var thisIndex = i;
-                    DrawUtils.DrawSlider("Taste " + (i + 1), 0, 20, () => (int)playerData._tastes[thisIndex], (int val) =>
+                    DrawUtils.DrawSlider("Taste " + (i + 1), 0, 20, () => playerData._tastes[thisIndex], val =>
                     {
                         playerData._tastes[thisIndex] = (byte)val;
                         if (InsideCommunication)
@@ -320,7 +309,7 @@ namespace CheatTools
                 DrawUtils.DrawNums("Relation lv", 4, () => currentChara.RelationValue, b =>
                 {
                     currentChara.RelationValue = b;
-                    currentChara.FavorValue = Math.Min(currentChara.FavorValue, currentChara.RelationValue * 100);
+                    currentChara.FavorValue = Math.Max(currentChara.FavorValue, currentChara.RelationValue * 100);
                     UpdateUiIfNeeded(true);
                 }, "1 - unknown, 2 - friend, 3 - bestie, 4 - lover.\nWarning: May not update immediately, save/load the game in case of issues.");
 
@@ -374,9 +363,14 @@ namespace CheatTools
 
                 GUILayout.Space(5);
 
-                if (GUILayout.Button("Call"))
-                    ExploreSceneInstance.CallNPC(currentChara.NPCInstance);
-
+                if (!InsideCommunication && !InsideH)
+                {
+                    GUI.color = Color.red;
+                    if (GUILayout.Button(new GUIContent("Call", null, "Warning: May softlock the game in some cases, save before using!")))
+                        ExploreSceneInstance.CallNPC(currentChara.NPCInstance);
+                    GUI.color = Color.white;
+                }
+#if DEBUG
                 if (GUILayout.Button("DEBUG: try update UI"))
                 {
                     ExploreSceneInstance.CommunicationUI.UpdateParameter(true);
@@ -384,7 +378,7 @@ namespace CheatTools
                     ExploreSceneInstance.CommunicationUI.UpdateTasteGraph();
                     ExploreSceneInstance.CommunicationUI.RefreshTasteGraph();
                 }
-
+#endif
                 GUILayout.Space(5);
 
                 if (GUILayout.Button("Open Character in inspector"))
@@ -399,119 +393,6 @@ namespace CheatTools
                 }
             }
             GUILayout.EndVertical();
-
-
-
-            //var comboboxMaxY = (int)cheatToolsWindow.WindowRect.bottom - 30;
-            //var isCopy = mainChara != null;
-
-
-            //    var charasGameParam = currentAdvChara.charasGameParam;
-            //    if (charasGameParam != null)
-            //    {
-            //        var baseParameter = currentAdvChara.charasGameParam.baseParameter;
-
-            //        {
-            //            GUILayout.Label("In-game stats (changed through gameplay)");
-
-            //            DrawUtils.DrawSlider(nameof(baseParameter.Stamina), 0, 1000, () => baseParameter.Stamina, val => baseParameter.Stamina = val);
-            //            DrawUtils.DrawSlider(nameof(baseParameter.NowStamina), 0, baseParameter.Stamina + 100, () => baseParameter.NowStamina, val => baseParameter.NowStamina = val,
-            //                                 "When character is controlled by player this field is used for determining how long until the period ends. NPCs don't use it.\nInitial value is equal to 'Stamina + 100'.");
-            //            DrawUtils.DrawSlider(nameof(baseParameter.Conversation), 0, 1000, () => baseParameter.Conversation, val => baseParameter.Conversation = val);
-            //            DrawUtils.DrawSlider(nameof(baseParameter.Study), 0, 1000, () => baseParameter.Study, val => baseParameter.Study = val);
-            //            DrawUtils.DrawSlider(nameof(baseParameter.Living), 0, 1000, () => baseParameter.Living, val => baseParameter.Living = val);
-            //            DrawUtils.DrawSlider(nameof(baseParameter.Job), 0, 1000, () => baseParameter.Job, val => baseParameter.Job = val, "Doesn't seem to work, changes get overwritten.");
-
-            //            GUILayout.Space(6);
-            //        }
-
-            //        GUILayout.BeginVertical(GUI.skin.box);
-            //        {
-            //            var menstruationsLength = charasGameParam.menstruations.Length;
-            //            var currentDayIndex = Manager.Game.saveData.Day % menstruationsLength;
-
-            //            GUILayout.BeginHorizontal();
-            //            {
-            //                GUILayout.Label("Menstruation: ");
-
-            //                GUI.color = currentAdvChara.IsMenstruation(ActorExtensionH.Menstruation.Normal) ? Color.green : Color.white;
-            //                if (GUILayout.Button("Normal")) SetMenstruationForDay(currentDayIndex, 0);
-            //                GUI.color = currentAdvChara.IsMenstruation(ActorExtensionH.Menstruation.Safe) ? Color.green : Color.white;
-            //                if (GUILayout.Button("Safe")) SetMenstruationForDay(currentDayIndex, 1);
-            //                GUI.color = currentAdvChara.IsMenstruation(ActorExtensionH.Menstruation.Danger) ? Color.green : Color.white;
-            //                if (GUILayout.Button("Danger")) SetMenstruationForDay(currentDayIndex, 2);
-            //                GUI.color = Color.white;
-            //            }
-            //            GUILayout.EndHorizontal();
-
-            //            GUILayout.BeginHorizontal();
-            //            {
-            //                GUILayout.Label(menstruationsLength / 7 + "-weekly", GUILayout.Width(80));
-            //                var mensUiItems = new GUIContent[] { new("N"), new("S"), new("D") };
-            //                for (var i = 0; i < menstruationsLength; i++)
-            //                {
-            //                    var mens = charasGameParam.menstruations[i];
-            //                    GUI.color = currentDayIndex == i ? Color.green : Color.white;
-            //                    if (GUILayout.Button(mensUiItems[mens]))
-            //                        SetMenstruationForDay(i, (mens + 1) % 3);
-
-            //                    if (i == 6)
-            //                    {
-            //                        GUI.color = Color.white;
-            //                        GUILayout.EndHorizontal();
-            //                        GUILayout.BeginHorizontal();
-            //                        GUILayout.Label("schedule:", GUILayout.Width(80));
-            //                    }
-            //                }
-            //                GUI.color = Color.white;
-            //            }
-            //            GUILayout.EndHorizontal();
-
-            //            void SetMenstruationForDay(int index, int newMens) => charasGameParam.menstruations[index] = newMens;
-            //        }
-            //        GUILayout.EndVertical();
-
-            //        GUILayout.Space(6);
-            //    }
-
-            //    var gameParam = currentAdvChara.id.GameParameter;
-            //    if (gameParam != null)
-            //    {
-            //        GUILayout.BeginVertical(GUI.skin.box);
-            //        {
-            //            GUILayout.Label("Card stats (same as in the chara maker)");
-
-            //            DrawUtils.DrawStrings("Job", new[] { "None", "Lifeguard", "Cafe", "Shrine" }, () => gameParam.job, b => gameParam.job = b);
-            //            DrawUtils.DrawNums("Gayness", 5, () => gameParam.sexualTarget, b => gameParam.sexualTarget = b);
-            //            DrawUtils.DrawNums(nameof(gameParam.lvChastity), 5, () => gameParam.lvChastity, b => gameParam.lvChastity = b);
-            //            DrawUtils.DrawNums(nameof(gameParam.lvSociability), 5, () => gameParam.lvSociability, b => gameParam.lvSociability = b);
-            //            DrawUtils.DrawNums(nameof(gameParam.lvTalk), 5, () => gameParam.lvTalk, b => gameParam.lvTalk = b);
-            //            DrawUtils.DrawNums(nameof(gameParam.lvStudy), 5, () => gameParam.lvStudy, b => gameParam.lvStudy = b);
-            //            DrawUtils.DrawNums(nameof(gameParam.lvLiving), 5, () => gameParam.lvLiving, b => gameParam.lvLiving = b);
-            //            DrawUtils.DrawNums(nameof(gameParam.lvPhysical), 5, () => gameParam.lvPhysical, b => gameParam.lvPhysical = b);
-            //            DrawUtils.DrawNums("Fighting style", 3, () => gameParam.lvDefeat, b => gameParam.lvDefeat = b);
-
-            //            DrawUtils.DrawBool(nameof(gameParam.isVirgin), () => gameParam.isVirgin, b => gameParam.isVirgin = b);
-            //            DrawUtils.DrawBool(nameof(gameParam.isAnalVirgin), () => gameParam.isAnalVirgin, b => gameParam.isAnalVirgin = b);
-            //            DrawUtils.DrawBool(nameof(gameParam.isMaleVirgin), () => gameParam.isMaleVirgin, b => gameParam.isMaleVirgin = b);
-            //            DrawUtils.DrawBool(nameof(gameParam.isMaleAnalVirgin), () => gameParam.isMaleAnalVirgin, b => gameParam.isMaleAnalVirgin = b);
-            //        }
-            //        GUILayout.EndVertical();
-            //    }
-
-            //    if (gameParam != null && GUILayout.Button("Inspect GameParameter"))
-            //        Inspector.Instance.Push(new InstanceStackEntry(gameParam, "GameParam " + currentAdvChara.GetCharaName(true)), true);
-
-            //    if (charasGameParam != null && GUILayout.Button("Inspect CharactersGameParameter"))
-            //        Inspector.Instance.Push(new InstanceStackEntry(charasGameParam, "CharaGameParam " + currentAdvChara.GetCharaName(true)), true);
-
-            //    //if (GUILayout.Button("Inspect extended data"))
-            //    //{
-            //    //    Inspector.Instance.Push(new InstanceStackEntry(ExtensibleSaveFormat.ExtendedSave.GetAllExtendedData(currentAdvChara.chaFile), "ExtData for " + currentAdvChara.Name), true);
-            //    //}
-            //}
-            //GUILayout.EndVertical();
         }
-
     }
 }
