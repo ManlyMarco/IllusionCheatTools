@@ -9,7 +9,7 @@ namespace CheatTools
         public readonly GUIContent[] Contents;
         public int[] ContentsIndexes;
         public int Index;
-        public ImguiComboBoxSimple(GUIContent[] contents) : base()
+        public ImguiComboBoxSimple(GUIContent[] contents)
         {
             Contents = contents;
         }
