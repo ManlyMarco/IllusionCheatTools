@@ -4,7 +4,7 @@
 		<TargetFramework>net6.0</TargetFramework>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<RootNamespace>CheatTools</RootNamespace>
-		<DefineConstants>$(DefineConstants);SVS</DefineConstants>
+		<DefineConstants>$(DefineConstants);AC</DefineConstants>
 		<DebugType>embedded</DebugType>
 		<WarningLevel>9999</WarningLevel>
 	</PropertyGroup>
