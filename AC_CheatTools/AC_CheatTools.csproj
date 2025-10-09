@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<RootNamespace>CheatTools</RootNamespace>
+		<DefineConstants>$(DefineConstants);AC</DefineConstants>
+		<DebugType>embedded</DebugType>
+		<WarningLevel>9999</WarningLevel>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="IllusionLibs.Aicomi.AllPackages" Version="2024.10.3" />
+		<PackageReference Include="IllusionLibs.XUnity.AutoTranslator.Plugin.Core.IL2CPP" Version="5.4.0" />
+		<PackageReference Include="RuntimeUnityEditor.Core.IL2CPP" Version="5.6.0" />
+	</ItemGroup>
+
+	<Import Project="..\Shared\Shared.projitems" Label="Shared" />
+
+	<Target Name="CopyCustomContent" AfterTargets="AfterBuild">
+		<Copy SourceFiles="$(TargetPath)" DestinationFolder="$(SolutionDir)bin" />
+	</Target>
+
+</Project>

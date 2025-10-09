@@ -1,4 +1,4 @@
-﻿#if !HC && !SVS
+﻿#if !HC && !SVS && !AC
 using System;
 using BepInEx;
 using BepInEx.Logging;

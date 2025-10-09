@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HC_CheatTools", "HC_CheatTo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SVS_CheatTools", "SVS_CheatTools\SVS_CheatTools.csproj", "{462E6000-BE07-4812-B5B9-524E3D517C2F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AC_CheatTools", "AC_CheatTools\AC_CheatTools.csproj", "{66AAE05C-6710-5CDB-0B4C-5855F0EDB7C0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +57,10 @@ Global
 		{462E6000-BE07-4812-B5B9-524E3D517C2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{462E6000-BE07-4812-B5B9-524E3D517C2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{462E6000-BE07-4812-B5B9-524E3D517C2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66AAE05C-6710-5CDB-0B4C-5855F0EDB7C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66AAE05C-6710-5CDB-0B4C-5855F0EDB7C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66AAE05C-6710-5CDB-0B4C-5855F0EDB7C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66AAE05C-6710-5CDB-0B4C-5855F0EDB7C0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -69,6 +75,7 @@ Global
 		Shared\Shared.projitems*{4c489dbc-b8fc-4b0c-ba9c-023afcd2896a}*SharedItemsImports = 4
 		Shared_Noclip\Shared_Noclip.projitems*{4c489dbc-b8fc-4b0c-ba9c-023afcd2896a}*SharedItemsImports = 4
 		Shared\Shared.projitems*{4e9bc084-8ceb-4531-a4ba-2013b0cefba0}*SharedItemsImports = 4
+		Shared\Shared.projitems*{66aae05c-6710-5cdb-0b4c-5855f0edb7c0}*SharedItemsImports = 5
 		Shared\Shared.projitems*{a87bb074-865d-44b4-bae7-d7719327e405}*SharedItemsImports = 4
 		Shared\Shared.projitems*{bd455182-d44b-4647-aa8a-566444962e3f}*SharedItemsImports = 13
 		Shared\Shared.projitems*{c9020a15-e2d1-47d6-ac74-fbf397ccbd67}*SharedItemsImports = 4
