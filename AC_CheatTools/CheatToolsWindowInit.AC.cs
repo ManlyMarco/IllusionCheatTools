@@ -133,7 +133,7 @@ namespace CheatTools
             if (!InsideCommunication && !InsideH)
             {
                 GUI.color = Color.red;
-                if (GUILayout.Button(new GUIContent("I. AM. MAGNETIC.", null, "Warning: Likely to softlock the game, save first!")))
+                if (GUILayout.Button(new GUIContent("I. AM. MAGNETIC.", null, "Warning: Likely to softlock the game, save first! You may be able to un-softlock by skipping the current period.")))
                 {
                     ExploreSceneInstance.Player._state.Release();
 
