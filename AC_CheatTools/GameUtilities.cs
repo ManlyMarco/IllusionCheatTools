@@ -5,7 +5,7 @@ namespace CheatTools;
 
 internal static class GameUtilities
 {
-    public const string GameProcessName = "SamabakeScramble";
+    public const string GameProcessName = "Aicomi";
 
     /// <summary>
     /// True in character maker, both in main menu and in-game maker.

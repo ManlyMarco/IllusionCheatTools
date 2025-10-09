@@ -8,7 +8,7 @@ namespace CheatTools
 {
     [BepInPlugin(GUID, DisplayName, Version)]
     [BepInDependency(RuntimeUnityEditorCore.GUID, ">=" + RuntimeUnityEditorCore.Version)]
-    [BepInProcess("Aicomi")]
+    [BepInProcess(GameUtilities.GameProcessName)]
     public class CheatToolsPlugin : BasePlugin
     {
         public const string DisplayName = Metadata.DisplayName;
