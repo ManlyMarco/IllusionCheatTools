@@ -26,7 +26,9 @@ internal static class GameUtilities
     /// </summary>
     public static string GetCharaName(this Actor chara, bool translated)
     {
-        var fullname = chara?.BaseData.HumanData.Parameter.GetCharaName(translated);
+        if(chara == null) return "";
+
+        var fullname = chara.BaseData?.HumanData?.Parameter.GetCharaName(translated);
         if (!string.IsNullOrEmpty(fullname))
         {
             if (translated)
@@ -37,7 +39,24 @@ internal static class GameUtilities
             }
             return fullname;
         }
-        return chara?._charaFileName ?? chara?.ToString();
+        return chara._charaFileName ?? chara.ToString();
+    }
+    public static string GetCharaName(this HumanData chara, bool translated)
+    {
+        if(chara == null) return "";
+
+        var fullname = chara.Parameter?.GetCharaName(translated);
+        if (!string.IsNullOrEmpty(fullname))
+        {
+            if (translated)
+            {
+                TranslationHelper.TryTranslate(fullname, out var translatedName);
+                if (!string.IsNullOrEmpty(translatedName))
+                    return translatedName;
+            }
+            return fullname;
+        }
+        return chara.CharaFileName ?? chara.ID.ToString();
     }
 
     /// <summary>
@@ -46,18 +65,18 @@ internal static class GameUtilities
     /// </summary>
     public static string GetCharaName(this HumanDataParameter param, bool translated)
     {
-        var fullname = param?.fullname;
-        if (!string.IsNullOrEmpty(fullname))
+        if(param == null) return "";
+
+        var fullname = param.fullname;
+        if (string.IsNullOrEmpty(fullname)) return "";
+
+        if (translated)
         {
-            if (translated)
-            {
-                TranslationHelper.TryTranslate(fullname, out var translatedName);
-                if (!string.IsNullOrEmpty(translatedName))
-                    return translatedName;
-            }
-            return fullname;
+            TranslationHelper.TryTranslate(fullname, out var translatedName);
+            if (!string.IsNullOrEmpty(translatedName))
+                return translatedName;
         }
-        return "";
+        return fullname;
     }
 
 

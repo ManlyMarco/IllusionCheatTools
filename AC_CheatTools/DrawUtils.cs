@@ -54,12 +54,12 @@ internal static class DrawUtils
         }
         GUILayout.EndHorizontal();
     }
-    public static void DrawNums(string name, byte count, Func<byte> get, Action<byte> set)
+    public static void DrawNums(string name, byte count, Func<byte> get, Action<byte> set, string tooltip = null)
     {
         GUILayout.BeginHorizontal();
         {
             GUI.changed = false;
-            GUILayout.Label(name + ": ", _LayoutOptionsName);
+            GUILayout.Label(new GUIContent(name + ": ", null, tooltip), _LayoutOptionsName);
             GUILayout.FlexibleSpace();
             var oldValue = get();
 

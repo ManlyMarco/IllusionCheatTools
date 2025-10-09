@@ -29,7 +29,7 @@ internal static class Hooks
                 break;
             case SpeedModes.Sanic:
                 __instance.Agent.speed = 100;
-                __instance.Agent.acceleration = 100;
+                __instance.Agent.acceleration = 400;
                 break;
 
             case SpeedModes.Normal:
