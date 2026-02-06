@@ -41,8 +41,12 @@ namespace CheatTools
             }
         }
 
+        private static bool _nightTourDlcInstalled;
+
         public static void Initialize(CheatToolsPlugin instance)
         {
+            _nightTourDlcInstalled = typeof(AC.PropertyData.MapIDs).GetProperty("NightMarket") != null; //nameof(AC.PropertyData.MapIDs.NightMarket);
+
             CheatToolsWindow.OnShown += window =>
             {
                 _openInInspectorButtons = new[]
@@ -306,12 +310,24 @@ namespace CheatTools
                         ExploreSceneInstance.CommunicationUI.UpdateParameter(isLoveTalk);
                 }
 
-                DrawUtils.DrawNums("Relation lv", 4, () => currentChara.RelationValue, b =>
+                if (_nightTourDlcInstalled)
                 {
-                    currentChara.RelationValue = b;
-                    currentChara.FavorValue = Math.Max(currentChara.FavorValue, currentChara.RelationValue * 100);
-                    UpdateUiIfNeeded(true);
-                }, "1 - unknown, 2 - friend, 3 - bestie, 4 - lover.\nWarning: May not update immediately, save/load the game in case of issues.");
+                    DrawUtils.DrawNums("Relation lv", 5, () => currentChara.RelationValue, b =>
+                    {
+                        currentChara.RelationValue = b;
+                        currentChara.FavorValue = Math.Max(currentChara.FavorValue, currentChara.RelationValue * 100);
+                        UpdateUiIfNeeded(true);
+                    }, "1 - unknown, 2 - friend, 3 - bestie, 4 - lover, 5 - darling (NightTour DLC only).\nWarning: May not update immediately, save/load the game in case of issues.");
+                }
+                else
+                {
+                    DrawUtils.DrawNums("Relation lv", 4, () => currentChara.RelationValue, b =>
+                    {
+                        currentChara.RelationValue = b;
+                        currentChara.FavorValue = Math.Max(currentChara.FavorValue, currentChara.RelationValue * 100);
+                        UpdateUiIfNeeded(true);
+                    }, "1 - unknown, 2 - friend, 3 - bestie, 4 - lover.\nWarning: May not update immediately, save/load the game in case of issues.");
+                }
 
                 DrawUtils.DrawSlider(nameof(currentChara.Favor), 0, 100, () => currentChara.FavorValue - currentChara.RelationValue * 100, i =>
                 {
