@@ -1,0 +1,21 @@
+{
+  "UI": {
+    "Language": "语言",
+    "English": "英文",
+    "Chinese": "中文",
+    "VRMoveTools": "VR移动工具",
+    "AlwaysAllowThumbstickMove": "始终允许使用摇杆移动",
+    "UnlimitedThumbstickMove": "无限制摇杆移动",
+    "ThumbstickMoveDistance": "摇杆移动距离 {0}",
+    "UnlockTeleportToolDistance": "解锁传送工具距离",
+    "PlayerUnlocks": "玩家解锁（当前游戏进度）",
+    "SakurakoFavor": "樱子好感度: {0}",
+    "UmekoFavor": "梅子好感度: {0}",
+    "OpenAdvancedOptions": "打开高级选项",
+    "PlayerStatus": "玩家状态",
+    "GlobalUnlocks": "全局解锁（可能需要重启游戏，永久生效）",
+    "UnlockAllChapters": "解锁所有章节",
+    "UnlockAllClothes": "解锁所有服装",
+    "MarkAllEndingsAndGamesAsSeen": "标记所有结局和小游戏为已完成"
+  }
+}

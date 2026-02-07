@@ -1,0 +1,41 @@
+
+  "supportedLanguages": [
+    {
+      "code": "en",
+      "name": "English"
+    },
+   
+    {
+      "code": "zh_CN",
+      "name": "中文"
+    },
+    {
+      "code": "ko_KR",
+      "name": "한국어"
+    },
+    {
+      "code": "es_ES",
+      "name": "Español"
+    },
+    {
+      "code": "pt_BR",
+      "name": "Português (Brasil)"
+    },
+    {
+      "code": "fr_FR",
+      "name": "Français"
+    },
+    {
+      "code": "de_DE",
+      "name": "Deutsch"
+    },
+    {
+      "code": "nb_NO",
+      "name": "Norsk (Bokmål)"
+    },
+    {
+      "code": "ru_RU",
+      "name": "Русский"
+    }
+  ]
+}
